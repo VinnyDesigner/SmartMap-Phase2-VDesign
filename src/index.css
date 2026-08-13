@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sans antialiased bg-[#F8FAFC] text-slate-900;
+  }
+}
+
+/* Hide native leaflet-draw toolbar */
+.leaflet-draw {
+  display: none !important;
+}
+/* Hide default cursor on map background, but show it on interactive UI */
+@media (hover: hover) and (pointer: fine) {
+  body {
+    cursor: none;
+  }
+  
+  /* Restore cursors for UI elements */
+  .pointer-events-auto {
+    cursor: default;
+  }
+  
+  a, button, [role="button"] {
+    cursor: pointer;
+  }
+  
+  input, textarea {
+    cursor: text;
+  }
+}
+
+/* Make Leaflet blend in */
+.leaflet-container {
+  background: #f8fafc !important; /* Tailwind slate-50 */
+}
+
+/* Remove Leaflet attribution border/background to make it seamless */
+.leaflet-control-attribution {
+  background: transparent !important;
+  color: rgba(0,0,0,0.4) !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a {
+  color: rgba(0,0,0,0.6) !important;
+}
+
+/* Custom Sleek Scrollbar */
+.sleek-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.sleek-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sleek-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+}
+.sleek-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Hide scrollbar for elements with .hide-scrollbar class */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

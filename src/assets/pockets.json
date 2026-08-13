@@ -1,0 +1,203 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Saadiyat Island"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              54.4,
+              24.56
+            ],
+            [
+              54.48,
+              24.55
+            ],
+            [
+              54.47,
+              24.51
+            ],
+            [
+              54.42,
+              24.5
+            ],
+            [
+              54.4,
+              24.56
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Al Reem Island"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              54.385,
+              24.505
+            ],
+            [
+              54.415,
+              24.51
+            ],
+            [
+              54.415,
+              24.475
+            ],
+            [
+              54.38,
+              24.485
+            ],
+            [
+              54.385,
+              24.505
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Downtown Abu Dhabi"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              54.335,
+              24.495
+            ],
+            [
+              54.375,
+              24.5
+            ],
+            [
+              54.385,
+              24.475
+            ],
+            [
+              54.34,
+              24.465
+            ],
+            [
+              54.335,
+              24.495
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Al Maryah Island"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              54.385,
+              24.51
+            ],
+            [
+              54.395,
+              24.512
+            ],
+            [
+              54.398,
+              24.495
+            ],
+            [
+              54.388,
+              24.49
+            ],
+            [
+              54.385,
+              24.51
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Zayed Sports City Area"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              54.43,
+              24.43
+            ],
+            [
+              54.47,
+              24.43
+            ],
+            [
+              54.48,
+              24.4
+            ],
+            [
+              54.44,
+              24.39
+            ],
+            [
+              54.43,
+              24.43
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Yas Island"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              54.57,
+              24.52
+            ],
+            [
+              54.62,
+              24.51
+            ],
+            [
+              54.63,
+              24.46
+            ],
+            [
+              54.58,
+              24.47
+            ],
+            [
+              54.57,
+              24.52
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
