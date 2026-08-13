@@ -55,30 +55,36 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="w-[600px] h-[56px] bg-white/80 backdrop-blur-2xl rounded-full shadow-[0_12px_24px_rgba(33,90,158,0.15),_inset_0_1px_0_rgba(255,255,255,0.8)] border border-white/80 pointer-events-auto flex items-center px-6 cursor-text transition-all hover:shadow-[0_16px_32px_rgba(33,90,158,0.2)] hover:bg-white"
+          className="relative p-[1.5px] rounded-full shadow-[0_12px_24px_rgba(33,90,158,0.15)] pointer-events-auto overflow-hidden group transition-all hover:shadow-[0_16px_32px_rgba(33,90,158,0.2)] cursor-text"
           onClick={() => setExplorerState(prev => ({ ...prev, isDockerMinimized: false }))}
         >
-          <Search className="w-5 h-5 text-dge-tech mr-4" />
-          <input 
-            type="text" 
-            placeholder="Ask GeoVision AI or search locations..." 
-            className="flex-1 bg-transparent border-none outline-none text-[14px] text-slate-800 placeholder:text-slate-400 font-medium cursor-text"
-            onClick={(e) => {
-              e.stopPropagation();
-              setExplorerState(prev => ({ ...prev, isDockerMinimized: false }));
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.target.value.trim()) {
-                 const text = e.target.value.trim();
-                 setExplorerState(prev => ({
-                   ...prev,
-                   isDockerMinimized: false,
-                   chatHistory: [...(prev.chatHistory || []), { sender: 'user', text }]
-                 }));
-                 e.target.value = '';
-              }
-            }}
+          {/* Animated Shiny Stroke Layer */}
+          <div className="absolute aspect-square w-[500%] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-[spin_8s_linear_infinite] z-0 opacity-100"
+               style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.6) 80%, #ffffff 95%, transparent 100%)' }} 
           />
+          <div className="w-[600px] h-[56px] bg-white rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex items-center px-6 relative z-10">
+            <Search className="w-5 h-5 text-dge-tech mr-4" />
+            <input 
+              type="text" 
+              placeholder="Ask GeoVision AI or search locations..." 
+              className="flex-1 bg-transparent border-none outline-none text-[14px] text-slate-800 placeholder:text-slate-400 font-medium cursor-text"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExplorerState(prev => ({ ...prev, isDockerMinimized: false }));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                   const text = e.target.value.trim();
+                   setExplorerState(prev => ({
+                     ...prev,
+                     isDockerMinimized: false,
+                     chatHistory: [...(prev.chatHistory || []), { sender: 'user', text }]
+                   }));
+                   e.target.value = '';
+                }
+              }}
+            />
+          </div>
         </motion.div>
       ) : (
         <motion.div 
@@ -89,42 +95,49 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.98 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="w-[1100px] h-[400px] bg-[#f8faff]/60 backdrop-blur-2xl rounded-[32px] shadow-[0_12px_48px_rgba(0,0,0,0.1)] border border-white/60 pointer-events-auto flex overflow-hidden relative z-10"
+          className="relative p-[1.5px] rounded-[32px] shadow-[0_12px_48px_rgba(0,0,0,0.15)] pointer-events-auto overflow-hidden group z-10"
         >
-          {/* AI Glow Blob */}
-          <motion.div
-            className="pointer-events-none absolute w-[450px] h-[450px] rounded-full blur-[100px] opacity-[0.55] z-0 bg-gradient-to-r from-blue-400 via-indigo-300 to-[#3D52A0]"
-            style={{
-              x: springX,
-              y: springY,
-              translateX: '-50%',
-              translateY: '-50%'
-            }}
+          {/* Animated Shiny Stroke Layer */}
+          <div className="absolute aspect-square w-[300%] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-[spin_8s_linear_infinite] z-0 opacity-100"
+               style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.6) 80%, #ffffff 95%, transparent 100%)' }} 
           />
-
-          {/* Split Content Area */}
-          <div className="w-[45%] h-full flex flex-col relative z-10">
-            <AiChatInterface 
-              explorerState={explorerState}
-              setExplorerState={setExplorerState}
-              title={getContextualTitle()}
+          {/* Main Inner Container */}
+          <div className="w-[1100px] h-[400px] bg-white rounded-[30.5px] flex overflow-hidden relative z-10">
+            {/* AI Glow Blob */}
+            <motion.div
+              className="pointer-events-none absolute w-[450px] h-[450px] rounded-full blur-[100px] opacity-[0.55] z-0 bg-gradient-to-r from-blue-400 via-indigo-300 to-[#3D52A0]"
+              style={{
+                x: springX,
+                y: springY,
+                translateX: '-50%',
+                translateY: '-50%'
+              }}
             />
-          </div>
-            
-          <div className="w-[55%] h-full p-2 relative z-20">
-            <div className="w-full h-full bg-white/50 backdrop-blur-md rounded-[24px] shadow-sm border border-white/60 overflow-hidden relative flex flex-col">
-              <SearchResultsList 
+
+            {/* Split Content Area */}
+            <div className="w-[45%] h-full flex flex-col relative z-10">
+              <AiChatInterface 
                 explorerState={explorerState}
                 setExplorerState={setExplorerState}
+                title={getContextualTitle()}
               />
-              <DetailSlidePanel 
-                explorerState={explorerState}
-                setExplorerState={setExplorerState}
-              />
-              <MenuSlidePanel 
-                explorerState={explorerState}
-                setExplorerState={setExplorerState}
-              />
+            </div>
+              
+            <div className="w-[55%] h-full p-2 relative z-20">
+              <div className="w-full h-full bg-white/50 backdrop-blur-md rounded-[24px] shadow-sm border border-white/60 overflow-hidden relative flex flex-col">
+                <SearchResultsList 
+                  explorerState={explorerState}
+                  setExplorerState={setExplorerState}
+                />
+                <DetailSlidePanel 
+                  explorerState={explorerState}
+                  setExplorerState={setExplorerState}
+                />
+                <MenuSlidePanel 
+                  explorerState={explorerState}
+                  setExplorerState={setExplorerState}
+                />
+              </div>
             </div>
           </div>
         </motion.div>

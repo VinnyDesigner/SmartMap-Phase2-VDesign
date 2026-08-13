@@ -98,7 +98,7 @@ const MOCK_DATA = [
                 const pos = { x: e.clientX, y: e.clientY };
                 setIdlePos(pos);
                 activeIdlePos.current = pos;
-             }, 1000);
+             }, 4000); // Wait 4 seconds before showing hover popup
           }
         }
       }
@@ -134,9 +134,6 @@ const MOCK_DATA = [
         explorerState={explorerState}
         setExplorerState={setExplorerState}
       />
-      
-      {/* 3D WebGL Topography Wave */}
-      {currentView === 'landing' && <DynamicBackground />}
       
       {/* Ambient Drifting Orbs */}
       {currentView === 'landing' && (

@@ -39,7 +39,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
   return (
     <div className="flex flex-col h-full">
       {/* Main Header with Actions */}
-      <div className="px-8 pt-6 pb-2 flex items-center justify-between">
+      <div className="px-8 pt-6 pb-4 flex items-center justify-between border-b border-black/5">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[#f0f4ff] text-[#3D52A0] flex items-center justify-center">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
@@ -50,25 +50,25 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setExplorerState(prev => ({ ...prev, activeMenu: 'saved' }))}
-            className="text-gray-400 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
+            className="text-slate-500 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
           >
             <Bookmark className="w-[18px] h-[18px]" />
           </button>
           <button 
             onClick={() => setExplorerState(prev => ({ ...prev, chatHistory: [] }))}
-            className="text-gray-400 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
+            className="text-slate-500 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
           >
             <Plus className="w-[18px] h-[18px]" />
           </button>
           <button 
             onClick={() => setExplorerState(prev => ({ ...prev, activeMenu: 'history' }))}
-            className="text-gray-400 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
+            className="text-slate-500 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
           >
             <History className="w-[18px] h-[18px]" />
           </button>
           <button 
             onClick={() => setExplorerState(prev => ({ ...prev, isDockerMinimized: true }))}
-            className="text-gray-400 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
+            className="text-slate-500 hover:text-[#3D52A0] transition-colors w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f8faff]"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
           </button>
@@ -76,7 +76,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
       </div>
 
       {/* Filters Sub-header */}
-      <div className="px-8 py-3 flex items-center justify-end border-b border-gray-100 mb-2">
+      <div className="px-8 py-3 flex items-center justify-end border-b border-black/5 mb-2">
         
         <div className="flex items-center gap-5">
           <div className="relative flex items-center gap-2" ref={layerRef}>

@@ -11,9 +11,15 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
     }
   ]);
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
   };
 
   useEffect(() => {
@@ -96,7 +102,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
         </h2>
       </div>
 
-      <div className="flex-1 overflow-y-auto mb-2 flex flex-col pr-4 space-y-4">
+      <div className="flex-1 overflow-y-auto mb-2 flex flex-col pr-4 space-y-4 sleek-scrollbar" ref={scrollContainerRef}>
         {messages.map((msg, index) => (
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'assistant' && (

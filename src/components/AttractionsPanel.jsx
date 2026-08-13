@@ -5,81 +5,71 @@ import { X, GraduationCap, PlusSquare, TreePine, Bus, MapPin, Navigation2, Map a
 export default function AttractionsPanel({ selectedLocation, onClose, onCategorySelect }) {
   const [activeFilter, setActiveFilter] = useState('all');
 
-  const categories = [
-    {
-      id: 'transport',
-      categoryLabel: 'TRANSPORT',
-      name: 'Transport',
-      icon: <Bus className="w-6 h-6 text-amber-500" />,
-      attraction: 'Abu Dhabi Main Bus Terminal',
-      details: 'Central transportation hub connecting all major districts and intercity routes.',
-      bg: 'bg-amber-50',
-      textColor: 'text-amber-500'
-    },
-    {
-      id: 'parks',
-      categoryLabel: 'PUBLIC PARKS',
-      name: 'Parks',
-      icon: <TreePine className="w-6 h-6 text-emerald-500" />,
-      attraction: 'Umm Al Emarat Park',
-      details: 'One of the oldest and largest parks with botanical gardens and an amphitheater.',
-      bg: 'bg-emerald-50',
-      textColor: 'text-emerald-500'
-    },
-    {
-      id: 'health',
-      categoryLabel: 'HEALTHCARE',
-      name: 'Healthcare',
-      icon: <PlusSquare className="w-6 h-6 text-red-500" />,
-      attraction: 'Cleveland Clinic Abu Dhabi',
-      details: 'Multispecialty hospital offering complex and critical care.',
-      bg: 'bg-red-50',
-      textColor: 'text-red-500'
-    },
-    {
-      id: 'education',
-      categoryLabel: 'EDUCATION',
-      name: 'Education',
-      icon: <GraduationCap className="w-6 h-6 text-blue-500" />,
-      attraction: 'Zayed University Campus',
-      details: 'Leading university offering diverse programs and research opportunities.',
-      bg: 'bg-blue-50',
-      textColor: 'text-blue-500'
-    }
-  ];
-
   const locationName = useMemo(() => {
-    if (!selectedLocation) return 'Local';
+    if (!selectedLocation) return 'Abu Dhabi';
     const { lat, lng } = selectedLocation;
-    if (lng < 54.4) return 'Al Maryah Island';
+    if (lng < 54.35) return 'Al Maryah Island';
     if (lat > 24.45) return 'Al Reem Island';
     return 'Khalifa City';
   }, [selectedLocation]);
 
-  // Helper for hash
-  const hashA = (str, seed) => {
-    let hash = seed;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash * 31 + str.charCodeAt(i)) % 1000;
-    }
-    return hash;
-  };
-
   const displayItems = useMemo(() => {
-    if (!selectedLocation) return categories;
-    const seed = Math.floor((selectedLocation.lat + selectedLocation.lng) * 10000);
-    const sorted = [...categories].sort((a, b) => {
-      const hA = (a.id.charCodeAt(0) * seed) % 100;
-      const hB = (b.id.charCodeAt(0) * seed) % 100;
-      return hA - hB;
-    });
-    
-    // Add realistic distance
-    return sorted.map((item) => ({
-      ...item,
-      distance: ((hashA(item.id, seed) % 40) / 10 + 0.5).toFixed(1) // 0.5 to 4.5 km
-    }));
-  }, [selectedLocation]);
+    const allAttractions = {
+      'Al Maryah Island': [
+        {
+          id: 'health', categoryLabel: 'HEALTHCARE', name: 'Healthcare', icon: <PlusSquare className="w-6 h-6 text-red-500" />,
+          attraction: 'Cleveland Clinic Abu Dhabi', details: 'Multispecialty hospital offering complex and critical care.',
+          bg: 'bg-red-50', textColor: 'text-red-500', distance: '0.8'
+        },
+        {
+          id: 'education', categoryLabel: 'EDUCATION', name: 'Education', icon: <GraduationCap className="w-6 h-6 text-blue-500" />,
+          attraction: 'Sorbonne University', details: 'A bridge to global knowledge and prestigious higher education.',
+          bg: 'bg-blue-50', textColor: 'text-blue-500', distance: '1.2'
+        },
+        {
+          id: 'parks', categoryLabel: 'PUBLIC PARKS', name: 'Parks', icon: <TreePine className="w-6 h-6 text-emerald-500" />,
+          attraction: 'Corniche Beach Park', details: 'Sun, sand, and serenity along the beautiful Abu Dhabi coast.',
+          bg: 'bg-emerald-50', textColor: 'text-emerald-500', distance: '2.5'
+        }
+      ],
+      'Al Reem Island': [
+        {
+          id: 'education', categoryLabel: 'EDUCATION', name: 'Education', icon: <GraduationCap className="w-6 h-6 text-blue-500" />,
+          attraction: 'Sorbonne University Abu Dhabi', details: 'Leading university offering diverse programs and research opportunities.',
+          bg: 'bg-blue-50', textColor: 'text-blue-500', distance: '0.5'
+        },
+        {
+          id: 'health', categoryLabel: 'HEALTHCARE', name: 'Healthcare', icon: <PlusSquare className="w-6 h-6 text-red-500" />,
+          attraction: 'NMC Specialty Hospital', details: 'Your health, our priority with advanced medical facilities.',
+          bg: 'bg-red-50', textColor: 'text-red-500', distance: '1.8'
+        },
+        {
+          id: 'transport', categoryLabel: 'TRANSPORT', name: 'Transport', icon: <Bus className="w-6 h-6 text-amber-500" />,
+          attraction: 'Main Bus Terminal', details: 'The gateway to the city connecting all major districts.',
+          bg: 'bg-amber-50', textColor: 'text-amber-500', distance: '3.0'
+        }
+      ],
+      'Khalifa City': [
+        {
+          id: 'education', categoryLabel: 'EDUCATION', name: 'Education', icon: <GraduationCap className="w-6 h-6 text-blue-500" />,
+          attraction: 'Zayed University Campus', details: 'Where ideas take flight in a state-of-the-art campus environment.',
+          bg: 'bg-blue-50', textColor: 'text-blue-500', distance: '1.5'
+        },
+        {
+          id: 'parks', categoryLabel: 'PUBLIC PARKS', name: 'Parks', icon: <TreePine className="w-6 h-6 text-emerald-500" />,
+          attraction: 'Umm Al Emarat Park', details: 'One of the oldest and largest parks with botanical gardens.',
+          bg: 'bg-emerald-50', textColor: 'text-emerald-500', distance: '4.2'
+        },
+        {
+          id: 'transport', categoryLabel: 'TRANSPORT', name: 'Transport', icon: <Bus className="w-6 h-6 text-amber-500" />,
+          attraction: 'Abu Dhabi International Airport', details: 'See where the city connects to the rest of the world.',
+          bg: 'bg-amber-50', textColor: 'text-amber-500', distance: '5.5'
+        }
+      ]
+    };
+
+    return allAttractions[locationName] || allAttractions['Khalifa City'];
+  }, [locationName]);
 
   const filteredItems = displayItems.filter(item => activeFilter === 'all' || item.id === activeFilter);
 

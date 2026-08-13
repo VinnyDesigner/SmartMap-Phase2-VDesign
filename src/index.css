@@ -51,18 +51,18 @@
 
 /* Custom Sleek Scrollbar */
 .sleek-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 .sleek-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .sleek-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(61, 82, 160, 0.25);
   border-radius: 10px;
 }
 .sleek-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(61, 82, 160, 0.45);
 }
 
 /* Hide scrollbar for elements with .hide-scrollbar class */
