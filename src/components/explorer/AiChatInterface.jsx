@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CheckCircle2, ThumbsUp, ThumbsDown, Mic, Send, Bot, User, MessageSquare } from 'lucide-react';
+import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 
 export default function AiChatInterface({ explorerState, setExplorerState, title }) {
   const [inputValue, setInputValue] = useState('');
@@ -12,6 +13,11 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
   ]);
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
+
+  const placeholderText = useTypewriterPlaceholder([
+    'Search places...',
+    'Find schools near Al Reem Island'
+  ]);
 
   const scrollToBottom = () => {
     if (scrollContainerRef.current) {
@@ -164,7 +170,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
           type="text" 
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Type a follow-up question here..." 
+          placeholder={placeholderText} 
           className="flex-1 bg-transparent border-none py-2.5 pl-5 text-[14px] focus:outline-none text-dge-reliable placeholder:text-gray-400"
         />
         <div className="flex items-center gap-1 pr-1">

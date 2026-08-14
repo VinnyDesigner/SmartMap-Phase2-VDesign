@@ -5,6 +5,7 @@ import AiChatInterface from './AiChatInterface';
 import SearchResultsList from './SearchResultsList';
 import DetailSlidePanel from './DetailSlidePanel';
 import MenuSlidePanel from './MenuSlidePanel';
+import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 
 export default function BottomDataPanel({ explorerState, setExplorerState }) {
   const getContextualTitle = () => {
@@ -46,6 +47,11 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
     mouseY.set(e.clientY - rect.top);
   };
 
+  const placeholderText = useTypewriterPlaceholder([
+    'Search places...',
+    'Find schools near Al Reem Island'
+  ]);
+
   return (
     <AnimatePresence mode="wait">
       {explorerState?.isDockerMinimized ? (
@@ -56,7 +62,6 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           exit={{ opacity: 0, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="relative p-[1.5px] rounded-full shadow-[0_12px_24px_rgba(33,90,158,0.15)] pointer-events-auto overflow-hidden group transition-all hover:shadow-[0_16px_32px_rgba(33,90,158,0.2)] cursor-text"
-          onClick={() => setExplorerState(prev => ({ ...prev, isDockerMinimized: false }))}
         >
           {/* Animated Shiny Stroke Layer */}
           <div className="absolute aspect-square w-[500%] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-[spin_8s_linear_infinite] z-0 opacity-100"
@@ -66,11 +71,10 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
             <Search className="w-5 h-5 text-dge-tech mr-4" />
             <input 
               type="text" 
-              placeholder="Ask GeoVision AI or search locations..." 
+              placeholder={placeholderText} 
               className="flex-1 bg-transparent border-none outline-none text-[14px] text-slate-800 placeholder:text-slate-400 font-medium cursor-text"
               onClick={(e) => {
                 e.stopPropagation();
-                setExplorerState(prev => ({ ...prev, isDockerMinimized: false }));
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.target.value.trim()) {

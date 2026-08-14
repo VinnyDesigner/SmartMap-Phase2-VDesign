@@ -44,13 +44,13 @@ const MOCK_DATA = [
   { id: 10, name: 'Sorbonne University Abu Dhabi', type: 'EDUCATION', location: 'Al Reem Island', lat: 24.5028, lng: 54.4056 }
 ];
 
-  // Shared state for the Data Explorer view
   const [explorerState, setExplorerState] = useState({
     mapFocus: null, // { lat, lng, zoom }
     activeResults: MOCK_DATA,
     selectedDetail: null,
     basemap: 'osm',
     isDrawingMode: false,
+    isDockerMinimized: true,
     chatHistory: [],
     layerFilters: ['Education', 'Healthcare', 'Transport', 'Environment', 'Tourism', 'Utilities'],
     typeFilter: 'All Types'
