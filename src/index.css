@@ -16,20 +16,20 @@
 }
 /* Hide default cursor on map background, but show it on interactive UI */
 @media (hover: hover) and (pointer: fine) {
-  body {
+  .custom-cursor-active {
     cursor: none;
   }
   
   /* Restore cursors for UI elements */
-  .pointer-events-auto {
+  .custom-cursor-active .pointer-events-auto {
     cursor: default;
   }
   
-  a, button, [role="button"] {
+  .custom-cursor-active a, .custom-cursor-active button, .custom-cursor-active [role="button"] {
     cursor: pointer;
   }
   
-  input, textarea {
+  .custom-cursor-active input, .custom-cursor-active textarea {
     cursor: text;
   }
 }

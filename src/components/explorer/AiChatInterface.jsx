@@ -98,12 +98,12 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
   };
 
   return (
-    <div className="flex flex-col h-full p-6">
-      <div className="flex items-center gap-3 mb-6 shrink-0">
-        <div className="flex items-center justify-center text-white bg-[#3D52A0] w-10 h-10 rounded-full shadow-sm">
-          <MessageSquare className="w-5 h-5 fill-white/20" />
+    <div className="flex flex-col h-full pt-6 px-6 pb-5">
+      <div className="flex items-center gap-3 mb-5 shrink-0">
+        <div className="flex items-center justify-center text-white bg-[#3D52A0] w-8 h-8 rounded-full shadow-sm">
+          <MessageSquare className="w-4 h-4 fill-white/20" />
         </div>
-        <h2 className="font-bold text-[#3D52A0] tracking-tight text-[17px]">
+        <h2 className="font-bold text-[#333333] tracking-tight text-[15px]">
           {title || "Points of Interest"}
         </h2>
       </div>
@@ -112,29 +112,29 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
         {messages.map((msg, index) => (
           <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
             {msg.role === 'assistant' && (
-              <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0 relative z-10 border border-gray-100">
-                <Bot className="w-5 h-5 text-[#3D52A0]" />
+              <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center flex-shrink-0 relative z-10 border border-gray-100">
+                <Bot className="w-4 h-4 text-[#3D52A0]" />
               </div>
             )}
             
             <div className={`flex flex-col max-w-[85%] relative ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
               {msg.role === 'assistant' && (
-                 <div className="absolute top-4 -left-1.5 w-3 h-3 bg-white/80 backdrop-blur-sm rotate-45 transform origin-center shadow-sm z-0 border-b border-l border-white/50"></div>
+                 <div className="absolute top-3 -left-1 w-2.5 h-2.5 bg-white/80 backdrop-blur-sm rotate-45 transform origin-center shadow-sm z-0 border-b border-l border-white/50"></div>
               )}
               <div 
-                className={`p-4 rounded-[20px] text-[14px] leading-relaxed relative z-10 ${
+                className={`p-3.5 rounded-[18px] text-[13px] leading-relaxed relative z-10 ${
                   msg.role === 'user' 
                     ? 'bg-[#3D52A0] text-white rounded-tr-sm shadow-sm' 
                     : 'bg-white/80 backdrop-blur-sm text-gray-800 shadow-sm border border-white/50'
                 }`}
               >
                 {msg.content.split('**').map((part, i) => 
-                  i % 2 === 1 ? <strong key={i} className={msg.role === 'user' ? 'text-white' : 'text-dge-tech'}>{part}</strong> : part
+                  i % 2 === 1 ? <strong key={i} className={msg.role === 'user' ? 'text-white' : 'text-[#333333]'}>{part}</strong> : part
                 )}
               </div>
               
               {msg.role === 'assistant' && msg.resultsCount !== undefined && (
-                <div className="inline-flex items-center gap-2 border-l-2 border-dge-tech pl-3 py-1 text-dge-tech text-xs font-semibold mt-3">
+                <div className="inline-flex items-center gap-2 border-l-2 border-[#333333] pl-3 py-1 text-[#333333] text-xs font-semibold mt-3">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Found {msg.resultsCount} matching results
                 </div>
@@ -142,8 +142,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
             </div>
 
             {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-full bg-dge-grey/10 flex items-center justify-center flex-shrink-0">
-                <User className="w-4 h-4 text-dge-grey" />
+              <div className="w-7 h-7 rounded-full bg-dge-grey/10 flex items-center justify-center flex-shrink-0">
+                <User className="w-3.5 h-3.5 text-dge-grey" />
               </div>
             )}
           </div>
@@ -152,14 +152,14 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
       </div>
 
       <div className="mt-auto shrink-0 pt-2 border-t border-transparent">
-        <div className="flex overflow-x-auto gap-3 mb-4 pb-1 hide-scrollbar">
-          <button onClick={() => setInputValue('Hospitals open now')} className="whitespace-nowrap text-[13px] text-[#3D52A0] font-semibold bg-[#eef3ff] border border-[#dce6ff] rounded-lg px-4 py-2 hover:bg-[#e0eaff] transition-all">
+        <div className="flex overflow-x-auto gap-2 mb-3 pb-1 hide-scrollbar">
+          <button onClick={() => setInputValue('Hospitals open now')} className="whitespace-nowrap text-[12px] text-[#333333] font-medium bg-[#eef3ff] border border-[#dce6ff] rounded-lg px-3 py-1.5 hover:bg-[#e0eaff] transition-all">
             Hospitals open now
           </button>
-          <button onClick={() => setInputValue('Parks in Abu Dhabi')} className="whitespace-nowrap text-[13px] text-[#3D52A0] font-semibold bg-[#eef3ff] border border-[#dce6ff] rounded-lg px-4 py-2 hover:bg-[#e0eaff] transition-all">
+          <button onClick={() => setInputValue('Parks in Abu Dhabi')} className="whitespace-nowrap text-[12px] text-[#333333] font-medium bg-[#eef3ff] border border-[#dce6ff] rounded-lg px-3 py-1.5 hover:bg-[#e0eaff] transition-all">
             Parks in Abu Dhabi
           </button>
-          <button onClick={() => setInputValue('Schools near me')} className="whitespace-nowrap text-[13px] text-[#3D52A0] font-semibold bg-[#eef3ff] border border-[#dce6ff] rounded-lg px-4 py-2 hover:bg-[#e0eaff] transition-all">
+          <button onClick={() => setInputValue('Schools near me')} className="whitespace-nowrap text-[12px] text-[#333333] font-medium bg-[#eef3ff] border border-[#dce6ff] rounded-lg px-3 py-1.5 hover:bg-[#e0eaff] transition-all">
             Schools near me
           </button>
         </div>
@@ -171,7 +171,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, title
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           placeholder={placeholderText} 
-          className="flex-1 bg-transparent border-none py-2.5 pl-5 text-[14px] focus:outline-none text-dge-reliable placeholder:text-gray-400"
+          className="flex-1 bg-transparent border-none py-2 pl-4 text-[13px] focus:outline-none text-dge-reliable placeholder:text-gray-400"
         />
         <div className="flex items-center gap-1 pr-1">
           <button type="button" className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors rounded-full">

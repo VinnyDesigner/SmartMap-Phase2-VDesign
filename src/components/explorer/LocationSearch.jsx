@@ -42,7 +42,7 @@ export default function LocationSearch({ explorerState, setExplorerState }) {
 
   return (
     <div ref={wrapperRef} className="relative group">
-      <div className="flex items-center gap-3 bg-white h-14 rounded-[28px] shadow-sm border border-gray-100 focus-within:ring-2 focus-within:ring-dge-tech/20 transition-all duration-300 w-14 hover:w-72 focus-within:w-72 overflow-hidden px-[18px] cursor-pointer">
+      <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md h-12 rounded-[24px] shadow-sm border border-gray-100 focus-within:ring-2 focus-within:ring-dge-tech/20 transition-all duration-300 w-12 hover:w-72 focus-within:w-72 overflow-hidden px-[14px] cursor-pointer">
         <Search className="w-5 h-5 text-dge-tech shrink-0" />
         <input 
           type="text"

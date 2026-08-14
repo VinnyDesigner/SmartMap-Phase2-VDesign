@@ -6,12 +6,12 @@ function SidebarButton({ icon, label, onClick, isActive }) {
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex flex-col items-center justify-center py-2.5 transition-colors ${
+      className={`w-full flex flex-col items-center justify-center py-1.5 transition-colors ${
         isActive ? 'text-dge-tech bg-blue-50/50' : 'text-dge-reliable hover:text-dge-tech hover:bg-gray-50'
       }`}
     >
-      <div className="[&>svg]:w-[18px] [&>svg]:h-[18px]">{icon}</div>
-      <span className="text-[9px] mt-1 font-semibold tracking-tight opacity-80">{label}</span>
+      <div className="[&>svg]:w-[16px] [&>svg]:h-[16px]">{icon}</div>
+      <span className="text-[8px] mt-1 font-semibold tracking-tight opacity-80">{label}</span>
     </button>
   );
 }
@@ -47,29 +47,29 @@ function DrawOption({ icon: Icon, label, isActive, onClick }) {
 export default function MapControlsSidebar({ explorerState, setExplorerState }) {
   const [showBasemapMenu, setShowBasemapMenu] = useState(false);
 
-  const IconBtn = ({ icon: Icon, label, noLabel, onClick }) => (
-    <button onClick={onClick} className="flex flex-col items-center justify-center py-2.5 w-full hover:bg-gray-50 transition-colors group">
-      <Icon className="w-[18px] h-[18px] text-dge-reliable group-hover:text-dge-tech" />
-      {!noLabel && <span className="text-[9px] mt-1 text-dge-reliable opacity-80 font-semibold tracking-tight">{label}</span>}
+  const IconBtn = ({ icon: Icon, label, noLabel, onClick, highlight }) => (
+    <button onClick={onClick} className={`flex flex-col items-center justify-center py-1.5 w-full hover:bg-gray-50 transition-colors group ${highlight ? 'text-dge-tech' : 'text-dge-reliable'}`}>
+      <Icon className={`w-[16px] h-[16px] ${highlight ? 'text-dge-tech' : 'text-dge-reliable group-hover:text-dge-tech'}`} />
+      {!noLabel && <span className="text-[8px] mt-1 opacity-80 font-semibold tracking-tight">{label}</span>}
     </button>
   );
 
   return (
-    <div className="absolute left-8 top-[90px] bottom-6 flex flex-col gap-4 pointer-events-auto z-30">
-      
-      {/* Zoom Controls */}
-      <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 flex flex-col py-1 w-14">
+    <div className="absolute left-8 top-[64px] bottom-6 flex flex-col gap-4 pointer-events-auto z-30 overflow-y-auto hide-scrollbar pb-10">
+      <div className="bg-white/90 backdrop-blur-md rounded-[24px] shadow-sm border border-gray-100 flex flex-col py-2 w-12 gap-1 items-center">
+        
+        {/* Zoom Controls */}
         <IconBtn icon={Plus} noLabel />
         <IconBtn icon={Minus} noLabel />
-      </div>
-
-      {/* Top Tools */}
-      <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 flex flex-col py-1 w-14 gap-1">
-        <SidebarButton icon={<Grid className="w-5 h-5" />} label="Browse" />
         
-        <div className="relative">
+        <div className="w-8 h-px bg-gray-100 my-1"></div>
+
+        {/* Top Tools */}
+        <SidebarButton icon={<Grid className="w-4 h-4" />} label="Browse" />
+        
+        <div className="relative w-full">
           <SidebarButton 
-            icon={<Pencil className="w-5 h-5" />} 
+            icon={<Pencil className="w-4 h-4" />} 
             label="Draw" 
             isActive={explorerState?.isDrawingMode}
             onClick={() => setExplorerState(prev => {
@@ -89,7 +89,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="absolute left-[70px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[160px] flex flex-col gap-1 z-50"
+                className="absolute left-[60px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[160px] flex flex-col gap-1 z-50"
               >
                 <DrawOption 
                   icon={Square} 
@@ -120,9 +120,9 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
           </AnimatePresence>
         </div>
 
-        <div className="relative">
+        <div className="relative w-full">
           <SidebarButton 
-            icon={<Layers className="w-5 h-5" />} 
+            icon={<Layers className="w-4 h-4" />} 
             label="Basemap" 
             onClick={() => {
               const newMenu = !showBasemapMenu;
@@ -137,7 +137,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
-                className="absolute left-[70px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[300px] grid grid-cols-2 gap-2 z-50"
+                className="absolute left-[60px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[300px] grid grid-cols-2 gap-2 z-50"
               >
                 <BasemapOption 
                   label="Streets" 
@@ -179,10 +179,10 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
             )}
           </AnimatePresence>
         </div>
-      </div>
 
-      {/* Bottom Tools */}
-      <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 flex flex-col py-1 w-14 gap-1 overflow-hidden">
+        <div className="w-8 h-px bg-gray-100 my-1"></div>
+
+        {/* Bottom Tools */}
         <IconBtn icon={Home} label="Home" />
         <IconBtn icon={Navigation} label="Locate" />
         <IconBtn icon={Compass} label="Compass" />

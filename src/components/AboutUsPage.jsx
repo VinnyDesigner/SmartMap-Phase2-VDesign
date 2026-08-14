@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Shield, Lightbulb, Users, Layers, Database, Crosshair, MapPin, Building, ArrowRight, CheckCircle2 } from 'lucide-react';
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
-import ExplorerHeader from './explorer/ExplorerHeader';
 
 function SectionCard({ icon: Icon, title, description }) {
   return (
@@ -37,10 +36,8 @@ export default function AboutUsPage({ onNavigate }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-20 flex flex-col bg-white overflow-hidden"
+      className="absolute inset-0 z-20 flex flex-col bg-white overflow-hidden pt-24"
     >
-      <ExplorerHeader onNavigate={onNavigate} currentView="about" />
-
       <div className="relative z-10 w-full flex-1 overflow-y-auto">
         
         {/* Hero Section */}

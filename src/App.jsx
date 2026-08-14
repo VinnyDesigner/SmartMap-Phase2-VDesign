@@ -126,8 +126,8 @@ const MOCK_DATA = [
   }, [mouseX, mouseY, currentView, isSearchFocused, selectedLocation]);
 
   return (
-    <div className="h-screen w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC]">
-      {currentView === 'landing' && <BrandHeader onNavigate={handleNavigate} />}
+    <div className={`h-screen w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
+      <BrandHeader onNavigate={handleNavigate} currentView={currentView} />
       
       <MapBackground 
         mouseX={mouseX} 

@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { MessageSquare, Bookmark, Plus, History, Maximize2, Minimize2, Search } from 'lucide-react';
+import { MessageSquare, Bookmark, Plus, History, ChevronUp, Minimize2, Sparkles, Mic } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
 import AiChatInterface from './AiChatInterface';
 import SearchResultsList from './SearchResultsList';
@@ -68,7 +68,7 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
                style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.6) 80%, #ffffff 95%, transparent 100%)' }} 
           />
           <div className="w-[600px] h-[56px] bg-white rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex items-center px-6 relative z-10">
-            <Search className="w-5 h-5 text-dge-tech mr-4" />
+            <Sparkles className="w-5 h-5 text-dge-tech mr-4" />
             <input 
               type="text" 
               placeholder={placeholderText} 
@@ -88,6 +88,21 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
                 }
               }}
             />
+            <div className="flex items-center gap-1">
+              <button className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-50 transition-colors rounded-full">
+                <Mic className="w-4 h-4" />
+              </button>
+              <div className="w-px h-5 bg-slate-200 mx-1"></div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExplorerState(prev => ({ ...prev, isDockerMinimized: false }));
+                }}
+                className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-50 transition-colors rounded-full"
+              >
+                <ChevronUp className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </motion.div>
       ) : (
@@ -106,10 +121,10 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
                style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.6) 80%, #ffffff 95%, transparent 100%)' }} 
           />
           {/* Main Inner Container */}
-          <div className="w-[1100px] h-[400px] bg-white rounded-[30.5px] flex overflow-hidden relative z-10">
+          <div className="w-[950px] h-[360px] bg-white rounded-[30.5px] flex overflow-hidden relative z-10">
             {/* AI Glow Blob */}
             <motion.div
-              className="pointer-events-none absolute w-[450px] h-[450px] rounded-full blur-[100px] opacity-[0.55] z-0 bg-gradient-to-r from-blue-400 via-indigo-300 to-[#3D52A0]"
+              className="pointer-events-none absolute w-[350px] h-[350px] rounded-full blur-[90px] opacity-[0.55] z-0 bg-gradient-to-r from-blue-400 via-indigo-300 to-[#3D52A0]"
               style={{
                 x: springX,
                 y: springY,

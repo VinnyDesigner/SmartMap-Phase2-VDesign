@@ -34,8 +34,8 @@ export default function MenuSlidePanel({ explorerState, setExplorerState }) {
               {menuType === 'history' ? (
                  explorerState.chatHistory?.length > 0 ? (
                      explorerState.chatHistory.map((msg, i) => (
-                        <div key={i} className={`p-4 rounded-2xl border ${msg.sender === 'user' ? 'bg-[#3D52A0] border-[#3D52A0] ml-8 text-white shadow-sm' : 'bg-slate-50 border-slate-100 text-[#1e293b] mr-8 shadow-sm'}`}>
-                           <div className="flex items-center gap-2 mb-2 opacity-80">
+                        <div key={i} className={`p-4 rounded-2xl border ${msg.sender === 'user' ? 'bg-[#f4f7fb] border-[#e2e8f0] ml-8 text-[#333333] shadow-sm' : 'bg-white border-gray-200 text-[#333333] mr-8 shadow-sm'}`}>
+                           <div className="flex items-center gap-2 mb-2 opacity-60 text-gray-500">
                                <MessageSquare className="w-4 h-4" />
                                <span className="text-[10px] font-bold uppercase tracking-widest">{msg.sender === 'user' ? 'You' : 'GeoVision AI'}</span>
                            </div>

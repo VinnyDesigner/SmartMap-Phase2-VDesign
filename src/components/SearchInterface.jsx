@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowRight, GraduationCap, PlusSquare, TreePine, Bus, LayoutGrid } from 'lucide-react';
+import { Search, ArrowRight, GraduationCap, PlusSquare, TreePine, Bus, LayoutGrid, Mic, Sparkles } from 'lucide-react';
 import WebGLTextEffect from './WebGLTextEffect';
+import { useTypewriterPlaceholder } from '../hooks/useTypewriter';
 
 export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
   const handleMouseMove = (e) => {
@@ -11,6 +12,12 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
     e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
     e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
   };
+
+  const placeholderText = useTypewriterPlaceholder([
+    'Search places...',
+    'Find schools near Al Reem Island',
+    'Ask anything about places, services, or data in Abu Dhabi...'
+  ]);
 
   const suggestions = [
     { icon: <GraduationCap className="w-4 h-4 text-blue-500" />, text: "Schools near me" },
@@ -95,12 +102,12 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
             {/* Left Search Icon */}
             <div className="w-12 h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white shadow-sm ml-1 relative overflow-hidden group/btn">
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-              <Search className="w-5 h-5 relative z-10" />
+              <Sparkles className="w-5 h-5 relative z-10" />
             </div>
             
             <input 
               type="text"
-              placeholder="Ask anything about places, services, or data in Abu Dhabi..."
+              placeholder={placeholderText}
               className="flex-1 bg-transparent border-none outline-none px-5 text-dge-reliable placeholder-dge-grey/70 font-medium text-lg w-full"
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
@@ -108,13 +115,21 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
             />
             
             {/* Right Action Button */}
-            <button 
-              onClick={() => onSearch && onSearch()}
-              className="w-12 h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white transition-transform hover:scale-105 active:scale-95 shadow-sm mr-1 relative overflow-hidden group/action"
-            >
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/action:translate-y-0 transition-transform duration-300" />
-              <ArrowRight className="w-5 h-5 relative z-10" />
-            </button>
+            <div className="flex items-center gap-1 pr-1">
+              <button 
+                type="button" 
+                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-dge-tech hover:bg-slate-50 transition-colors rounded-full"
+              >
+                <Mic className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => onSearch && onSearch()}
+                className="w-12 h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white transition-transform hover:scale-105 active:scale-95 shadow-sm relative overflow-hidden group/action"
+              >
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/action:translate-y-0 transition-transform duration-300" />
+                <ArrowRight className="w-5 h-5 relative z-10" />
+              </button>
+            </div>
           </div>
         </motion.div>
 

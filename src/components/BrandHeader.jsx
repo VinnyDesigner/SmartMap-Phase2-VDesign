@@ -1,9 +1,10 @@
-import React from 'react';
-import { Sun, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sun, User, HelpCircle } from 'lucide-react';
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
 
-export default function BrandHeader({ onNavigate }) {
+export default function BrandHeader({ onNavigate, currentView }) {
+  const [isArabic, setIsArabic] = useState(false);
   return (
     <>
       {/* Top Brand Gradient Line */}
@@ -22,19 +23,21 @@ export default function BrandHeader({ onNavigate }) {
              style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(61, 82, 160, 0.5) 60%, #00e5ff 85%, transparent 100%)' }} 
         />
         <nav className="relative z-10 flex items-center bg-white/90 backdrop-blur-xl p-1.5 rounded-full w-full h-full">
-          {['Home', 'Map View', 'About Us'].map((item) => (
-            <button 
-              key={item} 
-              onClick={() => {
-                if (item === 'Home') onNavigate?.('landing');
-                else if (item === 'Map View') onNavigate?.('explorer');
-                else if (item === 'About Us') onNavigate?.('about');
-              }}
-              className="px-6 py-2 rounded-full text-sm font-semibold tracking-wide text-slate-600 hover:text-[#3D52A0] hover:bg-white hover:shadow-sm transition-all duration-300"
-            >
-              {item}
-            </button>
-          ))}
+          {['Home', 'Map View'].map((item) => {
+            const isActive = (item === 'Home' && currentView === 'landing') || (item === 'Map View' && currentView === 'explorer');
+            return (
+              <button 
+                key={item} 
+                onClick={() => {
+                  if (item === 'Home') onNavigate?.('landing');
+                  else if (item === 'Map View') onNavigate?.('explorer');
+                }}
+                className={`px-6 py-2 rounded-full text-sm font-semibold tracking-wide transition-all duration-300 ${isActive ? 'bg-white text-[#3D52A0] shadow-sm' : 'text-slate-600 hover:text-[#3D52A0] hover:bg-white/50'}`}
+              >
+                {item}
+              </button>
+            );
+          })}
         </nav>
       </div>
 
@@ -42,16 +45,29 @@ export default function BrandHeader({ onNavigate }) {
       <div className="flex items-center gap-6 pointer-events-auto">
         <img src={sdiLogo} alt="Abu Dhabi Spatial Data" className="h-10 object-contain drop-shadow-sm hidden md:block opacity-90 hover:opacity-100 transition-opacity" />
         <div className="flex items-center gap-4">
-          <div className="flex items-center bg-white/70 backdrop-blur-xl p-1 rounded-full shadow-[0_4px_20px_rgba(33,90,158,0.08)] border border-white/60">
-            <button className="w-10 h-10 rounded-full flex items-center justify-center text-dge-reliable hover:bg-white hover:shadow-sm transition-all">
-              <Sun className="w-[18px] h-[18px]" />
-            </button>
-            <button className="w-10 h-10 rounded-full flex items-center justify-center text-dge-reliable font-bold hover:bg-white hover:shadow-sm transition-all text-lg">
-              ع
-            </button>
+          {/* Language Toggle Switch */}
+          <div 
+            onClick={() => setIsArabic(!isArabic)}
+            className="flex items-center bg-white/50 backdrop-blur-md p-1 rounded-full shadow-inner border border-white/40 cursor-pointer w-20 relative"
+          >
+            <div className={`absolute left-1 top-1 w-8 h-8 bg-white rounded-full shadow-sm transition-transform duration-300 ease-in-out ${isArabic ? 'translate-x-[36px]' : 'translate-x-0'}`}></div>
+            <div className={`w-9 h-8 flex items-center justify-center text-[13px] font-bold z-10 transition-colors ${!isArabic ? 'text-dge-reliable' : 'text-slate-500'}`}>EN</div>
+            <div className={`w-9 h-8 flex items-center justify-center text-[16px] font-bold font-sans z-10 transition-colors ${isArabic ? 'text-dge-reliable' : 'text-slate-500'}`}>ع</div>
           </div>
+          
+          <button className="w-10 h-10 rounded-full flex items-center justify-center text-dge-reliable bg-white/70 backdrop-blur-md border border-white/60 hover:bg-white hover:shadow-sm transition-all shadow-sm">
+            <Sun className="w-[18px] h-[18px] fill-dge-reliable" />
+          </button>
+          
+          <button 
+            onClick={() => onNavigate?.('about')}
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white bg-white/70 backdrop-blur-md border border-white/60 hover:bg-white hover:shadow-sm transition-all shadow-sm"
+          >
+            <HelpCircle className="w-[20px] h-[20px] fill-dge-reliable text-white" />
+          </button>
+          
           <button className="h-11 px-7 rounded-full bg-gradient-to-r from-dge-tech to-dge-reliable border-none shadow-[0_4px_16px_rgba(6,51,96,0.25)] flex items-center gap-2 text-white hover:shadow-[0_6px_20px_rgba(6,51,96,0.35)] transition-all transform hover:-translate-y-0.5">
-            <User className="w-4 h-4" />
+            <User className="w-4 h-4" fill="currentColor" />
             <span className="text-sm font-bold tracking-wide">Sign In</span>
           </button>
         </div>
