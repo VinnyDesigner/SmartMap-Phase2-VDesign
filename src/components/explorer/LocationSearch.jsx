@@ -41,9 +41,9 @@ export default function LocationSearch({ explorerState, setExplorerState }) {
   };
 
   return (
-    <div ref={wrapperRef} className="relative w-72">
-      <div className="flex items-center gap-3 bg-white px-5 py-3.5 rounded-full shadow-sm border border-gray-100 focus-within:ring-2 focus-within:ring-dge-tech/20 transition-all">
-        <MapPin className="w-4 h-4 text-dge-tech shrink-0" />
+    <div ref={wrapperRef} className="relative group">
+      <div className="flex items-center gap-3 bg-white h-14 rounded-[28px] shadow-sm border border-gray-100 focus-within:ring-2 focus-within:ring-dge-tech/20 transition-all duration-300 w-14 hover:w-72 focus-within:w-72 overflow-hidden px-[18px] cursor-pointer">
+        <Search className="w-5 h-5 text-dge-tech shrink-0" />
         <input 
           type="text"
           value={query}
@@ -53,9 +53,8 @@ export default function LocationSearch({ explorerState, setExplorerState }) {
           }}
           onFocus={() => setShowDropdown(true)}
           placeholder="Search locations..."
-          className="flex-1 bg-transparent border-none outline-none text-[14px] font-bold text-dge-reliable tracking-tight placeholder:text-gray-400"
+          className="flex-1 min-w-0 bg-transparent border-none outline-none text-[14px] font-bold text-dge-reliable tracking-tight placeholder:text-gray-400 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300 whitespace-nowrap"
         />
-        <Search className="w-4 h-4 text-dge-grey opacity-50 shrink-0" />
       </div>
 
       <AnimatePresence>

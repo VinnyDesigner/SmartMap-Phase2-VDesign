@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useMotionValue, useSpring, useTransform, motion } from 'framer-motion';
+import { useMotionValue, useSpring, useTransform, motion, AnimatePresence } from 'framer-motion';
 import MapBackground from './components/MapBackground';
 import CustomCursor from './components/CustomCursor';
 import SearchInterface from './components/SearchInterface';
@@ -8,6 +8,7 @@ import AttractionsPanel from './components/AttractionsPanel';
 import DataExplorerLayout from './components/explorer/DataExplorerLayout';
 import HoverExplorationPopup from './components/HoverExplorationPopup';
 import DynamicBackground from './components/DynamicBackground';
+import AboutUsPage from './components/AboutUsPage';
 
 function App() {
   const mouseX = useMotionValue(window.innerWidth / 2);
@@ -23,8 +24,12 @@ function App() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isHoveringUI, setIsHoveringUI] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'explorer'
+  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'explorer' | 'about'
   const [idlePos, setIdlePos] = useState(null);
+
+  const handleNavigate = (view) => {
+    setCurrentView(view);
+  };
   
 const MOCK_DATA = [
   { id: 1, name: 'Al Ain Hospital', type: 'HOSPITAL', location: 'Al Jimi', lat: 24.2155, lng: 55.7389 },
@@ -122,7 +127,7 @@ const MOCK_DATA = [
 
   return (
     <div className="h-screen w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC]">
-      {currentView === 'landing' && <BrandHeader />}
+      {currentView === 'landing' && <BrandHeader onNavigate={handleNavigate} />}
       
       <MapBackground 
         mouseX={mouseX} 
@@ -218,12 +223,14 @@ const MOCK_DATA = [
             }}
           />
         </>
-      ) : (
+      ) : currentView === 'explorer' ? (
         <DataExplorerLayout 
-          onGoHome={() => setCurrentView('landing')} 
+          onNavigate={handleNavigate} 
           explorerState={explorerState}
           setExplorerState={setExplorerState}
         />
+      ) : (
+        <AboutUsPage onNavigate={handleNavigate} />
       )}
       
       {currentView === 'landing' && idlePos && (

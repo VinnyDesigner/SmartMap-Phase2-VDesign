@@ -3,7 +3,7 @@ import { Sun, User } from 'lucide-react';
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
 
-export default function BrandHeader() {
+export default function BrandHeader({ onNavigate }) {
   return (
     <>
       {/* Top Brand Gradient Line */}
@@ -22,10 +22,18 @@ export default function BrandHeader() {
              style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(61, 82, 160, 0.5) 60%, #00e5ff 85%, transparent 100%)' }} 
         />
         <nav className="relative z-10 flex items-center bg-white/90 backdrop-blur-xl p-1.5 rounded-full w-full h-full">
-          {['Data Categories', 'Explore Map', 'Developers', 'Resources', 'About Us'].map((item) => (
-            <a key={item} href="#" className="px-6 py-2 rounded-full text-sm font-semibold tracking-wide text-slate-600 hover:text-[#3D52A0] hover:bg-white hover:shadow-sm transition-all duration-300">
+          {['Home', 'Map View', 'About Us'].map((item) => (
+            <button 
+              key={item} 
+              onClick={() => {
+                if (item === 'Home') onNavigate?.('landing');
+                else if (item === 'Map View') onNavigate?.('explorer');
+                else if (item === 'About Us') onNavigate?.('about');
+              }}
+              className="px-6 py-2 rounded-full text-sm font-semibold tracking-wide text-slate-600 hover:text-[#3D52A0] hover:bg-white hover:shadow-sm transition-all duration-300"
+            >
               {item}
-            </a>
+            </button>
           ))}
         </nav>
       </div>

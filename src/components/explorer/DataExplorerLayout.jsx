@@ -6,7 +6,7 @@ import MapControlsSidebar from './MapControlsSidebar';
 import BottomDataPanel from './BottomDataPanel';
 import LocationSearch from './LocationSearch';
 
-export default function DataExplorerLayout({ onGoHome, explorerState, setExplorerState }) {
+export default function DataExplorerLayout({ onNavigate, explorerState, setExplorerState }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -15,11 +15,11 @@ export default function DataExplorerLayout({ onGoHome, explorerState, setExplore
       transition={{ duration: 0.3 }}
       className="absolute inset-0 z-20 pointer-events-none flex flex-col"
     >
-      <ExplorerHeader onGoHome={onGoHome} />
+      <ExplorerHeader onNavigate={onNavigate} currentView="explorer" />
       
       <div className="flex-1 relative w-full h-full">
         {/* Top Left Search Bar */}
-        <div className="absolute top-6 left-6 z-40 pointer-events-auto">
+        <div className="absolute top-6 left-8 z-40 pointer-events-auto">
           <LocationSearch 
             explorerState={explorerState}
             setExplorerState={setExplorerState}

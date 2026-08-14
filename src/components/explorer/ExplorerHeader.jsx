@@ -3,26 +3,32 @@ import { Sun, User, HelpCircle } from 'lucide-react';
 import dgeLogo from '../../assets/dge-logo.png';
 import sdiLogo from '../../assets/sdilogo.png';
 
-export default function ExplorerHeader({ onGoHome }) {
+export default function ExplorerHeader({ onNavigate, currentView }) {
   return (
     <header className="pointer-events-auto bg-white border-b border-gray-100 shadow-sm px-8 py-4 flex items-center justify-between">
       {/* Left: Logo */}
       <div className="flex items-center gap-5">
-        <img src={dgeLogo} alt="Department of Government Enablement" className="h-10 object-contain drop-shadow-sm cursor-pointer" onClick={onGoHome} />
+        <img src={dgeLogo} alt="Department of Government Enablement" className="h-10 object-contain drop-shadow-sm cursor-pointer" onClick={() => onNavigate?.('landing')} />
       </div>
 
       {/* Center: Segmented Control */}
       <div className="flex items-center gap-6">
         <button 
-          onClick={onGoHome}
-          className="px-6 py-2 rounded-full text-[15px] font-bold text-dge-reliable hover:text-dge-tech transition-all"
+          onClick={() => onNavigate?.('landing')}
+          className={`px-6 py-2 rounded-full text-[15px] font-bold transition-all ${currentView === 'landing' ? 'bg-white text-dge-tech border border-dge-tech/30 shadow-sm' : 'text-dge-reliable hover:text-dge-tech'}`}
         >
           Home
         </button>
-        <button className="px-6 py-2 rounded-full text-[15px] font-bold bg-white text-dge-tech border border-dge-tech/30 shadow-sm">
+        <button 
+          onClick={() => onNavigate?.('explorer')}
+          className={`px-6 py-2 rounded-full text-[15px] font-bold transition-all ${currentView === 'explorer' ? 'bg-white text-dge-tech border border-dge-tech/30 shadow-sm' : 'text-dge-reliable hover:text-dge-tech'}`}
+        >
           Map View
         </button>
-        <button className="px-6 py-2 rounded-full text-[15px] font-bold text-dge-reliable hover:text-dge-tech transition-all">
+        <button 
+          onClick={() => onNavigate?.('about')}
+          className={`px-6 py-2 rounded-full text-[15px] font-bold transition-all ${currentView === 'about' ? 'bg-white text-dge-tech border border-dge-tech/30 shadow-sm' : 'text-dge-reliable hover:text-dge-tech'}`}
+        >
           About Us
         </button>
       </div>
