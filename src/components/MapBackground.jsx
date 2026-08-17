@@ -255,7 +255,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
         <TileLayer
           key={explorerState?.basemap || 'osm'}
           url={
-            !isExplorer ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            !isExplorer ? "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
             : explorerState?.basemap === 'satellite' ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             : explorerState?.basemap === 'dark' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             : explorerState?.basemap === 'light' ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"

@@ -5,6 +5,95 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import glbUrl from '../assets/map_pointer.glb?url';
 
+// 2D Canvas Particle System for Kinetic Disintegration Trail
+const ParticleTrail = ({ cursorX, cursorY, isVisible }) => {
+  const canvasRef = useRef(null);
+  
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationFrameId;
+    let lastX = cursorX.get();
+    let lastY = cursorY.get();
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', resize);
+    resize();
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      if (!isVisible) {
+        particles = [];
+        lastX = cursorX.get();
+        lastY = cursorY.get();
+        animationFrameId = requestAnimationFrame(render);
+        return;
+      }
+
+      const currentX = cursorX.get();
+      const currentY = cursorY.get();
+      const vx = currentX - lastX;
+      const vy = currentY - lastY;
+      const speed = Math.sqrt(vx * vx + vy * vy);
+      
+      // Emit particles based on kinetic speed
+      if (speed > 2) {
+        const emitCount = Math.min(Math.floor(speed * 0.8), 15); // Emit slightly more since they are tiny
+        for(let i=0; i<emitCount; i++) {
+          particles.push({
+            x: currentX + (Math.random() - 0.5) * 12, // Tighter scatter around pin body
+            y: currentY - 40 + (Math.random() - 0.5) * 24, // Offset to pin vertical center
+            vx: -vx * 0.12 + (Math.random() - 0.5) * 2, // Slightly slower kinetic backward scatter
+            vy: -vy * 0.12 + (Math.random() - 0.5) * 2,
+            life: 1.0,
+            decay: 0.03 + Math.random() * 0.04, // Fade a bit faster
+            size: Math.random() * 1.2 + 0.3 // Very tiny particles (0.3px to 1.5px)
+          });
+        }
+      }
+      
+      lastX = currentX;
+      lastY = currentY;
+
+      // Update & Draw Particles
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay; 
+        
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(239, 63, 67, ${p.life})`; // DGE Brand Red metallic hue
+          ctx.shadowBlur = 3;
+          ctx.shadowColor = `rgba(239, 63, 67, ${p.life * 0.8})`;
+          ctx.fill();
+        }
+      }
+      
+      animationFrameId = requestAnimationFrame(render);
+    };
+    
+    render();
+    
+    return () => {
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [cursorX, cursorY, isVisible]);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-40" />;
+};
+
 function PinModel({ cursorX, cursorY }) {
   const { scene } = useGLTF(glbUrl);
   const ref = useRef();
@@ -129,17 +218,23 @@ export default function CustomCursor({ mouseX, mouseY, isSearchFocused, isHoveri
   if (isTouchDevice) return null;
 
   return (
-    <motion.div
-      className="fixed top-0 left-0 z-50 pointer-events-none"
-      style={{
-        x: cursorX,
-        y: cursorY,
-        opacity: (isSearchFocused || isHoveringSearch) ? 0 : 1, 
-      }}
-      initial={false}
-      animate={{ opacity: (isSearchFocused || isHoveringSearch) ? 0 : 1 }}
-      transition={{ duration: 0.3 }}
-    >
+    <>
+      <ParticleTrail 
+        cursorX={cursorX} 
+        cursorY={cursorY} 
+        isVisible={!(isSearchFocused || isHoveringSearch)} 
+      />
+      <motion.div
+        className="fixed top-0 left-0 z-50 pointer-events-none"
+        style={{
+          x: cursorX,
+          y: cursorY,
+          opacity: (isSearchFocused || isHoveringSearch) ? 0 : 1, 
+        }}
+        initial={false}
+        animate={{ opacity: (isSearchFocused || isHoveringSearch) ? 0 : 1 }}
+        transition={{ duration: 0.3 }}
+      >
       {/* 3D Map Pointer using React Three Fiber */}
       <div className="relative -left-[60px] -top-[100px]" style={{ width: 120, height: 120 }}>
         {/* Subtle glass shadow underneath the 3D pin to anchor it */}
@@ -174,5 +269,6 @@ export default function CustomCursor({ mouseX, mouseY, isSearchFocused, isHoveri
         </p>
       </motion.div>
     </motion.div>
+    </>
   );
 }
