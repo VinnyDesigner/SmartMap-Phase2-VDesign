@@ -17,7 +17,7 @@ export default function BrandHeader({ onNavigate, currentView }) {
       </div>
 
       {/* Navigation */}
-      <div className="hidden lg:flex relative p-[1px] rounded-full overflow-hidden shadow-[0_4px_20px_rgba(33,90,158,0.08)] pointer-events-auto group">
+      <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2 p-[1px] rounded-full overflow-hidden shadow-[0_4px_20px_rgba(33,90,158,0.08)] pointer-events-auto group">
         {/* Animated Shiny Stroke Layer - forced square for perfectly smooth rotation */}
         <div className="absolute aspect-square w-[300%] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-[spin_8s_linear_infinite] z-0 opacity-60"
              style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(61, 82, 160, 0.5) 60%, #00e5ff 85%, transparent 100%)' }} 
@@ -66,7 +66,10 @@ export default function BrandHeader({ onNavigate, currentView }) {
             <HelpCircle className="w-[20px] h-[20px] fill-dge-reliable text-white" />
           </button>
           
-          <button className="h-11 px-7 rounded-full bg-gradient-to-r from-dge-tech to-dge-reliable border-none shadow-[0_4px_16px_rgba(6,51,96,0.25)] flex items-center gap-2 text-white hover:shadow-[0_6px_20px_rgba(6,51,96,0.35)] transition-all transform hover:-translate-y-0.5">
+          <button 
+            onClick={() => onNavigate?.('login')}
+            className="h-11 px-7 rounded-full bg-gradient-to-r from-dge-tech to-dge-reliable border-none shadow-[0_4px_16px_rgba(6,51,96,0.25)] flex items-center gap-2 text-white hover:shadow-[0_6px_20px_rgba(6,51,96,0.35)] transition-all transform hover:-translate-y-0.5"
+          >
             <User className="w-4 h-4" fill="currentColor" />
             <span className="text-sm font-bold tracking-wide">Sign In</span>
           </button>

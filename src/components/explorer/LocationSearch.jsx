@@ -41,8 +41,32 @@ export default function LocationSearch({ explorerState, setExplorerState }) {
   };
 
   return (
-    <div ref={wrapperRef} className="relative group">
-      <div className="flex items-center gap-2 bg-white/90 backdrop-blur-md h-12 rounded-[24px] shadow-sm border border-gray-100 focus-within:ring-2 focus-within:ring-dge-tech/20 transition-all duration-300 w-12 hover:w-72 focus-within:w-72 overflow-hidden px-[14px] cursor-pointer">
+    <div ref={wrapperRef} className="relative group w-12 hover:w-72 focus-within:w-72 transition-all duration-300 h-12 rounded-[24px] shadow-sm overflow-hidden cursor-pointer pointer-events-auto p-[2px]">
+      {/* Base subtle border to give structure when plasma fades out */}
+      <div className="absolute inset-0 bg-slate-200/40" />
+
+      {/* Solar Plasma Energy Ring - visible when NOT expanded */}
+      <div className="absolute top-1/2 left-1/2 w-[400%] aspect-square -translate-x-1/2 -translate-y-1/2 animate-[spin_3s_linear_infinite] z-0 pointer-events-none opacity-100 group-hover:opacity-0 group-focus-within:opacity-0 transition-opacity duration-300">
+         <div className="absolute inset-0" 
+              style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(0, 229, 255, 0.1) 50%, rgba(61, 82, 160, 0.4) 70%, rgba(0, 229, 255, 0.8) 85%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.8) 93%, rgba(61, 82, 160, 0.4) 96%, transparent 98%)' }} />
+         <div className="absolute inset-0 opacity-90" 
+              style={{ 
+                background: 'conic-gradient(from 0deg, transparent 70%, rgba(0, 229, 255, 0.4) 80%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.4) 94%, transparent 97%)',
+                filter: 'blur(6px)' 
+              }} />
+         <div className="absolute inset-0" 
+              style={{ 
+                background: 'conic-gradient(from 0deg, transparent 85%, rgba(255, 255, 255, 0.6) 88%, #ffffff 90%, rgba(255, 255, 255, 0.6) 92%, transparent 95%)',
+                filter: 'blur(2px)' 
+              }} />
+         <div className="absolute inset-0" 
+              style={{ 
+                background: 'conic-gradient(from 0deg, transparent 82%, rgba(255, 255, 255, 0.8) 82.2%, transparent 82.5%, transparent 85%, rgba(0, 229, 255, 0.9) 85.2%, transparent 85.5%, transparent 94%, rgba(0, 229, 255, 0.8) 94.2%, transparent 94.5%)',
+                filter: 'blur(1px)'
+              }} />
+      </div>
+
+      <div className="relative flex items-center gap-2 bg-white/95 backdrop-blur-md h-full w-full rounded-[22px] px-[12px]">
         <Search className="w-5 h-5 text-dge-tech shrink-0" />
         <input 
           type="text"

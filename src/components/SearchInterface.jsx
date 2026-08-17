@@ -85,16 +85,36 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
           }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Default subtle border */}
-          <div className="absolute inset-0 bg-white/40 transition-opacity duration-500 group-hover:opacity-0" />
+          {/* Base subtle border to give structure */}
+          <div className="absolute inset-0 bg-slate-200/40" />
           
-          {/* Luxury mouse-tracking spotlight border */}
-          <div 
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            style={{
-              background: 'radial-gradient(400px circle at var(--mouse-x, 0) var(--mouse-y, 0), rgba(67, 112, 240, 0.8), transparent 40%)'
-            }}
-          />
+          {/* Solar Plasma Energy Ring */}
+          <div className="absolute top-1/2 left-1/2 w-[300%] aspect-square -translate-x-1/2 -translate-y-1/2 animate-[spin_5s_linear_infinite] z-0 pointer-events-none">
+             {/* Plasma Main Trail */}
+             <div className="absolute inset-0" 
+                  style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(0, 229, 255, 0.1) 50%, rgba(61, 82, 160, 0.4) 70%, rgba(0, 229, 255, 0.8) 85%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.8) 93%, rgba(61, 82, 160, 0.4) 96%, transparent 98%)' }} />
+             
+             {/* Core Solar Flare (Bulge/Glow) */}
+             <div className="absolute inset-0 opacity-90" 
+                  style={{ 
+                    background: 'conic-gradient(from 0deg, transparent 70%, rgba(0, 229, 255, 0.4) 80%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.4) 94%, transparent 97%)',
+                    filter: 'blur(6px)' 
+                  }} />
+
+             {/* Intense Core Center */}
+             <div className="absolute inset-0" 
+                  style={{ 
+                    background: 'conic-gradient(from 0deg, transparent 85%, rgba(255, 255, 255, 0.6) 88%, #ffffff 90%, rgba(255, 255, 255, 0.6) 92%, transparent 95%)',
+                    filter: 'blur(2px)' 
+                  }} />
+
+             {/* Secondary energy wisps/particles */}
+             <div className="absolute inset-0" 
+                  style={{ 
+                    background: 'conic-gradient(from 0deg, transparent 82%, rgba(255, 255, 255, 0.8) 82.2%, transparent 82.5%, transparent 85%, rgba(0, 229, 255, 0.9) 85.2%, transparent 85.5%, transparent 94%, rgba(0, 229, 255, 0.8) 94.2%, transparent 94.5%)',
+                    filter: 'blur(1px)'
+                  }} />
+          </div>
 
           <div className="relative flex items-center px-3 py-3 w-full bg-white/95 backdrop-blur-2xl rounded-full z-10"
                style={{ backgroundColor: isFocused ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.95)' }}

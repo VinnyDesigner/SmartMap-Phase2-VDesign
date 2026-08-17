@@ -9,6 +9,7 @@ import DataExplorerLayout from './components/explorer/DataExplorerLayout';
 import HoverExplorationPopup from './components/HoverExplorationPopup';
 import DynamicBackground from './components/DynamicBackground';
 import AboutUsPage from './components/AboutUsPage';
+import SignInPage from './components/SignInPage';
 
 function App() {
   const mouseX = useMotionValue(window.innerWidth / 2);
@@ -24,7 +25,7 @@ function App() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isHoveringUI, setIsHoveringUI] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
-  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'explorer' | 'about'
+  const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'explorer' | 'about' | 'login'
   const [idlePos, setIdlePos] = useState(null);
 
   const handleNavigate = (view) => {
@@ -86,7 +87,7 @@ const MOCK_DATA = [
               setIdlePos(null);
               activeIdlePos.current = null;
               hideTimer.current = null;
-            }, 600); // 600ms grace period to reach the popup
+            }, 300); // Reduced to 300ms for more responsive hiding
           }
         }
       } else {
@@ -114,16 +115,36 @@ const MOCK_DATA = [
       setIsHoveringUI(!!isInteractive);
     };
 
+    const handleClick = (e) => {
+      if (activeIdlePos.current) {
+        const isOverPopup = e.target.closest && e.target.closest('.idle-popup');
+        if (!isOverPopup) {
+          setIdlePos(null);
+          activeIdlePos.current = null;
+          if (hideTimer.current) {
+            clearTimeout(hideTimer.current);
+            hideTimer.current = null;
+          }
+        }
+      }
+    };
+
     window.addEventListener("mousemove", handleMouseMove, { capture: true });
     window.addEventListener("mouseover", handleMouseOver, { capture: true });
+    window.addEventListener("click", handleClick, { capture: true });
     
     return () => {
       window.removeEventListener("mousemove", handleMouseMove, { capture: true });
       window.removeEventListener("mouseover", handleMouseOver, { capture: true });
+      window.removeEventListener("click", handleClick, { capture: true });
       if (idleTimer.current) clearTimeout(idleTimer.current);
       if (hideTimer.current) clearTimeout(hideTimer.current);
     };
   }, [mouseX, mouseY, currentView, isSearchFocused, selectedLocation]);
+
+  if (currentView === 'login') {
+    return <SignInPage onNavigate={handleNavigate} />;
+  }
 
   return (
     <div className={`h-screen w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>

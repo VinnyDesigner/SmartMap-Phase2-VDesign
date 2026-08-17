@@ -63,10 +63,29 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="relative p-[1.5px] rounded-full shadow-[0_12px_24px_rgba(33,90,158,0.15)] pointer-events-auto overflow-hidden group transition-all hover:shadow-[0_16px_32px_rgba(33,90,158,0.2)] cursor-text"
         >
-          {/* Animated Shiny Stroke Layer */}
-          <div className="absolute aspect-square w-[500%] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-[spin_8s_linear_infinite] z-0 opacity-100"
-               style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.6) 80%, #ffffff 95%, transparent 100%)' }} 
-          />
+          {/* Base subtle border to give structure */}
+          <div className="absolute inset-0 bg-slate-200/40" />
+
+          {/* Solar Plasma Energy Ring */}
+          <div className="absolute top-1/2 left-1/2 w-[300%] aspect-square -translate-x-1/2 -translate-y-1/2 animate-[spin_5s_linear_infinite] z-0 pointer-events-none">
+             <div className="absolute inset-0" 
+                  style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(0, 229, 255, 0.1) 50%, rgba(61, 82, 160, 0.4) 70%, rgba(0, 229, 255, 0.8) 85%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.8) 93%, rgba(61, 82, 160, 0.4) 96%, transparent 98%)' }} />
+             <div className="absolute inset-0 opacity-90" 
+                  style={{ 
+                    background: 'conic-gradient(from 0deg, transparent 70%, rgba(0, 229, 255, 0.4) 80%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.4) 94%, transparent 97%)',
+                    filter: 'blur(6px)' 
+                  }} />
+             <div className="absolute inset-0" 
+                  style={{ 
+                    background: 'conic-gradient(from 0deg, transparent 85%, rgba(255, 255, 255, 0.6) 88%, #ffffff 90%, rgba(255, 255, 255, 0.6) 92%, transparent 95%)',
+                    filter: 'blur(2px)' 
+                  }} />
+             <div className="absolute inset-0" 
+                  style={{ 
+                    background: 'conic-gradient(from 0deg, transparent 82%, rgba(255, 255, 255, 0.8) 82.2%, transparent 82.5%, transparent 85%, rgba(0, 229, 255, 0.9) 85.2%, transparent 85.5%, transparent 94%, rgba(0, 229, 255, 0.8) 94.2%, transparent 94.5%)',
+                    filter: 'blur(1px)'
+                  }} />
+          </div>
           <div className="w-[600px] h-[56px] bg-white rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex items-center px-6 relative z-10">
             <Sparkles className="w-5 h-5 text-dge-tech mr-4" />
             <input 
