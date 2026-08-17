@@ -141,29 +141,7 @@ export default function SignInPage({ onNavigate }) {
             </button>
           </form>
 
-          <div className="mt-8">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-[#F8FAFC] text-slate-500 font-medium">Or continue with</span>
-              </div>
-            </div>
 
-            <div className="mt-6">
-              <button
-                type="button"
-                className="w-full flex items-center justify-center gap-3 py-3.5 px-4 border-2 border-slate-200 rounded-xl shadow-sm bg-white text-sm font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all focus:outline-none"
-              >
-                {/* UAE PASS green color representation */}
-                <div className="w-8 h-8 rounded-full bg-[#008c45] flex items-center justify-center">
-                  <Fingerprint className="w-5 h-5 text-white" />
-                </div>
-                <span>Sign in with UAE PASS</span>
-              </button>
-            </div>
-          </div>
 
           <p className="mt-10 text-center text-sm text-slate-500">
             Don't have an account?{' '}

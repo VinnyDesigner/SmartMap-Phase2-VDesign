@@ -169,7 +169,7 @@ function PinModel({ cursorX, cursorY }) {
 
   return (
     <group ref={ref}>
-      <primitive object={clonedScene} scale={0.8} />
+      <primitive object={clonedScene} scale={0.56} />
     </group>
   );
 }
