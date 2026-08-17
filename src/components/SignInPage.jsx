@@ -16,22 +16,22 @@ export default function SignInPage({ onNavigate }) {
         {/* Abstract shapes for visual interest */}
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-white/10 blur-[80px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-cyan-400/20 blur-[100px]" />
-        
+
         {/* Top Gradient Line */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#00e5ff] to-transparent z-10" />
 
         <div className="relative z-10 p-16 flex flex-col justify-between h-full">
           <div>
-            <button 
+            <button
               onClick={() => onNavigate('landing')}
               className="flex items-center gap-2 text-white/80 hover:text-white transition-colors group mb-12"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
               <span className="font-medium">Back to Home</span>
             </button>
-            
+
             <img src={dgeLogo} alt="DGE" className="h-16 object-contain mb-8 brightness-0 invert" />
-            
+
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ export default function SignInPage({ onNavigate }) {
       <div className="flex-1 flex flex-col justify-center px-8 sm:px-16 lg:px-24 relative">
         {/* Mobile Header / Back button */}
         <div className="absolute top-8 left-8 lg:hidden flex justify-between w-[calc(100%-4rem)]">
-          <button 
+          <button
             onClick={() => onNavigate('landing')}
             className="flex items-center gap-2 text-slate-600 hover:text-dge-reliable transition-colors group"
           >
@@ -71,7 +71,7 @@ export default function SignInPage({ onNavigate }) {
           <img src={dgeLogo} alt="DGE" className="h-8 object-contain" />
         </div>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
@@ -154,3 +154,4 @@ export default function SignInPage({ onNavigate }) {
     </div>
   );
 }
+
