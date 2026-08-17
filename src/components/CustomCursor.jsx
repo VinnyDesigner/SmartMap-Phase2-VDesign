@@ -250,24 +250,7 @@ export default function CustomCursor({ mouseX, mouseY, isSearchFocused, isHoveri
         </Canvas>
       </div>
 
-      {/* Floating Location Tooltip */}
-      <motion.div 
-        className="absolute top-8 left-12 whitespace-nowrap bg-white/70 backdrop-blur-xl border border-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-xl py-2 px-3.5"
-        layout
-      >
-        <motion.p 
-          key={locationName}
-          initial={{ opacity: 0, y: 4, filter: 'blur(2px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="text-[11px] font-bold text-dge-tech tracking-[0.2em] uppercase"
-        >
-          {locationName}
-        </motion.p>
-        <p className="text-[10px] text-dge-grey font-semibold uppercase tracking-[0.15em] mt-0.5">
-          Abu Dhabi
-        </p>
-      </motion.div>
+
     </motion.div>
     </>
   );

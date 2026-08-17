@@ -154,7 +154,10 @@ const MOCK_DATA = [
         mouseX={mouseX} 
         mouseY={mouseY} 
         isSearchFocused={isSearchFocused} 
-        onMapClick={(latlng) => currentView === 'landing' && setSelectedLocation(latlng)}
+        onMapClick={(latlng) => {
+          // Temporarily disabled as per request
+          // if (currentView === 'landing') setSelectedLocation(latlng);
+        }}
         selectedLocation={selectedLocation}
         isExplorer={currentView === 'explorer'}
         explorerState={explorerState}
@@ -254,96 +257,12 @@ const MOCK_DATA = [
         <AboutUsPage onNavigate={handleNavigate} />
       )}
       
+      {/* Hover Exploration Popup temporarily disabled as per request */}
+      {/* 
       {currentView === 'landing' && idlePos && (
-        (() => {
-          const x = idlePos.x;
-          const y = idlePos.y;
-          let areaContext = {};
-          
-          if (x < window.innerWidth / 2 && y < window.innerHeight / 2) {
-            areaContext = {
-              areaName: 'Al Maryah Island',
-              description: "The pulse of luxury and wellness.\\nExperience Abu Dhabi's premier lifestyle destination—where world-class healthcare meets high-end retail and stunning waterfronts.",
-              highlights: [
-                { id: 2, name: 'Cleveland Clinic', type: 'health', tagline: 'World-class care, redefined' },
-                { id: 10, name: 'Sorbonne University', type: 'education', tagline: 'A bridge to global knowledge' },
-                { id: 7, name: 'Corniche Beach Park', type: 'parks', tagline: 'Sun, sand, and serenity' }
-              ]
-            };
-          } else if (x > window.innerWidth / 2 && y < window.innerHeight / 2) {
-            areaContext = {
-              areaName: 'Al Reem Island',
-              description: "Modern living, elevated.\\nA dynamic island hub blending stunning architectural skylines with leading education and vital city connections.",
-              highlights: [
-                { id: 10, name: 'Sorbonne University', type: 'education', tagline: 'A bridge to global knowledge' },
-                { id: 8, name: 'NMC Specialty Hospital', type: 'health', tagline: 'Your health, our priority' },
-                { id: 6, name: 'Main Bus Terminal', type: 'transport', tagline: 'The gateway to the city' }
-              ]
-            };
-          } else {
-            areaContext = {
-              areaName: 'Khalifa City',
-              description: "Quiet on the map. Full of possibilities.\\nExplore the places that shape everyday life here — from knowledge and culture to green escapes and global connections.",
-              highlights: [
-                { id: 3, name: 'Zayed University', type: 'education', tagline: 'Where ideas take flight' },
-                { id: 5, name: 'Umm Al Emarat Park', type: 'parks', tagline: 'Your green escape awaits' },
-                { id: 9, name: 'Intl Airport', type: 'transport', tagline: 'See where the city connects' }
-              ]
-            };
-          }
-
-          return (
-            <HoverExplorationPopup 
-              x={idlePos.x} 
-              y={idlePos.y} 
-              areaContext={areaContext}
-              onExplore={(category, specificId) => {
-                  let newResults = [];
-              if (category === 'education') {
-                newResults = [
-                  { id: 3, name: 'Zayed University Campus', type: 'EDUCATION', location: 'Khalifa City', lat: 24.4136, lng: 54.5683 },
-                  { id: 4, name: 'Bright Riders School', type: 'EDUCATION', location: 'Mohammed Bin Zayed City', lat: 24.3297, lng: 54.5361 }
-                ];
-              } else if (category === 'parks') {
-                newResults = [
-                  { id: 5, name: 'Umm Al Emarat Park', type: 'PARK', location: 'Al Mushrif', lat: 24.4533, lng: 54.3879 }
-                ];
-              } else if (category === 'transport') {
-                newResults = [
-                  { id: 6, name: 'Abu Dhabi Main Bus Terminal', type: 'TRANSPORT', location: 'Al Nahyan', lat: 24.4719, lng: 54.3725 }
-                ];
-              } else {
-                newResults = [
-                  { id: 1, name: 'Al Ain Hospital', type: 'HOSPITAL', location: 'Al Jimi', lat: 24.2155, lng: 55.7389 },
-                  { id: 2, name: 'Cleveland Clinic Abu Dhabi', type: 'HOSPITAL', location: 'Al Maryah Island', lat: 24.5011, lng: 54.3942 }
-                ];
-              }
-              let focusItem = newResults.length > 0 ? newResults[0] : null;
-              let selectedItem = null;
-              
-              if (specificId) {
-                const specificItem = MOCK_DATA.find(item => item.id === specificId);
-                if (specificItem) {
-                  focusItem = specificItem;
-                  selectedItem = specificItem;
-                }
-              }
-              
-              setExplorerState(prev => ({
-                ...prev,
-                activeResults: MOCK_DATA,
-                layerFilters: ['Education', 'Healthcare', 'Transport', 'Environment', 'Tourism', 'Utilities'],
-                mapFocus: focusItem ? { lat: focusItem.lat, lng: focusItem.lng, zoom: selectedItem ? 16 : 12 } : null,
-                selectedDetail: selectedItem,
-                isDockerMinimized: false
-              }));
-              setCurrentView('explorer');
-              setSelectedLocation(null);
-          }}
-        />
-        );
-      })()
-      )}
+        (() => { ... })()
+      )} 
+      */}
       
       {/* Hide custom cursor in explorer view so standard interactions work normally */}
       {currentView === 'landing' && (

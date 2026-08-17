@@ -280,7 +280,8 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
                 icon={createCategoryIcon(item.type)}
                 eventHandlers={{
                   click: () => {
-                    setExplorerState(prev => ({ ...prev, selectedDetail: item, mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 } }));
+                    // Temporarily disabled as per request: no Marker Interaction needed
+                    // setExplorerState(prev => ({ ...prev, selectedDetail: item, mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 } }));
                   }
                 }}
               />
