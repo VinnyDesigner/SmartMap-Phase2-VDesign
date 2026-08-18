@@ -4,12 +4,12 @@ import MapBackground from './components/MapBackground';
 import CustomCursor from './components/CustomCursor';
 import SearchInterface from './components/SearchInterface';
 import BrandHeader from './components/BrandHeader';
-import AttractionsPanel from './components/AttractionsPanel';
 import DataExplorerLayout from './components/explorer/DataExplorerLayout';
 import HoverExplorationPopup from './components/HoverExplorationPopup';
 import DynamicBackground from './components/DynamicBackground';
 import AboutUsPage from './components/AboutUsPage';
 import SignInPage from './components/SignInPage';
+import WebGLFluidReveal from './components/WebGLFluidReveal';
 
 function App() {
   const mouseX = useMotionValue(window.innerWidth / 2);
@@ -150,19 +150,24 @@ const MOCK_DATA = [
     <div className={`h-screen w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
       <BrandHeader onNavigate={handleNavigate} currentView={currentView} />
       
-      <MapBackground 
-        mouseX={mouseX} 
-        mouseY={mouseY} 
-        isSearchFocused={isSearchFocused} 
-        onMapClick={(latlng) => {
-          // Temporarily disabled as per request
-          // if (currentView === 'landing') setSelectedLocation(latlng);
-        }}
-        selectedLocation={selectedLocation}
-        isExplorer={currentView === 'explorer'}
-        explorerState={explorerState}
-        setExplorerState={setExplorerState}
-      />
+      {currentView === 'explorer' && (
+        <MapBackground 
+          mouseX={mouseX} 
+          mouseY={mouseY} 
+          isSearchFocused={isSearchFocused} 
+          onMapClick={() => {}}
+          selectedLocation={selectedLocation}
+          isExplorer={true}
+          explorerState={explorerState}
+          setExplorerState={setExplorerState}
+        />
+      )}
+      
+      {currentView === 'landing' && (
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <WebGLFluidReveal mouseX={smoothMouseX} mouseY={smoothMouseY} />
+        </div>
+      )}
       
       {/* Ambient Drifting Orbs */}
       {currentView === 'landing' && (
@@ -203,45 +208,6 @@ const MOCK_DATA = [
             isFocused={isSearchFocused}
             setIsFocused={setIsSearchFocused}
             onSearch={() => {
-              setCurrentView('explorer');
-              setSelectedLocation(null);
-            }}
-          />
-          <AttractionsPanel 
-            selectedLocation={selectedLocation}
-            onClose={() => setSelectedLocation(null)}
-            onCategorySelect={(category) => {
-              let newResults = [];
-              if (category === 'education') {
-                newResults = [
-                  { id: 3, name: 'Zayed University Campus', type: 'EDUCATION', location: 'Khalifa City', lat: 24.4136, lng: 54.5683 },
-                  { id: 4, name: 'Bright Riders School', type: 'EDUCATION', location: 'Mohammed Bin Zayed City', lat: 24.3297, lng: 54.5361 }
-                ];
-              } else if (category === 'parks') {
-                newResults = [
-                  { id: 5, name: 'Umm Al Emarat Park', type: 'PARK', location: 'Al Mushrif', lat: 24.4533, lng: 54.3879 }
-                ];
-              } else if (category === 'transport') {
-                newResults = [
-                  { id: 6, name: 'Abu Dhabi Main Bus Terminal', type: 'TRANSPORT', location: 'Al Nahyan', lat: 24.4719, lng: 54.3725 }
-                ];
-              } else {
-                newResults = [
-                  { id: 1, name: 'Al Ain Hospital', type: 'HOSPITAL', location: 'Al Jimi', lat: 24.2155, lng: 55.7389 },
-                  { id: 2, name: 'Cleveland Clinic Abu Dhabi', type: 'HOSPITAL', location: 'Al Maryah Island', lat: 24.5011, lng: 54.3942 }
-                ];
-              }
-              
-              setExplorerState(prev => ({
-                ...prev,
-                activeResults: MOCK_DATA,
-                layerFilters: category === 'education' ? ['Education'] : 
-                              category === 'parks' ? ['Environment'] : 
-                              category === 'transport' ? ['Transport'] : 
-                              ['Education', 'Healthcare', 'Transport', 'Environment', 'Tourism', 'Utilities'],
-                mapFocus: newResults.length > 0 ? { lat: newResults[0].lat, lng: newResults[0].lng, zoom: 12 } : null,
-                selectedDetail: null
-              }));
               setCurrentView('explorer');
               setSelectedLocation(null);
             }}
