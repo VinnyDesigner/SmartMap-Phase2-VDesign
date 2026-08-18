@@ -44,6 +44,10 @@ void main() {
   color1.rgb *= 0.3; // Pre-multiply alpha for proper blending in WebGL
   vec4 color2 = texture2D(tex2, distortedUv);
   
+  // Reduce opacity of the revealed colored map
+  color2.a *= 0.6;
+  color2.rgb *= 0.6;
+  
   // Blend them using the distorted mask
   gl_FragColor = mix(color1, color2, distMask);
 }
