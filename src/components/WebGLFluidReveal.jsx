@@ -42,12 +42,7 @@ void main() {
   // Reduce opacity of the default white map (make it faint)
   color1.a *= 0.3; 
   color1.rgb *= 0.3; // Pre-multiply alpha for proper blending in WebGL
-  
   vec4 color2 = texture2D(tex2, distortedUv);
-  
-  // Reduce opacity of the revealed colored map
-  color2.a *= 0.3;
-  color2.rgb *= 0.3;
   
   // Blend them using the distorted mask
   gl_FragColor = mix(color1, color2, distMask);
@@ -67,8 +62,8 @@ const ShaderPlane = ({ mouseX, mouseY }) => {
   const meshRef = useRef();
   
   // Load the two textures
-  // tex1 is the white map, tex2 is the colored map
-  const [tex1, tex2] = useTexture(['/white-map.png', '/background-4k.png']);
+  // tex1 is the default map, tex2 is the reveal map
+  const [tex1, tex2] = useTexture(['/default.png', '/hover.png']);
   
   const uniforms = useMemo(() => ({
     tex1: { value: tex1 },
