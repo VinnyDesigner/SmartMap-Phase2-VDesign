@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X, MapPin, ExternalLink, Mail, Phone, Bookmark, Activity, BookOpen, HeartPulse, TreePine, Bus } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function DetailSlidePanel({ explorerState, setExplorerState }) {
   const detail = explorerState?.selectedDetail;
+  const { t, isArabic } = useLanguage();
 
   const handleClose = () => {
     setExplorerState(prev => ({ ...prev, selectedDetail: null }));
@@ -21,17 +23,17 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
     <AnimatePresence>
       {detail && (
         <motion.div
-          initial={{ x: '100%' }}
+          initial={{ x: isArabic ? '-100%' : '100%' }}
           animate={{ x: 0 }}
-          exit={{ x: '100%' }}
+          exit={{ x: isArabic ? '-100%' : '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="absolute inset-0 bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)] border-l border-slate-100 pointer-events-auto z-40 overflow-hidden flex flex-col"
+          className="absolute inset-0 bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)] border-s border-slate-100 pointer-events-auto z-40 overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-5 bg-white sticky top-0 z-10">
             <button onClick={handleClose} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors">
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium tracking-tight">Back to results</span>
+              <ArrowLeft className="w-4 h-4 rtl:-scale-x-100" />
+              <span className="text-sm font-medium tracking-tight">{t('Back to results', 'العودة للنتائج')}</span>
             </button>
             <button onClick={handleClose} className="text-slate-400 hover:text-slate-700 transition-colors">
               <X className="w-5 h-5" />
@@ -45,9 +47,9 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
                 {React.cloneElement(getIcon(detail.type), { className: "w-6 h-6 text-[#3D52A0]" })}
               </div>
               <div className="flex-1 pt-0.5">
-                <h2 className="text-[19px] font-bold text-[#1e293b] tracking-tight leading-tight">{detail.name}</h2>
+                <h2 className="text-[19px] font-bold text-[#1e293b] tracking-tight leading-tight">{isArabic && detail.name_ar ? detail.name_ar : detail.name}</h2>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-slate-500 tracking-tight font-arabic text-[13px]" dir="rtl">مستشفى العين</p>
+                  <p className="text-slate-500 tracking-tight font-arabic text-[13px]" dir="rtl">{!isArabic && detail.name_ar ? detail.name_ar : ''}</p>
                   <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded tracking-widest uppercase">
                     {detail.type}
                   </span>
@@ -64,16 +66,16 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
                 </div>
                 <div className="flex items-center gap-1.5 text-blue-600 text-[13px] font-medium hover:underline cursor-pointer">
                   <ExternalLink className="w-3.5 h-3.5 opacity-70" />
-                  <span>Website</span>
+                  <span>{t('Website', 'الموقع الإلكتروني')}</span>
                 </div>
               </div>
               
               <div className="pt-3 border-t border-slate-200/70 flex items-center gap-2">
                 <button className="flex-1 bg-white border border-slate-200 rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-slate-50 shadow-sm transition-all text-[#1e293b] text-[13px] font-bold tracking-tight">
-                  <Mail className="w-4 h-4 text-slate-500" /> Email
+                  <Mail className="w-4 h-4 text-slate-500" /> {t('Email', 'بريد إلكتروني')}
                 </button>
                 <button className="flex-1 bg-white border border-slate-200 rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-slate-50 shadow-sm transition-all text-[#1e293b] text-[13px] font-bold tracking-tight">
-                  <Phone className="w-4 h-4 text-slate-500" /> Phone
+                  <Phone className="w-4 h-4 text-slate-500" /> {t('Phone', 'هاتف')}
                 </button>
                 <button className="w-10 h-[38px] bg-white border border-slate-200 rounded-lg flex items-center justify-center hover:bg-slate-50 shadow-sm transition-all" title="Save to Workspace">
                   <Bookmark className="w-4 h-4 text-slate-500" />
@@ -83,22 +85,22 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
 
             {/* Details Section */}
             <div className="pt-2">
-              <h3 className="font-bold tracking-tight text-[#1e293b] text-[15px] mb-4">Facility Details</h3>
+              <h3 className="font-bold tracking-tight text-[#1e293b] text-[15px] mb-4">{t('Facility Details', 'تفاصيل المنشأة')}</h3>
               <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                 <div className="flex flex-col">
-                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">Facility Type</span>
+                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">{t('Facility Type', 'نوع المنشأة')}</span>
                   <span className="font-semibold tracking-tight text-[#1e293b] text-[14px] capitalize">{detail.type.toLowerCase()}</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">Medical Audit</span>
+                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">{t('Medical Audit', 'التدقيق الطبي')}</span>
                   <span className="font-semibold tracking-tight text-[#1e293b] text-[14px]">AUDIT REPORT • Q3/2024</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">Operating Hours</span>
+                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">{t('Operating Hours', 'ساعات العمل')}</span>
                   <span className="font-semibold tracking-tight text-[#1e293b] text-[14px]">24/7 Emergency</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">Lat / Long</span>
+                  <span className="text-slate-500 text-[12px] font-medium tracking-tight mb-1">{t('Lat / Long', 'خط العرض / الطول')}</span>
                   <span className="font-semibold tracking-tight text-[#1e293b] text-[14px]">{detail.lat?.toFixed(5) || '24.41360'}, {detail.lng?.toFixed(5) || '54.56830'}</span>
                 </div>
               </div>

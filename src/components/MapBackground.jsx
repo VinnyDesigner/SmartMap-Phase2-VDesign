@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents, Polygon, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents, Polygon, Circle, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
 import { motion, useTransform, useSpring } from 'framer-motion';
 
@@ -35,12 +35,16 @@ const createCategoryIcon = (type) => {
   });
 };
 
-function MapController({ explorerState, isExplorer }) {
+function MapController({ explorerState, setExplorerState, isExplorer }) {
   const map = useMap();
   
   useEffect(() => {
     if (isExplorer) {
-      map.dragging.enable();
+      if (explorerState?.isDrawingMode || explorerState?.drawingTool) {
+        map.dragging.disable();
+      } else {
+        map.dragging.enable();
+      }
       map.scrollWheelZoom.enable();
       map.doubleClickZoom.enable();
       map.touchZoom.enable();
@@ -50,7 +54,7 @@ function MapController({ explorerState, isExplorer }) {
       map.doubleClickZoom.disable();
       map.touchZoom.disable();
     }
-  }, [isExplorer, map]);
+  }, [isExplorer, explorerState?.isDrawingMode, explorerState?.drawingTool, map]);
 
   useEffect(() => {
     if (explorerState?.mapFocus) {
@@ -62,118 +66,183 @@ function MapController({ explorerState, isExplorer }) {
     }
   }, [explorerState?.mapFocus, map]);
 
+  useEffect(() => {
+    if (explorerState?.mapAction) {
+      const action = explorerState.mapAction;
+      if (action === 'zoomIn') map.zoomIn();
+      else if (action === 'zoomOut') map.zoomOut();
+      else if (action === 'home' || action === 'compass') {
+        map.flyTo([24.4839, 54.3773], 13, { animate: true, duration: 1.5 });
+      } else if (action === 'locate') {
+        map.locate({ setView: true, maxZoom: 16 });
+      }
+      
+      // Clear the action so it can be triggered again
+      setExplorerState(prev => ({ ...prev, mapAction: null }));
+    }
+  }, [explorerState?.mapAction, map, setExplorerState]);
+
   return null;
 }
 
-function NativeDrawControl({ explorerState, setExplorerState }) {
+function CustomDrawControl({ explorerState, setExplorerState }) {
   const map = useMap();
+  const [startPoint, setStartPoint] = useState(null);
+  const [currentPoint, setCurrentPoint] = useState(null);
+
+  // For Polygon
+  const [polyPoints, setPolyPoints] = useState([]);
+  const [mousePos, setMousePos] = useState(null);
 
   useEffect(() => {
-    if (!map) return;
-    
-    if (map.__drawInitialized) return;
-    map.__drawInitialized = true;
-
-      const drawnItems = new L.FeatureGroup();
-      map.addLayer(drawnItems);
-
-      map.on(L.Draw.Event.CREATED, function (e) {
-        const type = e.layerType;
-        const layer = e.layer;
-        
-        let bounds, center;
-        
-        if (type === 'circle') {
-          center = layer.getLatLng();
-          // Approximate bounds based on radius in meters (1 deg lat ~ 111.32 km)
-          const r = layer.getRadius();
-          const dLat = r / 111320;
-          const dLng = r / (111320 * Math.cos(center.lat * (Math.PI / 180)));
-          bounds = L.latLngBounds(
-            [center.lat - dLat, center.lng - dLng],
-            [center.lat + dLat, center.lng + dLng]
-          );
-        } else {
-          // For polygon and rectangle
-          const latlngs = layer.getLatLngs()[0];
-          bounds = L.latLngBounds(latlngs);
-          center = bounds.getCenter();
-        }
-        
-        // Zoom map to the drawn shape
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-        const mockResults = [
-          { 
-            id: Date.now() + 1, 
-            name: 'Selected Area Result 1', 
-            type: 'POI', 
-            location: 'Custom Selection', 
-            lat: center.lat + (Math.random() - 0.5) * 0.005, 
-            lng: center.lng + (Math.random() - 0.5) * 0.005 
-          },
-          { 
-            id: Date.now() + 2, 
-            name: 'Selected Area Result 2', 
-            type: 'POI', 
-            location: 'Custom Selection', 
-            lat: center.lat + (Math.random() - 0.5) * 0.005, 
-            lng: center.lng + (Math.random() - 0.5) * 0.005 
-          },
-          { 
-            id: Date.now() + 3, 
-            name: 'Selected Area Result 3', 
-            type: 'POI', 
-            location: 'Custom Selection', 
-            lat: center.lat + (Math.random() - 0.5) * 0.005, 
-            lng: center.lng + (Math.random() - 0.5) * 0.005 
-          }
-        ];
-
-        setExplorerState(prev => {
-          let mockPolygon = null;
-          let mockCircle = null;
-          if (type === 'polygon' || type === 'rectangle') {
-            mockPolygon = layer.getLatLngs()[0].map(ll => [ll.lat, ll.lng]);
-          } else if (type === 'circle') {
-            const latlng = layer.getLatLng();
-            mockCircle = { center: [latlng.lat, latlng.lng], radius: layer.getRadius() };
-          }
-          
-          return {
-            ...prev,
-            drawnPolygon: mockPolygon,
-            drawnCircle: mockCircle,
-            drawingTool: null,
-            isDrawingMode: false,
-            isDockerMinimized: false,
-            activeResults: mockResults, // Show the new markers inside the docker and map
-            chatHistory: [
-              ...prev.chatHistory,
-              { sender: 'ai', text: `I have searched the selected area and found ${mockResults.length} locations.` }
-            ]
-          };
-        });
-      });
-  }, [map, setExplorerState]);
-
-  useEffect(() => {
-    if (explorerState?.drawingTool && window.L && window.L.Draw) {
-       let drawer;
-       if (explorerState.drawingTool === 'rectangle') {
-         drawer = new window.L.Draw.Rectangle(map);
-       } else if (explorerState.drawingTool === 'circle') {
-         drawer = new window.L.Draw.Circle(map);
-       } else if (explorerState.drawingTool === 'polygon') {
-         drawer = new window.L.Draw.Polygon(map);
-       }
-       
-       if (drawer) drawer.enable();
-       
-       return () => {
-         if (drawer) drawer.disable();
-       };
+    if (explorerState?.drawingTool) {
+      map.dragging.disable();
+      map.getContainer().style.cursor = 'crosshair';
+    } else {
+      map.dragging.enable();
+      map.getContainer().style.cursor = '';
+      setStartPoint(null);
+      setCurrentPoint(null);
+      setPolyPoints([]);
     }
+    return () => {
+      map.dragging.enable();
+      map.getContainer().style.cursor = '';
+    };
   }, [explorerState?.drawingTool, map]);
+
+  const finishDrawing = (type, bounds, center, radius, poly) => {
+    // Generate mock results for the drawn area
+    const mockResults = [
+      { id: Date.now() + 1, name: 'Zayed University Campus', type: 'EDUCATION', location: 'Custom Area', lat: center.lat + 0.002, lng: center.lng + 0.002 },
+      { id: Date.now() + 2, name: 'Area General Hospital', type: 'HOSPITAL', location: 'Custom Area', lat: center.lat - 0.001, lng: center.lng + 0.003 },
+      { id: Date.now() + 3, name: 'Community Central Park', type: 'PARK', location: 'Custom Area', lat: center.lat + 0.003, lng: center.lng - 0.002 },
+      { id: Date.now() + 4, name: 'Metro Transit Hub', type: 'TRANSPORT', location: 'Custom Area', lat: center.lat - 0.002, lng: center.lng - 0.001 }
+    ];
+
+    const chartData = {
+      id: Date.now() + 'chart',
+      title: 'Infrastructure Distribution in Selected Area',
+      type: 'doughnut',
+      data: [
+        { label: 'Education', value: 25, color: '#4facfe' },
+        { label: 'Healthcare', value: 15, color: '#f093fb' },
+        { label: 'Parks', value: 40, color: '#43e97b' },
+        { label: 'Transport', value: 20, color: '#fa709a' }
+      ]
+    };
+
+    if (bounds) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+    else map.setView(center, 16);
+
+    setExplorerState(prev => ({
+      ...prev,
+      drawnPolygon: type === 'polygon' ? poly : null,
+      drawnCircle: type === 'circle' ? { center: [center.lat, center.lng], radius } : null,
+      drawnRectangle: type === 'rectangle' ? [
+        [bounds.getSouthWest().lat, bounds.getSouthWest().lng],
+        [bounds.getNorthEast().lat, bounds.getNorthEast().lng]
+      ] : null,
+      drawingTool: null,
+      isDrawingMode: false,
+      isDockerMinimized: false,
+      aiPanelState: 'expanded', // Auto-expand the AI panel to show results
+      activeResults: mockResults,
+      chatHistory: [
+        ...(prev.chatHistory || []),
+        { 
+          id: Date.now(), 
+          role: 'user', 
+          content: `Selected a custom area on the map.` 
+        },
+        { 
+          id: Date.now() + 1, 
+          role: 'assistant', 
+          content: `I have analyzed the custom area you drew. Here is the infrastructure distribution within this zone:\n\n**Total Facilities Found:** ${mockResults.length}\n**Primary Land Use:** Parks & Environment\n\nI have pinned the specific facilities to the map for you.`,
+          results: mockResults,
+          suggestions: [
+            "Show demographic data for this area",
+            "What is the average property value here?",
+            "Are there upcoming construction projects?",
+            "Export this area report to PDF"
+          ],
+          chartData: chartData
+        }
+      ]
+    }));
+    
+    setStartPoint(null);
+    setCurrentPoint(null);
+    setPolyPoints([]);
+  };
+
+  useMapEvents({
+    mousedown(e) {
+      if (explorerState?.drawingTool === 'rectangle' || explorerState?.drawingTool === 'circle') {
+        setStartPoint(e.latlng);
+        setCurrentPoint(e.latlng);
+      } else if (explorerState?.drawingTool === 'polygon') {
+        setPolyPoints(prev => [...prev, e.latlng]);
+      }
+    },
+    mousemove(e) {
+      if (explorerState?.drawingTool === 'rectangle' || explorerState?.drawingTool === 'circle') {
+        if (startPoint) setCurrentPoint(e.latlng);
+      } else if (explorerState?.drawingTool === 'polygon') {
+        setMousePos(e.latlng);
+      }
+    },
+    mouseup(e) {
+      if (explorerState?.drawingTool === 'rectangle' && startPoint && currentPoint) {
+        const bounds = L.latLngBounds(startPoint, currentPoint);
+        // Only finish if the box is actually drawn (not just a click)
+        if (bounds.getNorthEast().distanceTo(bounds.getSouthWest()) > 10) {
+          finishDrawing('rectangle', bounds, bounds.getCenter(), null, null);
+        } else {
+          setStartPoint(null);
+          setCurrentPoint(null);
+        }
+      } else if (explorerState?.drawingTool === 'circle' && startPoint && currentPoint) {
+        const radius = startPoint.distanceTo(currentPoint);
+        if (radius > 10) {
+          const r = radius;
+          const dLat = r / 111320;
+          const dLng = r / (111320 * Math.cos(startPoint.lat * (Math.PI / 180)));
+          const bounds = L.latLngBounds(
+            [startPoint.lat - dLat, startPoint.lng - dLng],
+            [startPoint.lat + dLat, startPoint.lng + dLng]
+          );
+          finishDrawing('circle', bounds, startPoint, radius, null);
+        } else {
+          setStartPoint(null);
+          setCurrentPoint(null);
+        }
+      }
+    },
+    dblclick(e) {
+      if (explorerState?.drawingTool === 'polygon' && polyPoints.length > 2) {
+        const poly = polyPoints.map(p => [p.lat, p.lng]);
+        const bounds = L.latLngBounds(polyPoints);
+        finishDrawing('polygon', bounds, bounds.getCenter(), null, poly);
+      }
+    }
+  });
+
+  if (explorerState?.drawingTool === 'rectangle' && startPoint && currentPoint) {
+    const bounds = L.latLngBounds(startPoint, currentPoint);
+    return <Rectangle bounds={bounds} pathOptions={{ color: '#4370f0', weight: 2, dashArray: '5, 5', fillColor: '#4370f0', fillOpacity: 0.2 }} />;
+  }
+
+  if (explorerState?.drawingTool === 'circle' && startPoint && currentPoint) {
+    const radius = startPoint.distanceTo(currentPoint);
+    return <Circle center={startPoint} radius={radius} pathOptions={{ color: '#4370f0', weight: 2, dashArray: '5, 5', fillColor: '#4370f0', fillOpacity: 0.2 }} />;
+  }
+  
+  if (explorerState?.drawingTool === 'polygon' && polyPoints.length > 0) {
+    const positions = [...polyPoints.map(p => [p.lat, p.lng])];
+    if (mousePos) positions.push([mousePos.lat, mousePos.lng]);
+    return <Polygon positions={positions} pathOptions={{ color: '#4370f0', weight: 2, dashArray: '5, 5', fillColor: '#4370f0', fillOpacity: 0.2 }} />;
+  }
 
   return null;
 }
@@ -246,10 +315,10 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
         minZoom={7}
         style={{ width: '100%', height: '100%', background: 'transparent' }}
       >
-        <MapController explorerState={explorerState} isExplorer={isExplorer} />
+        <MapController explorerState={explorerState} setExplorerState={setExplorerState} isExplorer={isExplorer} />
         
         {isExplorer && (
-          <NativeDrawControl explorerState={explorerState} setExplorerState={setExplorerState} />
+          <CustomDrawControl explorerState={explorerState} setExplorerState={setExplorerState} />
         )}
         
         <TileLayer
@@ -294,6 +363,11 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           <Polygon positions={explorerState.drawnPolygon} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />
         )}
 
+        {/* Draw Rectangle visualization */}
+        {explorerState?.drawnRectangle && (
+          <Rectangle bounds={explorerState.drawnRectangle} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />
+        )}
+
         {/* Draw Circle visualization */}
         {explorerState?.drawnCircle && (
           <Circle center={explorerState.drawnCircle.center} radius={explorerState.drawnCircle.radius} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />
@@ -307,6 +381,20 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={customPinIcon} />
         )}
       </MapContainer>
+
+      {/* Floating Clear Shape Button */}
+      {(explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle) && (
+        <motion.button
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          onClick={() => setExplorerState(prev => ({ ...prev, drawnPolygon: null, drawnCircle: null, drawnRectangle: null, activeResults: [] }))}
+          className="absolute top-[88px] left-1/2 -translate-x-1/2 z-[400] bg-white/90 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200 px-5 py-2.5 rounded-full flex items-center gap-2 text-slate-600 hover:text-red-600 hover:bg-white transition-all font-bold tracking-tight text-[13px]"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          Clear Shape
+        </motion.button>
+      )}
       
       {/* Subtle overlay just to soften the map slightly, replacing the heavy white wash */}
       {!isExplorer && <div className="absolute inset-0 bg-slate-50/30 pointer-events-none z-[400]" />}

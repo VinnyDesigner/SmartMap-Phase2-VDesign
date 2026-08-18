@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Layers, Pencil, Grid, Home, Navigation, Compass, MousePointer2, Plus, Minus, Square, Circle, Hexagon, Map, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 function SidebarButton({ icon, label, onClick, isActive }) {
   return (
@@ -47,6 +48,7 @@ function DrawOption({ icon: Icon, label, isActive, onClick }) {
 export default function MapControlsSidebar({ explorerState, setExplorerState }) {
   const [showBasemapMenu, setShowBasemapMenu] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useLanguage();
 
   const IconBtn = ({ icon: Icon, label, noLabel, onClick, highlight }) => (
     <button onClick={onClick} className={`flex flex-col items-center justify-center py-1.5 w-full hover:bg-gray-50 transition-colors group ${highlight ? 'text-dge-tech' : 'text-dge-reliable'}`}>
@@ -56,7 +58,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
   );
 
   return (
-    <div className="absolute left-8 top-[64px] bottom-6 flex flex-col gap-3 pointer-events-auto z-30 pb-10 items-center">
+    <div className="absolute start-4 md:start-8 top-[64px] bottom-6 flex flex-col gap-3 pointer-events-auto z-30 pb-10 items-center">
       
       {/* Brand Colored Hamburger Button */}
       <button
@@ -105,18 +107,25 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
             <div className="bg-white/90 backdrop-blur-md rounded-[24px] shadow-sm border border-gray-100 flex flex-col py-2 w-12 gap-1 items-center">
               
               {/* Zoom Controls */}
-              <IconBtn icon={Plus} noLabel />
-              <IconBtn icon={Minus} noLabel />
+              <IconBtn icon={Plus} noLabel onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'zoomIn' }))} />
+              <IconBtn icon={Minus} noLabel onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'zoomOut' }))} />
               
               <div className="w-8 h-px bg-gray-100 my-1"></div>
 
               {/* Top Tools */}
-              <SidebarButton icon={<Grid className="w-4 h-4" />} label="Browse" />
+              <SidebarButton 
+                icon={<Grid className="w-4 h-4" />} 
+                label={t('Browse', 'تصفح')} 
+                onClick={() => {
+                  setShowBasemapMenu(false);
+                  setExplorerState(prev => ({ ...prev, isDrawingMode: false, drawingTool: null, aiPanelState: 'expanded', isDockerMinimized: false }));
+                }}
+              />
               
               <div className="relative w-full">
                 <SidebarButton 
                   icon={<Pencil className="w-4 h-4" />} 
-                  label="Draw" 
+                  label={t('Draw', 'رسم')} 
                   isActive={explorerState?.isDrawingMode}
                   onClick={() => {
                     setShowBasemapMenu(false);
@@ -138,11 +147,11 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                      className="absolute left-[60px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[160px] flex flex-col gap-1 z-50"
+                      className="absolute start-[60px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[160px] flex flex-col gap-1 z-50"
                     >
                       <DrawOption 
                         icon={Square} 
-                        label="Draw Box" 
+                        label={t('Draw Box', 'رسم مربع')} 
                         isActive={explorerState?.drawingTool === 'rectangle'}
                         onClick={() => {
                           setExplorerState(prev => ({ ...prev, drawingTool: 'rectangle' }));
@@ -150,7 +159,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       />
                       <DrawOption 
                         icon={Circle} 
-                        label="Draw Circle" 
+                        label={t('Draw Circle', 'رسم دائرة')} 
                         isActive={explorerState?.drawingTool === 'circle'}
                         onClick={() => {
                           setExplorerState(prev => ({ ...prev, drawingTool: 'circle' }));
@@ -158,7 +167,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       />
                       <DrawOption 
                         icon={Hexagon} 
-                        label="Draw Polygon" 
+                        label={t('Draw Polygon', 'رسم مضلع')} 
                         isActive={explorerState?.drawingTool === 'polygon'}
                         onClick={() => {
                           setExplorerState(prev => ({ ...prev, drawingTool: 'polygon' }));
@@ -172,7 +181,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
               <div className="relative w-full">
                 <SidebarButton 
                   icon={<Map className="w-4 h-4" />} 
-                  label="Basemap" 
+                  label={t('Basemap', 'الخريطة الأساسية')} 
                   onClick={() => {
                     const newMenu = !showBasemapMenu;
                     setShowBasemapMenu(newMenu);
@@ -193,10 +202,10 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -10 }}
-                      className="absolute left-[60px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[300px] grid grid-cols-2 gap-2 z-50"
+                      className="absolute start-[60px] top-0 bg-white/60 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] border border-white/60 rounded-2xl p-2 w-[300px] grid grid-cols-2 gap-2 z-50"
                     >
                       <BasemapOption 
-                        label="Streets" 
+                        label={t('Streets', 'الشوارع')} 
                         imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/4/6/10" 
                         isActive={explorerState?.basemap === 'osm'}
                         onClick={() => { 
@@ -205,7 +214,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                         }}
                       />
                       <BasemapOption 
-                        label="Satellite" 
+                        label={t('Satellite', 'قمر صناعي')} 
                         imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/4/6/10" 
                         isActive={explorerState?.basemap === 'satellite'}
                         onClick={() => { 
@@ -214,7 +223,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                         }}
                       />
                       <BasemapOption 
-                        label="Dark Mode" 
+                        label={t('Dark Mode', 'الوضع الداكن')} 
                         imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/4/6/10" 
                         isActive={explorerState?.basemap === 'dark'}
                         onClick={() => { 
@@ -223,7 +232,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                         }}
                       />
                       <BasemapOption 
-                        label="Light" 
+                        label={t('Light', 'الوضع الفاتح')} 
                         imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/4/6/10" 
                         isActive={explorerState?.basemap === 'light'}
                         onClick={() => { 
@@ -239,10 +248,27 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
               <div className="w-8 h-px bg-gray-100 my-1"></div>
 
               {/* Bottom Tools */}
-              <IconBtn icon={Home} label="Home" />
-              <IconBtn icon={Navigation} label="Locate" />
-              <IconBtn icon={Compass} label="Compass" />
-              <IconBtn icon={MousePointer2} label="Select" />
+              <IconBtn icon={Home} label={t('Home', 'الرئيسية')} onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'home' }))} />
+              <IconBtn icon={Navigation} label={t('Locate', 'تحديد الموقع')} onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'locate' }))} />
+              
+              {(explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle) && (
+                <IconBtn 
+                  icon={X} 
+                  label={t('Clear', 'مسح')} 
+                  onClick={() => setExplorerState(prev => ({ ...prev, drawnPolygon: null, drawnCircle: null, drawnRectangle: null, activeResults: [] }))} 
+                />
+              )}
+
+              <IconBtn icon={Compass} label={t('Compass', 'البوصلة')} onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'compass' }))} />
+              <IconBtn 
+                icon={MousePointer2} 
+                label={t('Select', 'تحديد')} 
+                onClick={() => {
+                  setShowBasemapMenu(false);
+                  setExplorerState(prev => ({ ...prev, isDrawingMode: false, drawingTool: null }));
+                }}
+                highlight={!explorerState?.isDrawingMode && !showBasemapMenu}
+              />
             </div>
           </motion.div>
         )}

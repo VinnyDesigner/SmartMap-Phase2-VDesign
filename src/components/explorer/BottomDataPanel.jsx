@@ -1,38 +1,17 @@
-import React, { useRef } from 'react';
-import { MessageSquare, Bookmark, Plus, History, ChevronUp, Minimize2, Sparkles, Mic } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import React, { useRef, useEffect, useState } from 'react';
+import { Minimize2, Maximize2, Sparkles, Mic, X } from 'lucide-react';
+import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import AiChatInterface from './AiChatInterface';
-import SearchResultsList from './SearchResultsList';
 import DetailSlidePanel from './DetailSlidePanel';
 import MenuSlidePanel from './MenuSlidePanel';
-import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function BottomDataPanel({ explorerState, setExplorerState }) {
-  const getContextualTitle = () => {
-    if (explorerState?.selectedDetail) {
-      return explorerState.selectedDetail.name;
-    }
+  // HIDDEN, COMPACT, EXPANDED
+  const panelState = explorerState.aiPanelState || 'hidden';
+  const [compactInputValue, setCompactInputValue] = useState('');
+  const { t, isArabic } = useLanguage();
 
-    const selectedLayers = explorerState?.layerFilters || ['Education', 'Healthcare', 'Transport', 'Environment', 'Tourism', 'Utilities'];
-    const visibleResults = (explorerState?.activeResults || []).filter(item => {
-      const typeMap = { 'EDUCATION': 'Education', 'HOSPITAL': 'Healthcare', 'TRANSPORT': 'Transport', 'PARK': 'Environment' };
-      return selectedLayers.includes(typeMap[item.type] || 'Utilities');
-    });
-
-    if (!visibleResults.length) return 'Explore Abu Dhabi';
-    
-    const firstItem = visibleResults[0];
-    const categoryName = 
-      firstItem.type === 'EDUCATION' ? 'Educational Facilities' :
-      firstItem.type === 'HOSPITAL' ? 'Healthcare Facilities' :
-      firstItem.type === 'PARK' ? 'Parks & Recreation' :
-      firstItem.type === 'TRANSPORT' ? 'Transport Hubs' : 'Points of Interest';
-    
-    const locationName = firstItem.location || 'the area';
-    return `${categoryName} in ${locationName}`;
-  };
-
-  // Setup for AI Glow Blob
   const containerRef = useRef(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -40,146 +19,184 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
   const springX = useSpring(mouseX, { stiffness: 45, damping: 25, mass: 1.5 });
   const springY = useSpring(mouseY, { stiffness: 45, damping: 25, mass: 1.5 });
 
+  const glowBackground = useMotionTemplate`radial-gradient(800px at ${springX}px ${springY}px, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0))`;
+
   const handleMouseMove = (e) => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || panelState !== 'expanded') return;
     const rect = containerRef.current.getBoundingClientRect();
     mouseX.set(e.clientX - rect.left);
     mouseY.set(e.clientY - rect.top);
   };
 
-  const placeholderText = useTypewriterPlaceholder([
-    'Search places...',
-    'Find schools near Al Reem Island'
-  ]);
+  const setPanelState = (newState) => {
+    setExplorerState(prev => ({ ...prev, aiPanelState: newState }));
+    if (newState === 'hidden') {
+      setCompactInputValue('');
+    }
+  };
+
+  const handleCompactKeyDown = (e) => {
+    if (e.key === 'Enter' && compactInputValue.trim()) {
+      setExplorerState(prev => ({ ...prev, aiPanelState: 'expanded', pendingQuery: compactInputValue }));
+      setCompactInputValue('');
+    }
+  };
 
   return (
-    <AnimatePresence mode="wait">
-      {explorerState?.isDockerMinimized ? (
-        <motion.div 
-          key="minimized"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative p-[1.5px] rounded-full shadow-[0_12px_24px_rgba(33,90,158,0.15)] pointer-events-auto overflow-hidden group transition-all hover:shadow-[0_16px_32px_rgba(33,90,158,0.2)] cursor-text"
-        >
-          {/* Base subtle border to give structure */}
-          <div className="absolute inset-0 bg-slate-200/40" />
+    <div className="absolute inset-0 pointer-events-none flex">
+      {/* Morphing Components */}
+      <AnimatePresence mode="wait">
 
-          {/* Solar Plasma Energy Ring */}
-          <div className="absolute top-1/2 left-1/2 w-[300%] aspect-square -translate-x-1/2 -translate-y-1/2 animate-[spin_5s_linear_infinite] z-0 pointer-events-none">
-             <div className="absolute inset-0" 
-                  style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(0, 229, 255, 0.1) 50%, rgba(61, 82, 160, 0.4) 70%, rgba(0, 229, 255, 0.8) 85%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.8) 93%, rgba(61, 82, 160, 0.4) 96%, transparent 98%)' }} />
-             <div className="absolute inset-0 opacity-90" 
-                  style={{ 
-                    background: 'conic-gradient(from 0deg, transparent 70%, rgba(0, 229, 255, 0.4) 80%, rgba(255, 255, 255, 1) 90%, rgba(0, 229, 255, 0.4) 94%, transparent 97%)',
-                    filter: 'blur(6px)' 
-                  }} />
-             <div className="absolute inset-0" 
-                  style={{ 
-                    background: 'conic-gradient(from 0deg, transparent 85%, rgba(255, 255, 255, 0.6) 88%, #ffffff 90%, rgba(255, 255, 255, 0.6) 92%, transparent 95%)',
-                    filter: 'blur(2px)' 
-                  }} />
-             <div className="absolute inset-0" 
-                  style={{ 
-                    background: 'conic-gradient(from 0deg, transparent 82%, rgba(255, 255, 255, 0.8) 82.2%, transparent 82.5%, transparent 85%, rgba(0, 229, 255, 0.9) 85.2%, transparent 85.5%, transparent 94%, rgba(0, 229, 255, 0.8) 94.2%, transparent 94.5%)',
-                    filter: 'blur(1px)'
-                  }} />
-          </div>
-          <div className="w-[600px] h-[56px] bg-white rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] flex items-center px-6 relative z-10">
-            <Sparkles className="w-5 h-5 text-dge-tech mr-4" />
-            <input 
-              type="text" 
-              placeholder={placeholderText} 
-              className="flex-1 bg-transparent border-none outline-none text-[14px] text-slate-800 placeholder:text-slate-400 font-medium cursor-text"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.target.value.trim()) {
-                   const text = e.target.value.trim();
-                   setExplorerState(prev => ({
-                     ...prev,
-                     isDockerMinimized: false,
-                     chatHistory: [...(prev.chatHistory || []), { sender: 'user', text }]
-                   }));
-                   e.target.value = '';
-                }
-              }}
-            />
-            <div className="flex items-center gap-1">
-              <button className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-50 transition-colors rounded-full">
-                <Mic className="w-4 h-4" />
-              </button>
-              <div className="w-px h-5 bg-slate-200 mx-1"></div>
+        {/* 1. HIDDEN STATE (Floating Button) */}
+        {panelState === 'hidden' && (
+          <motion.div
+            key="hidden-btn"
+            layoutId="ai-panel"
+            className="absolute bottom-6 end-6 md:end-8 w-14 h-14 bg-[#3D52A0] shadow-[0_8px_32px_rgba(61,82,160,0.4)] rounded-full flex items-center justify-center pointer-events-auto cursor-pointer z-50 group hover:bg-[#2B3A70] transition-colors"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            onMouseEnter={() => setPanelState('compact')}
+            onClick={() => setPanelState('compact')}
+          >
+            {/* Pulsing energy ring behind */}
+            <div className="absolute inset-0 rounded-full animate-ping opacity-30 bg-[#3D52A0]" style={{ animationDuration: '3s' }} />
+            <Sparkles className="w-6 h-6 text-white group-hover:animate-pulse" />
+          </motion.div>
+        )}
+
+        {/* 2. COMPACT STATE (Search Composer) */}
+        {panelState === 'compact' && (
+          <motion.div
+            key="compact-bar"
+            layoutId="ai-panel"
+            className="absolute bottom-6 end-6 md:end-8 w-[calc(100vw-3rem)] md:w-[420px] h-[60px] bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_16px_48px_rgba(61,82,160,0.2)] rounded-full pointer-events-auto z-50 flex items-center px-5 group overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.1 } }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+            onMouseLeave={() => {
+              if (!compactInputValue.trim()) {
+                setPanelState('hidden');
+              }
+            }}
+          >
+            <motion.div layoutId="ai-icon" className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-50/50 me-3 cursor-pointer" onClick={() => setPanelState('expanded')}>
+              <Sparkles className="w-5 h-5 text-[#3D52A0]" />
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, x: 10 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ delay: 0.15 }}
+              className="flex-1 overflow-hidden"
+            >
+              <input 
+                autoFocus
+                type="text"
+                placeholder={isArabic ? 'اسأل عن أي شيء حول أبوظبي...' : 'Ask anything about Abu Dhabi...'}
+                className="w-full bg-transparent border-none outline-none text-[14px] text-[#1e2749] font-medium placeholder:text-slate-400 placeholder:font-normal"
+                value={compactInputValue}
+                onChange={(e) => setCompactInputValue(e.target.value)}
+                onKeyDown={handleCompactKeyDown}
+              />
+            </motion.div>
+
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              transition={{ delay: 0.2 }}
+              className="shrink-0 flex items-center gap-0.5"
+            >
               <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExplorerState(prev => ({ ...prev, isDockerMinimized: false }));
-                }}
-                className="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-50 transition-colors rounded-full"
+                onClick={(e) => { e.stopPropagation(); setPanelState('expanded'); }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100 transition-colors"
+                title="Expand AI Assistant"
               >
-                <ChevronUp className="w-5 h-5" />
+                <Maximize2 className="w-4 h-4" />
               </button>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100 transition-colors cursor-pointer">
+                <Mic className="w-4 h-4" />
+              </div>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setPanelState('hidden'); }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors ms-0.5"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* 3. EXPANDED STATE (Full AI Panel) */}
+        {panelState === 'expanded' && (
+          <motion.div
+            key="expanded-panel"
+            layoutId="ai-panel"
+            ref={containerRef}
+            onMouseMove={handleMouseMove}
+            className="absolute bottom-0 md:bottom-6 inset-x-0 md:inset-auto md:end-8 h-[50vh] md:h-auto md:top-[72px] w-[100vw] md:w-[420px] pointer-events-auto z-50 rounded-t-[32px] md:rounded-[32px] overflow-hidden shadow-[0_-12px_64px_rgba(0,0,0,0.15)] flex flex-col bg-white/30 backdrop-blur-2xl border-t md:border border-white/40"
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100, transition: { duration: 0.2 } }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+          >
+            {/* Mobile Dock Handle */}
+            <div className="w-full flex items-center justify-center pt-3 pb-1 md:hidden cursor-pointer" onClick={() => setPanelState('compact')}>
+              <div className="w-12 h-1.5 rounded-full bg-slate-400/50" />
             </div>
-          </div>
-        </motion.div>
-      ) : (
-        <motion.div 
-          ref={containerRef}
-          onMouseMove={handleMouseMove}
-          key="expanded"
-          initial={{ opacity: 0, y: 40, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 40, scale: 0.98 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative p-[1.5px] rounded-[32px] shadow-[0_12px_48px_rgba(0,0,0,0.15)] pointer-events-auto overflow-hidden group z-10"
-        >
-          {/* Animated Shiny Stroke Layer */}
-          <div className="absolute aspect-square w-[300%] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-[spin_8s_linear_infinite] z-0 opacity-100"
-               style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(255, 255, 255, 0.6) 80%, #ffffff 95%, transparent 100%)' }} 
-          />
-          {/* Main Inner Container */}
-          <div className="w-[950px] h-[360px] bg-white rounded-[30.5px] flex overflow-hidden relative z-10">
-            {/* AI Glow Blob */}
+
+            {/* Subtle Interactive Mouse Glow */}
             <motion.div
-              className="pointer-events-none absolute w-[350px] h-[350px] rounded-full blur-[90px] opacity-[0.55] z-0 bg-gradient-to-r from-blue-400 via-indigo-300 to-[#3D52A0]"
-              style={{
-                x: springX,
-                y: springY,
-                translateX: '-50%',
-                translateY: '-50%'
-              }}
+              className="pointer-events-none absolute inset-0 z-0"
+              style={{ background: glowBackground }}
             />
 
-            {/* Split Content Area */}
-            <div className="w-[45%] h-full flex flex-col relative z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-2 md:pt-5 pb-4 border-b border-white/30 relative z-20 shrink-0 bg-gradient-to-b from-white/90 to-transparent">
+              <div className="flex items-center gap-3">
+                <motion.div layoutId="ai-icon" className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-50 to-[#eef3ff] border border-blue-100/50 flex items-center justify-center shadow-sm">
+                  <Sparkles className="w-4.5 h-4.5 text-[#3D52A0]" />
+                </motion.div>
+                <div>
+                  <h2 className="font-bold text-[#1e2749] text-[15px] tracking-tight leading-tight">{t('AI Map Assistant', 'مساعد الخرائط الذكي')}</h2>
+                  <p className="text-[11px] font-medium text-[#3D52A0]/70 tracking-tight flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" /> {t('Ready to explore', 'جاهز للاستكشاف')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button 
+                  onClick={() => setPanelState('hidden')}
+                  className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  <Minimize2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Chat Content Area */}
+            <div className="flex-1 relative z-10 w-full overflow-hidden flex flex-col bg-transparent">
               <AiChatInterface 
                 explorerState={explorerState}
                 setExplorerState={setExplorerState}
-                title={getContextualTitle()}
+              />
+              <DetailSlidePanel 
+                explorerState={explorerState}
+                setExplorerState={setExplorerState}
+              />
+              <MenuSlidePanel 
+                explorerState={explorerState}
+                setExplorerState={setExplorerState}
               />
             </div>
-              
-            <div className="w-[55%] h-full p-2 relative z-20">
-              <div className="w-full h-full bg-white/50 backdrop-blur-md rounded-[24px] shadow-sm border border-white/60 overflow-hidden relative flex flex-col">
-                <SearchResultsList 
-                  explorerState={explorerState}
-                  setExplorerState={setExplorerState}
-                />
-                <DetailSlidePanel 
-                  explorerState={explorerState}
-                  setExplorerState={setExplorerState}
-                />
-                <MenuSlidePanel 
-                  explorerState={explorerState}
-                  setExplorerState={setExplorerState}
-                />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        )}
+
+      </AnimatePresence>
+    </div>
   );
 }

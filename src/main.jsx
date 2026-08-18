@@ -5,9 +5,12 @@ import 'leaflet-draw/dist/leaflet.draw.css'
 import 'leaflet-draw'
 import './index.css'
 import App from './App.jsx'
+import { LanguageProvider } from './contexts/LanguageContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
   </StrictMode>,
 )

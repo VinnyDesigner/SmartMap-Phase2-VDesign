@@ -41,7 +41,7 @@ export default function LocationSearch({ explorerState, setExplorerState }) {
   };
 
   return (
-    <div ref={wrapperRef} className="relative group w-12 hover:w-72 focus-within:w-72 transition-all duration-300 h-12 rounded-[24px] shadow-sm overflow-hidden cursor-pointer pointer-events-auto p-[2px]">
+    <div ref={wrapperRef} className="relative group w-12 hover:w-[calc(100vw-2rem)] md:hover:w-72 focus-within:w-[calc(100vw-2rem)] md:focus-within:w-72 transition-all duration-300 h-12 rounded-[24px] shadow-sm overflow-hidden cursor-pointer pointer-events-auto p-[2px] ml-auto mr-auto md:m-0">
       {/* Base subtle border to give structure when plasma fades out */}
       <div className="absolute inset-0 bg-slate-200/40" />
 

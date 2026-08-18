@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { MapPin, ChevronDown } from 'lucide-react';
 import MapControlsSidebar from './MapControlsSidebar';
 import BottomDataPanel from './BottomDataPanel';
-import LocationSearch from './LocationSearch';
 
 export default function DataExplorerLayout({ onNavigate, explorerState, setExplorerState }) {
   return (
@@ -15,20 +14,11 @@ export default function DataExplorerLayout({ onNavigate, explorerState, setExplo
       className="absolute inset-0 z-20 pointer-events-none flex flex-col pt-24"
     >
       <div className="flex-1 relative w-full h-full">
-        {/* Top Left Search Bar */}
-        <div className="absolute top-0 left-8 z-40 pointer-events-auto">
-          <LocationSearch 
-            explorerState={explorerState}
-            setExplorerState={setExplorerState}
-          />
-        </div>
-
         <MapControlsSidebar 
           explorerState={explorerState}
           setExplorerState={setExplorerState}
         />
-        
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center pointer-events-none z-30">
+        <div className="absolute inset-0 pointer-events-none z-30 flex">
           <BottomDataPanel 
             explorerState={explorerState}
             setExplorerState={setExplorerState}

@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bookmark, Info, ChevronDown, GraduationCap, PlusSquare, TreePine, Bus, MapPin, Check, Plus, History } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function SearchResultsList({ explorerState, setExplorerState }) {
+  const { t, isArabic } = useLanguage();
   const results = explorerState?.activeResults || [];
 
   const [showLayerMenu, setShowLayerMenu] = useState(false);
@@ -39,8 +41,8 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
   return (
     <div className="flex flex-col h-full">
       {/* Main Header with Actions */}
-      <div className="px-8 pt-6 pb-4 flex items-center justify-between border-b border-black/5">
-        <div className="flex items-center gap-3">
+      <div className="px-4 md:px-8 pt-4 md:pt-6 pb-2 md:pb-4 flex items-center justify-between border-b border-black/5">
+        <div className="flex items-center gap-2 md:gap-3">
           <div className="w-8 h-8 rounded-full bg-[#f0f4ff] text-[#3D52A0] flex items-center justify-center">
              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
           </div>
@@ -76,7 +78,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
       </div>
 
       {/* Filters Sub-header */}
-      <div className="px-8 py-3 flex items-center justify-end border-b border-black/5 mb-2">
+      <div className="hidden md:flex px-8 py-3 items-center justify-end border-b border-black/5 mb-2">
         
         <div className="flex items-center gap-5">
           <div className="relative flex items-center gap-2" ref={layerRef}>
@@ -160,10 +162,10 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
                   <CategoryIcon className="w-4 h-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-[#333333] text-[13px] mb-0.5 truncate">{item.name}</h3>
+                  <h3 className="font-bold text-[#333333] text-[13px] mb-0.5 truncate">{isArabic && item.name_ar ? item.name_ar : item.name}</h3>
                   <div className="flex items-center gap-1.5 text-[10px]">
-                    <span className="font-bold text-gray-500 bg-[#f4f7fb] px-1.5 py-0.5 rounded tracking-tight">{item.type}</span>
-                    <span className="text-gray-400 font-medium truncate">{item.location || 'Custom Selection'}</span>
+                    <span className="font-bold text-gray-500 bg-[#f4f7fb] px-1.5 py-0.5 rounded tracking-tight">{typeMap[item.type] || item.type}</span>
+                    <span className="text-gray-400 font-medium truncate">{isArabic && item.location_ar ? item.location_ar : item.location || 'Custom Selection'}</span>
                   </div>
                 </div>
               </div>
@@ -184,7 +186,8 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
                     setExplorerState(prev => ({ 
                       ...prev, 
                       mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 },
-                      isDockerMinimized: true 
+                      isDockerMinimized: true,
+                      aiPanelState: 'compact'
                     })); 
                   }}
                   className="text-[#333333] hover:underline text-[11px] font-semibold tracking-tight transition-colors px-1 whitespace-nowrap"

@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ArrowRight, GraduationCap, PlusSquare, TreePine, Bus, LayoutGrid, Mic, Sparkles } from 'lucide-react';
 import WebGLTextEffect from './WebGLTextEffect';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriter';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
+  const [searchValue, setSearchValue] = useState('');
+  const { t, isArabic } = useLanguage();
+
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -13,24 +17,30 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
     e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
   };
 
-  const placeholderText = useTypewriterPlaceholder([
-    'Search places...',
-    'Find schools near Al Reem Island',
-    'Ask anything about places, services, or data in Abu Dhabi...'
-  ]);
+  const placeholderText = useTypewriterPlaceholder(
+    isArabic ? [
+      'البحث عن الأماكن...',
+      'البحث عن مدارس قريبة من جزيرة الريم',
+      'اسأل عن أي شيء حول الأماكن أو الخدمات في أبوظبي...'
+    ] : [
+      'Search places...',
+      'Find schools near Al Reem Island',
+      'Ask anything about places, services, or data in Abu Dhabi...'
+    ]
+  );
 
   const suggestions = [
-    { icon: <GraduationCap className="w-4 h-4 text-blue-500" />, text: "Schools near me" },
-    { icon: <PlusSquare className="w-4 h-4 text-red-500" />, text: "Healthcare facilities" },
-    { icon: <TreePine className="w-4 h-4 text-emerald-500" />, text: "Public parks" },
-    { icon: <Bus className="w-4 h-4 text-amber-500" />, text: "Transport stops" },
-    { icon: <LayoutGrid className="w-4 h-4 text-teal-500" />, text: "More ideas" }
+    { icon: <GraduationCap className="w-4 h-4 text-blue-500" />, text: t("Schools near me", "المدارس القريبة مني") },
+    { icon: <PlusSquare className="w-4 h-4 text-red-500" />, text: t("Healthcare facilities", "مرافق الرعاية الصحية") },
+    { icon: <TreePine className="w-4 h-4 text-emerald-500" />, text: t("Public parks", "الحدائق العامة") },
+    { icon: <Bus className="w-4 h-4 text-amber-500" />, text: t("Transport stops", "مواقف النقل") },
+    { icon: <LayoutGrid className="w-4 h-4 text-teal-500" />, text: t("More ideas", "المزيد من الأفكار") }
   ];
 
   return (
     <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none mt-16">
       <motion.div 
-        className="search-ui relative w-full max-w-4xl px-6 flex flex-col items-center text-center"
+        className="search-ui relative w-full max-w-4xl px-4 md:px-6 flex flex-col items-center text-center"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
@@ -42,11 +52,11 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
           transition={{ duration: 0.4 }}
         >
           {/* GeoVision Logo with Clean Gradient */}
-          <div className="flex items-center justify-center mb-3 select-none drop-shadow-sm">
-            <span className="text-[5.5rem] font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-r from-[#1e2749] to-[#3D52A0]">
+          <div className="flex items-center justify-center mb-3 select-none drop-shadow-sm" dir="ltr">
+            <span className="text-6xl md:text-[5.5rem] font-black tracking-tighter leading-none bg-clip-text text-transparent bg-gradient-to-r from-[#1e2749] to-[#3D52A0]">
               Geo
             </span>
-            <span className="text-[5.5rem] font-black tracking-tighter leading-none ml-1 flex items-end bg-clip-text text-transparent bg-gradient-to-r from-[#3D52A0] to-[#00e5ff]">
+            <span className="text-6xl md:text-[5.5rem] font-black tracking-tighter leading-none ms-1 flex items-end bg-clip-text text-transparent bg-gradient-to-r from-[#3D52A0] to-[#00e5ff]">
               Visi
               <div className="relative inline-flex flex-col items-center justify-end mx-1" style={{ width: '0.85em', height: '1.1em' }}>
                 <svg viewBox="0 0 24 24" className="w-full h-full text-[#3D52A0] relative z-10" fill="currentColor">
@@ -63,13 +73,13 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
             </span>
           </div>
 
-          <div className="flex items-center justify-center gap-3 mb-2">
-            <span className="text-3xl font-bold text-slate-800 tracking-tight">Find.</span>
-            <span className="text-3xl font-bold text-slate-800 tracking-tight">Explore.</span>
-            <span className="text-3xl font-bold text-dge-tech tracking-tight">Understand.</span>
+          <div className="flex flex-wrap items-center justify-center gap-1 md:gap-3 mb-2">
+            <span className="text-xl md:text-3xl font-bold text-slate-800 tracking-tight">{t('Find.', 'ابحث.')}</span>
+            <span className="text-xl md:text-3xl font-bold text-slate-800 tracking-tight">{t('Explore.', 'استكشف.')}</span>
+            <span className="text-xl md:text-3xl font-bold text-dge-tech tracking-tight">{t('Understand.', 'افهم.')}</span>
           </div>
-          <p className="text-xl text-dge-grey font-medium">
-            Abu Dhabi's Public Data, At Your Fingertips.
+          <p className="text-base md:text-xl text-dge-grey font-medium">
+            {t("Abu Dhabi's Public Data, At Your Fingertips.", "بيانات أبوظبي العامة، بين يديك.")}
           </p>
         </motion.div>
 
@@ -120,34 +130,40 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
                style={{ backgroundColor: isFocused ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.95)' }}
           >
             {/* Left Search Icon */}
-            <div className="w-12 h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white shadow-sm ml-1 relative overflow-hidden group/btn">
+            <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white shadow-sm ms-1 relative overflow-hidden group/btn">
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-              <Sparkles className="w-5 h-5 relative z-10" />
+              <Sparkles className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
             </div>
             
             <input 
               type="text"
               placeholder={placeholderText}
-              className="flex-1 bg-transparent border-none outline-none px-5 text-dge-reliable placeholder-dge-grey/70 font-medium text-lg w-full"
+              className="flex-1 bg-transparent border-none outline-none px-3 md:px-5 text-dge-reliable placeholder-dge-grey/70 font-medium text-base md:text-lg w-full"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              onKeyDown={(e) => e.key === 'Enter' && onSearch && onSearch()}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && onSearch) {
+                  onSearch(searchValue);
+                }
+              }}
             />
             
             {/* Right Action Button */}
-            <div className="flex items-center gap-1 pr-1">
+            <div className="flex items-center gap-1 pe-1">
               <button 
                 type="button" 
-                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-dge-tech hover:bg-slate-50 transition-colors rounded-full"
+                className="hidden sm:flex w-10 h-10 items-center justify-center text-slate-400 hover:text-dge-tech hover:bg-slate-50 transition-colors rounded-full"
               >
                 <Mic className="w-5 h-5" />
               </button>
               <button 
-                onClick={() => onSearch && onSearch()}
-                className="w-12 h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white transition-transform hover:scale-105 active:scale-95 shadow-sm relative overflow-hidden group/action"
+                onClick={() => onSearch && onSearch(searchValue)}
+                className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white transition-transform hover:scale-105 active:scale-95 shadow-sm relative overflow-hidden group/action"
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/action:translate-y-0 transition-transform duration-300" />
-                <ArrowRight className="w-5 h-5 relative z-10" />
+                <ArrowRight className="w-4 h-4 md:w-5 md:h-5 relative z-10 rtl:-scale-x-100" />
               </button>
             </div>
           </div>
@@ -155,15 +171,15 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
 
         {/* Suggestion Pills */}
         <motion.div 
-          className="mt-6 flex flex-wrap items-center gap-4 justify-center pointer-events-auto"
+          className="mt-6 flex flex-wrap items-center gap-2 md:gap-4 justify-center pointer-events-auto"
           animate={{ opacity: isFocused ? 0 : 1 }}
           transition={{ duration: 0.3 }}
         >
-          <span className="text-sm font-medium text-dge-grey mr-2">Try searching:</span>
+          <span className="hidden md:inline text-sm font-medium text-dge-grey me-2">{t('Try searching:', 'جرب البحث عن:')}</span>
           {suggestions.map((item, i) => (
             <button 
               key={i}
-              onClick={() => onSearch && onSearch()}
+              onClick={() => onSearch && onSearch(item.text)}
               className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md rounded-full border border-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
             >
               <div className="flex items-center justify-center">

@@ -33,16 +33,16 @@ function App() {
   };
   
 const MOCK_DATA = [
-  { id: 1, name: 'Al Ain Hospital', type: 'HOSPITAL', location: 'Al Jimi', lat: 24.2155, lng: 55.7389 },
-  { id: 2, name: 'Cleveland Clinic Abu Dhabi', type: 'HOSPITAL', location: 'Al Maryah Island', lat: 24.5011, lng: 54.3942 },
-  { id: 3, name: 'Zayed University Campus', type: 'EDUCATION', location: 'Khalifa City', lat: 24.4136, lng: 54.5683 },
-  { id: 4, name: 'Bright Riders School', type: 'EDUCATION', location: 'Mohammed Bin Zayed City', lat: 24.3297, lng: 54.5361 },
-  { id: 5, name: 'Umm Al Emarat Park', type: 'PARK', location: 'Al Mushrif', lat: 24.4533, lng: 54.3879 },
-  { id: 6, name: 'Abu Dhabi Main Bus Terminal', type: 'TRANSPORT', location: 'Al Nahyan', lat: 24.4719, lng: 54.3725 },
-  { id: 7, name: 'Corniche Beach Park', type: 'PARK', location: 'Corniche Road', lat: 24.4721, lng: 54.3213 },
-  { id: 8, name: 'NMC Specialty Hospital', type: 'HOSPITAL', location: 'Electra Street', lat: 24.4891, lng: 54.3644 },
-  { id: 9, name: 'Abu Dhabi International Airport', type: 'TRANSPORT', location: 'Airport Road', lat: 24.4329, lng: 54.6511 },
-  { id: 10, name: 'Sorbonne University Abu Dhabi', type: 'EDUCATION', location: 'Al Reem Island', lat: 24.5028, lng: 54.4056 }
+  { id: 1, name: 'Al Ain Hospital', name_ar: 'مستشفى العين', type: 'HOSPITAL', location: 'Al Jimi', location_ar: 'الجيمي', lat: 24.2155, lng: 55.7389 },
+  { id: 2, name: 'Cleveland Clinic Abu Dhabi', name_ar: 'كليفلاند كلينك أبوظبي', type: 'HOSPITAL', location: 'Al Maryah Island', location_ar: 'جزيرة الماريه', lat: 24.5011, lng: 54.3942 },
+  { id: 3, name: 'Zayed University Campus', name_ar: 'حرم جامعة زايد', type: 'EDUCATION', location: 'Khalifa City', location_ar: 'مدينة خليفة', lat: 24.4136, lng: 54.5683 },
+  { id: 4, name: 'Bright Riders School', name_ar: 'مدرسة برايت رايدرز', type: 'EDUCATION', location: 'Mohammed Bin Zayed City', location_ar: 'مدينة محمد بن زايد', lat: 24.3297, lng: 54.5361 },
+  { id: 5, name: 'Umm Al Emarat Park', name_ar: 'حديقة أم الإمارات', type: 'PARK', location: 'Al Mushrif', location_ar: 'المشرف', lat: 24.4533, lng: 54.3879 },
+  { id: 6, name: 'Abu Dhabi Main Bus Terminal', name_ar: 'محطة حافلات أبوظبي الرئيسية', type: 'TRANSPORT', location: 'Al Nahyan', location_ar: 'آل نهيان', lat: 24.4719, lng: 54.3725 },
+  { id: 7, name: 'Corniche Beach Park', name_ar: 'حديقة شاطئ الكورنيش', type: 'PARK', location: 'Corniche Road', location_ar: 'طريق الكورنيش', lat: 24.4721, lng: 54.3213 },
+  { id: 8, name: 'NMC Specialty Hospital', name_ar: 'مستشفى إن إم سي التخصصي', type: 'HOSPITAL', location: 'Electra Street', location_ar: 'شارع إلكترا', lat: 24.4891, lng: 54.3644 },
+  { id: 9, name: 'Abu Dhabi International Airport', name_ar: 'مطار أبوظبي الدولي', type: 'TRANSPORT', location: 'Airport Road', location_ar: 'شارع المطار', lat: 24.4329, lng: 54.6511 },
+  { id: 10, name: 'Sorbonne University Abu Dhabi', name_ar: 'جامعة السوربون أبوظبي', type: 'EDUCATION', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.5028, lng: 54.4056 }
 ];
 
   const [explorerState, setExplorerState] = useState({
@@ -67,8 +67,12 @@ const MOCK_DATA = [
     mouseY.set(window.innerHeight / 2);
 
     const handleMouseMove = (e) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
+      // Handle both touch and mouse events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      mouseX.set(clientX);
+      mouseY.set(clientY);
       
       const isOverPopup = e.target.closest && e.target.closest('.idle-popup');
       
@@ -101,7 +105,7 @@ const MOCK_DATA = [
           const isInteractive = e.target.closest && e.target.closest('a, button, input, header, .glass-panel');
           if (!isInteractive) {
              idleTimer.current = setTimeout(() => {
-                const pos = { x: e.clientX, y: e.clientY };
+                const pos = { x: clientX, y: clientY };
                 setIdlePos(pos);
                 activeIdlePos.current = pos;
              }, 4000); // Wait 4 seconds before showing hover popup
@@ -130,11 +134,15 @@ const MOCK_DATA = [
     };
 
     window.addEventListener("mousemove", handleMouseMove, { capture: true });
+    window.addEventListener("touchmove", handleMouseMove, { capture: true, passive: false });
+    window.addEventListener("touchstart", handleMouseMove, { capture: true, passive: false });
     window.addEventListener("mouseover", handleMouseOver, { capture: true });
     window.addEventListener("click", handleClick, { capture: true });
     
     return () => {
       window.removeEventListener("mousemove", handleMouseMove, { capture: true });
+      window.removeEventListener("touchmove", handleMouseMove, { capture: true });
+      window.removeEventListener("touchstart", handleMouseMove, { capture: true });
       window.removeEventListener("mouseover", handleMouseOver, { capture: true });
       window.removeEventListener("click", handleClick, { capture: true });
       if (idleTimer.current) clearTimeout(idleTimer.current);
@@ -173,13 +181,13 @@ const MOCK_DATA = [
       {currentView === 'landing' && (
         <>
           <motion.div 
-            className="absolute w-[600px] h-[600px] rounded-full pointer-events-none z-0"
+            className="absolute w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full pointer-events-none z-0"
             style={{ background: 'radial-gradient(circle, rgba(33, 90, 158, 0.12) 0%, transparent 70%)', filter: 'blur(50px)' }}
             animate={{ x: [0, 150, -100, 0], y: [0, -100, 150, 0] }}
             transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
           />
           <motion.div 
-            className="absolute w-[500px] h-[500px] rounded-full pointer-events-none z-0 right-[10%] bottom-[10%]"
+            className="absolute w-[250px] h-[250px] md:w-[500px] md:h-[500px] rounded-full pointer-events-none z-0 right-[10%] bottom-[10%]"
             style={{ background: 'radial-gradient(circle, rgba(67, 112, 240, 0.1) 0%, transparent 70%)', filter: 'blur(60px)' }}
             animate={{ x: [0, -150, 100, 0], y: [0, 100, -150, 0] }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
@@ -207,9 +215,16 @@ const MOCK_DATA = [
           <SearchInterface 
             isFocused={isSearchFocused}
             setIsFocused={setIsSearchFocused}
-            onSearch={() => {
+            onSearch={(query) => {
               setCurrentView('explorer');
               setSelectedLocation(null);
+              if (query && query.trim() !== '') {
+                setExplorerState(prev => ({
+                  ...prev,
+                  aiPanelState: 'expanded',
+                  pendingQuery: query
+                }));
+              }
             }}
           />
         </>
@@ -232,12 +247,14 @@ const MOCK_DATA = [
       
       {/* Hide custom cursor in explorer view so standard interactions work normally */}
       {currentView === 'landing' && (
-        <CustomCursor 
-          mouseX={mouseX} 
-          mouseY={mouseY}
-          isSearchFocused={isSearchFocused || !!selectedLocation}
-          isHoveringSearch={isHoveringUI}
-        />
+        <div className="hidden lg:block">
+          <CustomCursor 
+            mouseX={mouseX} 
+            mouseY={mouseY}
+            isSearchFocused={isSearchFocused || !!selectedLocation}
+            isHoveringSearch={isHoveringUI}
+          />
+        </div>
       )}
     </div>
   );
