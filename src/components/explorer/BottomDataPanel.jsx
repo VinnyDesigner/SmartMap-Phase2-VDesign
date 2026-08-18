@@ -149,6 +149,20 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
               <div className="w-12 h-1.5 rounded-full bg-slate-400/50" />
             </div>
 
+            {/* AI Solar Ring Edge Animation */}
+            <div className="absolute top-20 bottom-10 start-0 w-[3px] pointer-events-none z-[60] overflow-visible">
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00e5ff]/5 to-transparent" />
+              <motion.div
+                className="absolute start-0 -translate-x-[1px] w-[5px] h-[100px] flex items-center justify-center"
+                animate={{ top: ['0%', 'calc(100% - 100px)', '0%'] }}
+                transition={{ duration: 6, ease: "easeInOut", repeat: Infinity }}
+              >
+                <div className="absolute w-[16px] h-[80px] bg-[#00e5ff] blur-[10px] opacity-60 mix-blend-screen" />
+                <div className="absolute w-[4px] h-[40px] bg-cyan-200 blur-[2px] opacity-90" />
+                <div className="absolute w-[1.5px] h-[20px] bg-white rounded-full shadow-[0_0_8px_2px_#fff]" />
+              </motion.div>
+            </div>
+
             {/* Subtle Interactive Mouse Glow */}
             <motion.div
               className="pointer-events-none absolute inset-0 z-0"
