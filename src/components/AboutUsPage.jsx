@@ -39,7 +39,7 @@ export default function AboutUsPage({ onNavigate }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-20 flex flex-col bg-white overflow-hidden pt-24"
+      className="absolute inset-0 z-20 flex flex-col bg-white overflow-hidden pt-24 transition-colors duration-300"
     >
       <div className="relative z-10 w-full flex-1 overflow-y-auto">
         
@@ -65,7 +65,7 @@ export default function AboutUsPage({ onNavigate }) {
         </section>
 
         {/* DGE Section */}
-        <section className="bg-[#F8FAFC] py-24">
+        <section className="bg-[#F8FAFC] py-24 transition-colors duration-300">
           <div className="max-w-6xl mx-auto px-8 flex flex-col md:flex-row gap-16 items-center">
             <div className="flex-1 space-y-6">
               <h2 className="text-4xl font-extrabold text-dge-reliable leading-tight">{t('Department of Government Enablement', 'دائرة التمكين الحكومي')}</h2>
@@ -103,7 +103,7 @@ export default function AboutUsPage({ onNavigate }) {
         </section>
 
         {/* AD-SDI Section */}
-        <section className="bg-white py-24">
+        <section className="bg-white py-24 transition-colors duration-300">
           <div className="max-w-6xl mx-auto px-8 flex flex-col-reverse md:flex-row gap-16 items-center">
             <div className="flex-1 space-y-4 w-full">
               <SectionCard 

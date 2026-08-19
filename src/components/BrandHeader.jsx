@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Sun, LogIn, HelpCircle, Menu, X } from 'lucide-react';
+import { User, HelpCircle, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
 import { useLanguage } from '../contexts/LanguageContext';
+
 
 export default function BrandHeader({ onNavigate, currentView }) {
   const { isArabic, setIsArabic, t } = useLanguage();
@@ -58,9 +59,7 @@ export default function BrandHeader({ onNavigate, currentView }) {
             <div className={`w-9 h-8 flex items-center justify-center text-[16px] font-bold font-sans z-10 transition-colors ${isArabic ? 'text-dge-reliable' : 'text-slate-500'}`}>ع</div>
           </div>
           
-          <button className="hidden md:flex w-10 h-10 rounded-full items-center justify-center text-dge-reliable bg-white/70 backdrop-blur-md border border-white/60 hover:bg-white hover:shadow-sm transition-all shadow-sm">
-            <Sun className="w-[18px] h-[18px] fill-dge-reliable" />
-          </button>
+
           
           {/* Empty chunk as we move it to the end */}
           <button 
@@ -74,7 +73,7 @@ export default function BrandHeader({ onNavigate, currentView }) {
             onClick={() => onNavigate?.('login')}
             className="hidden lg:flex h-10 px-5 md:h-11 md:px-7 rounded-full bg-gradient-to-r from-dge-tech to-dge-reliable border-none shadow-[0_4px_16px_rgba(6,51,96,0.25)] items-center gap-2 text-white hover:shadow-[0_6px_20px_rgba(6,51,96,0.35)] transition-all transform hover:-translate-y-0.5"
           >
-            <LogIn className="w-4 h-4" />
+            <User className="w-4 h-4" />
             <span className="text-sm font-bold tracking-wide">{t('Sign In', 'تسجيل الدخول')}</span>
           </button>
           
@@ -102,11 +101,11 @@ export default function BrandHeader({ onNavigate, currentView }) {
           />
           {/* Off Canvas Panel */}
           <motion.div
-            initial={{ x: isArabic ? '100%' : '-100%' }}
+            initial={{ x: isArabic ? '-100%' : '100%' }}
             animate={{ x: 0 }}
-            exit={{ x: isArabic ? '100%' : '-100%' }}
+            exit={{ x: isArabic ? '-100%' : '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed top-0 bottom-0 start-0 w-[280px] bg-white z-[101] shadow-2xl flex flex-col pointer-events-auto lg:hidden"
+            className="fixed top-0 bottom-0 end-0 w-[280px] bg-white z-[101] shadow-2xl flex flex-col pointer-events-auto lg:hidden"
           >
             <div className="p-5 flex items-center justify-between border-b border-gray-100">
               <img src={dgeLogo} alt="DGE Logo" className="h-8 object-contain" />
@@ -147,13 +146,16 @@ export default function BrandHeader({ onNavigate, currentView }) {
                   <div className="w-6 h-5 flex items-center justify-center text-[11px] z-10 text-dge-reliable">ع</div>
                 </div>
               </div>
+              
+
+
             </div>
             <div className="p-4 border-t border-gray-100">
               <button 
                 onClick={() => { onNavigate?.('login'); setIsMobileMenuOpen(false); }}
                 className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-dge-tech to-dge-reliable text-white font-bold text-[15px]"
               >
-                <LogIn className="w-4 h-4" />
+                <User className="w-4 h-4" />
                 {t('Sign In', 'تسجيل الدخول')}
               </button>
             </div>

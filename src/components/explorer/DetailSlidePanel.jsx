@@ -27,10 +27,10 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
           animate={{ x: 0 }}
           exit={{ x: isArabic ? '-100%' : '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="absolute inset-0 bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)] border-s border-slate-100 pointer-events-auto z-40 overflow-hidden flex flex-col"
+          className="absolute inset-0 bg-white shadow-[0_0_40px_rgba(0,0,0,0.05)](0,0,0,0.3)] border-s border-slate-100 pointer-events-auto z-40 overflow-hidden flex flex-col transition-colors duration-300"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-5 bg-white sticky top-0 z-10">
+          <div className="flex items-center justify-between px-6 py-5 bg-white sticky top-0 z-10 transition-colors">
             <button onClick={handleClose} className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors">
               <ArrowLeft className="w-4 h-4 rtl:-scale-x-100" />
               <span className="text-sm font-medium tracking-tight">{t('Back to results', 'العودة للنتائج')}</span>

@@ -5,6 +5,13 @@ export function useTypewriterPlaceholder(texts, typingSpeed = 50, deletingSpeed 
   const [index, setIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Reset when texts array changes completely (e.g. language switch)
+  useEffect(() => {
+    setText('');
+    setIndex(0);
+    setIsDeleting(false);
+  }, [JSON.stringify(texts)]);
+
   useEffect(() => {
     const currentText = texts[index];
     let timeout;

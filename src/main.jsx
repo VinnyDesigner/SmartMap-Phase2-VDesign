@@ -9,8 +9,8 @@ import { LanguageProvider } from './contexts/LanguageContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <LanguageProvider>
-      <App />
-    </LanguageProvider>
+      <LanguageProvider>
+        <App />
+      </LanguageProvider>
   </StrictMode>,
 )

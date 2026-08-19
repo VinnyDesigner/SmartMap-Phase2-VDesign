@@ -1,8 +1,10 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Navigation, Trees, GraduationCap, Building2, ChevronRight } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function HoverExplorationPopup({ x, y, areaContext, onExplore }) {
+  const { t } = useLanguage();
   const getIcon = (type) => {
     switch(type) {
       case 'parks': return <Trees className="w-3.5 h-3.5 text-green-600" />;
@@ -46,7 +48,7 @@ export default function HoverExplorationPopup({ x, y, areaContext, onExplore }) 
           <div className="relative z-10 w-[300px] bg-white/95 backdrop-blur-3xl rounded-[calc(1.5rem-1px)] p-5 flex flex-col gap-4">
             <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
               <MapPin className="w-5 h-5 text-[#3D52A0]" />
-              <h4 className="text-[17px] font-black text-[#3D52A0] tracking-tight">{areaContext?.areaName || 'Explore this area'}</h4>
+              <h4 className="text-[17px] font-black text-[#3D52A0] tracking-tight">{areaContext?.areaName || t('Explore this area', 'استكشف هذه المنطقة')}</h4>
             </div>
             
             {areaContext?.description && (

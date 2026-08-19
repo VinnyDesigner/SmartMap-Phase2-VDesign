@@ -126,19 +126,17 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
                   }} />
           </div>
 
-          <div className="relative flex items-center px-3 py-3 w-full bg-white/95 backdrop-blur-2xl rounded-full z-10"
-               style={{ backgroundColor: isFocused ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.95)' }}
-          >
+          <div className={`relative flex items-center px-3 py-3 w-full backdrop-blur-2xl rounded-full z-10 transition-colors ${isFocused ? 'bg-white' : 'bg-white/95'}`}>
             {/* Left Search Icon */}
             <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-dge-tech flex items-center justify-center text-white shadow-sm ms-1 relative overflow-hidden group/btn">
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
               <Sparkles className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
             </div>
             
-            <input 
-              type="text"
-              placeholder={placeholderText}
-              className="flex-1 bg-transparent border-none outline-none px-3 md:px-5 text-dge-reliable placeholder-dge-grey/70 font-medium text-base md:text-lg w-full"
+              <input 
+                type="text"
+                placeholder={placeholderText}
+                className="flex-1 bg-transparent border-none outline-none px-3 md:px-5 text-dge-reliable placeholder-dge-grey/70 font-medium text-base md:text-lg w-full"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onFocus={() => setIsFocused(true)}

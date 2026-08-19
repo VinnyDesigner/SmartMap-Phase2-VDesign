@@ -52,17 +52,30 @@ export default function AiChatInterface({ explorerState, setExplorerState }) {
     scrollToBottom();
   }, [messages]);
 
-  // Update initial message and clear chat history when language changes
+  // Update initial message when language changes without clearing chat history
   useEffect(() => {
-    setExplorerState(prev => ({
-      ...prev,
-      chatHistory: [{
+    setExplorerState(prev => {
+      const currentHistory = prev.chatHistory || [];
+      const welcomeMessage = {
         id: 1,
         role: 'assistant',
         content: isArabic ? "مرحباً! أنا مساعد الخرائط الذكي. يمكنني مساعدتك في العثور على الأماكن والخدمات العامة. عما تبحث؟" : "Hello! I'm your AI Map Assistant. I can help you find places, public services, and understand spatial data in Abu Dhabi. What are you looking for?",
         suggestions: isArabic ? ["البحث عن مستشفيات قريبة مني", "عرض المدارس في العين", "ما هي الحدائق القريبة؟"] : ["Find hospitals near me", "Show schools in Al Ain", "What parks are nearby?"]
-      }]
-    }));
+      };
+
+      if (currentHistory.length > 0) {
+        const newHistory = [...currentHistory];
+        if (newHistory[0].id === 1) {
+          newHistory[0] = { ...newHistory[0], ...welcomeMessage };
+        }
+        return { ...prev, chatHistory: newHistory };
+      }
+
+      return {
+        ...prev,
+        chatHistory: [welcomeMessage]
+      };
+    });
   }, [isArabic, setExplorerState]);
 
   const handleSubmit = async (e, overrideQuery = null) => {
@@ -220,7 +233,7 @@ export default function AiChatInterface({ explorerState, setExplorerState }) {
       className="flex flex-col h-full bg-transparent relative overflow-hidden"
     >
       {/* Header Tabs */}
-      <div className="relative z-10 flex items-center gap-1 p-2 bg-white/10 border-b border-white/20 shrink-0">
+      <div className="relative z-10 flex items-center gap-1 p-2 bg-white/50 backdrop-blur-md border-b border-white/20 shrink-0">
         <button onClick={() => setActiveTab('chat')} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${activeTab === 'chat' ? 'bg-white shadow-sm text-[#3D52A0]' : 'text-slate-500 hover:bg-white/50'}`}><MessageSquare className="w-3.5 h-3.5"/> {t('Chat', 'دردشة')}</button>
         <button onClick={() => setActiveTab('bookmarks')} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${activeTab === 'bookmarks' ? 'bg-white shadow-sm text-[#3D52A0]' : 'text-slate-500 hover:bg-white/50'}`}>
           <Bookmark className="w-3.5 h-3.5"/> {t('Saved', 'المحفوظة')}
@@ -360,7 +373,7 @@ export default function AiChatInterface({ explorerState, setExplorerState }) {
 
           {/* Natural Language Input */}
           <div className="shrink-0 p-4 pt-2 bg-white/30 border-t border-white/20">
-            <form onSubmit={(e) => handleSubmit(e)} className="relative group rounded-full shadow-sm overflow-hidden p-[1.5px] flex items-center pointer-events-auto bg-white transition-shadow focus-within:shadow-[0_8px_24px_rgba(33,90,158,0.12)]">
+            <form onSubmit={(e) => handleSubmit(e)} className="relative group rounded-full shadow-sm overflow-hidden p-[1.5px] flex items-center pointer-events-auto bg-white transition-shadow focus-within:shadow-[0_8px_24px_rgba(33,90,158,0.12)](0,0,0,0.3)]">
               <div className="absolute inset-0 bg-slate-200" />
               <div className="relative z-10 bg-white rounded-full w-full flex items-center p-1.5 ps-4">
                 <input 

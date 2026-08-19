@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents, Polygon, Circle, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
 import { motion, useTransform, useSpring } from 'framer-motion';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const customPinIcon = L.divIcon({
   className: 'custom-map-pin-container',
@@ -87,6 +88,7 @@ function MapController({ explorerState, setExplorerState, isExplorer }) {
 
 function CustomDrawControl({ explorerState, setExplorerState }) {
   const map = useMap();
+  const { t, isArabic } = useLanguage();
   const [startPoint, setStartPoint] = useState(null);
   const [currentPoint, setCurrentPoint] = useState(null);
 
@@ -114,21 +116,21 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
   const finishDrawing = (type, bounds, center, radius, poly) => {
     // Generate mock results for the drawn area
     const mockResults = [
-      { id: Date.now() + 1, name: 'Zayed University Campus', type: 'EDUCATION', location: 'Custom Area', lat: center.lat + 0.002, lng: center.lng + 0.002 },
-      { id: Date.now() + 2, name: 'Area General Hospital', type: 'HOSPITAL', location: 'Custom Area', lat: center.lat - 0.001, lng: center.lng + 0.003 },
-      { id: Date.now() + 3, name: 'Community Central Park', type: 'PARK', location: 'Custom Area', lat: center.lat + 0.003, lng: center.lng - 0.002 },
-      { id: Date.now() + 4, name: 'Metro Transit Hub', type: 'TRANSPORT', location: 'Custom Area', lat: center.lat - 0.002, lng: center.lng - 0.001 }
+      { id: Date.now() + 1, name: isArabic ? 'حرم جامعة زايد' : 'Zayed University Campus', type: 'EDUCATION', location: isArabic ? 'منطقة مخصصة' : 'Custom Area', lat: center.lat + 0.002, lng: center.lng + 0.002 },
+      { id: Date.now() + 2, name: isArabic ? 'مستشفى المنطقة العام' : 'Area General Hospital', type: 'HOSPITAL', location: isArabic ? 'منطقة مخصصة' : 'Custom Area', lat: center.lat - 0.001, lng: center.lng + 0.003 },
+      { id: Date.now() + 3, name: 'Community Central Park', name_ar: 'الحديقة المركزية المجتمعية', type: 'PARK', location: isArabic ? 'منطقة مخصصة' : 'Custom Area', lat: center.lat + 0.003, lng: center.lng - 0.002 },
+      { id: Date.now() + 4, name: isArabic ? 'مركز عبور المترو' : 'Metro Transit Hub', type: 'TRANSPORT', location: isArabic ? 'منطقة مخصصة' : 'Custom Area', lat: center.lat - 0.002, lng: center.lng - 0.001 }
     ];
 
     const chartData = {
       id: Date.now() + 'chart',
-      title: 'Infrastructure Distribution in Selected Area',
+      title: isArabic ? 'توزيع البنية التحتية في المنطقة المحددة' : 'Infrastructure Distribution in Selected Area',
       type: 'doughnut',
       data: [
-        { label: 'Education', value: 25, color: '#4facfe' },
-        { label: 'Healthcare', value: 15, color: '#f093fb' },
-        { label: 'Parks', value: 40, color: '#43e97b' },
-        { label: 'Transport', value: 20, color: '#fa709a' }
+        { label: isArabic ? 'تعليم' : 'Education', name: isArabic ? 'تعليم' : 'Education', value: 25, color: '#4facfe' },
+        { label: isArabic ? 'رعاية صحية' : 'Healthcare', name: isArabic ? 'رعاية صحية' : 'Healthcare', value: 15, color: '#f093fb' },
+        { label: isArabic ? 'حدائق' : 'Parks', name: isArabic ? 'حدائق' : 'Parks', value: 40, color: '#43e97b' },
+        { label: isArabic ? 'نقل' : 'Transport', name: isArabic ? 'نقل' : 'Transport', value: 20, color: '#fa709a' }
       ]
     };
 
@@ -153,14 +155,19 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
         { 
           id: Date.now(), 
           role: 'user', 
-          content: `Selected a custom area on the map.` 
+          content: isArabic ? `تم تحديد منطقة مخصصة على الخريطة.` : `Selected a custom area on the map.` 
         },
         { 
           id: Date.now() + 1, 
           role: 'assistant', 
-          content: `I have analyzed the custom area you drew. Here is the infrastructure distribution within this zone:\n\n**Total Facilities Found:** ${mockResults.length}\n**Primary Land Use:** Parks & Environment\n\nI have pinned the specific facilities to the map for you.`,
+          content: isArabic ? `لقد قمت بتحليل المنطقة المخصصة التي رسمتها. إليك توزيع البنية التحتية داخل هذه المنطقة:\n\n**إجمالي المرافق:** ${mockResults.length}\n**الاستخدام الرئيسي للأراضي:** الحدائق والبيئة\n\nلقد قمت بتثبيت المرافق المحددة على الخريطة من أجلك.` : `I have analyzed the custom area you drew. Here is the infrastructure distribution within this zone:\n\n**Total Facilities Found:** ${mockResults.length}\n**Primary Land Use:** Parks & Environment\n\nI have pinned the specific facilities to the map for you.`,
           results: mockResults,
-          suggestions: [
+          suggestions: isArabic ? [
+            "عرض البيانات الديموغرافية لهذه المنطقة",
+            "ما هو متوسط قيمة العقار هنا؟",
+            "هل هناك مشاريع بناء قادمة؟",
+            "تصدير تقرير هذه المنطقة إلى PDF"
+          ] : [
             "Show demographic data for this area",
             "What is the average property value here?",
             "Are there upcoming construction projects?",

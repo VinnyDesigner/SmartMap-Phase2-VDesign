@@ -52,7 +52,7 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           <motion.div
             key="hidden-btn"
             layoutId="ai-panel"
-            className="absolute bottom-6 end-6 md:end-8 w-14 h-14 bg-[#3D52A0] shadow-[0_8px_32px_rgba(61,82,160,0.4)] rounded-full flex items-center justify-center pointer-events-auto cursor-pointer z-50 group hover:bg-[#2B3A70] transition-colors"
+            className="absolute bottom-6 end-6 md:end-8 w-14 h-14 bg-[#3D52A0] shadow-[0_8px_32px_rgba(61,82,160,0.4)](0,0,0,0.5)] rounded-full flex items-center justify-center pointer-events-auto cursor-pointer z-50 group hover:bg-[#2B3A70] transition-colors"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
@@ -73,7 +73,7 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           <motion.div
             key="compact-bar"
             layoutId="ai-panel"
-            className="absolute bottom-6 end-6 md:end-8 w-[calc(100vw-3rem)] md:w-[420px] h-[60px] bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_16px_48px_rgba(61,82,160,0.2)] rounded-full pointer-events-auto z-50 flex items-center px-5 group overflow-hidden"
+            className="absolute bottom-6 end-6 md:end-8 w-[calc(100vw-3rem)] md:w-[420px] h-[60px] bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_16px_48px_rgba(61,82,160,0.2)](0,0,0,0.3)] rounded-full pointer-events-auto z-50 flex items-center px-5 group overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
