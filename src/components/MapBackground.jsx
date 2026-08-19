@@ -293,7 +293,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
       className="absolute z-0 pointer-events-auto"
       style={isExplorer ? {
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         top: 0,
         left: 0,
         x: 0,

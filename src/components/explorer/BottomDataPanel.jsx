@@ -52,14 +52,13 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           <motion.div
             key="hidden-btn"
             layoutId="ai-panel"
-            className="absolute bottom-6 end-6 md:end-8 w-14 h-14 bg-[#3D52A0] shadow-[0_8px_32px_rgba(61,82,160,0.4)](0,0,0,0.5)] rounded-full flex items-center justify-center pointer-events-auto cursor-pointer z-50 group hover:bg-[#2B3A70] transition-colors"
+            className="absolute bottom-6 end-6 md:end-8 w-14 h-14 bg-[#3D52A0] shadow-[0_8px_32px_rgba(61,82,160,0.4)] rounded-full flex items-center justify-center pointer-events-auto cursor-pointer z-50 group hover:bg-[#2B3A70] transition-colors"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-            onMouseEnter={() => setPanelState('compact')}
             onClick={() => setPanelState('compact')}
           >
             {/* Pulsing energy ring behind */}
@@ -73,16 +72,11 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
           <motion.div
             key="compact-bar"
             layoutId="ai-panel"
-            className="absolute bottom-6 end-6 md:end-8 w-[calc(100vw-3rem)] md:w-[420px] h-[60px] bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_16px_48px_rgba(61,82,160,0.2)](0,0,0,0.3)] rounded-full pointer-events-auto z-50 flex items-center px-5 group overflow-hidden"
+            className="absolute bottom-6 end-6 md:end-8 w-[calc(100vw-3rem)] md:w-[420px] h-[60px] bg-white/90 backdrop-blur-xl border border-white/60 shadow-[0_16px_48px_rgba(61,82,160,0.2)] rounded-full pointer-events-auto z-50 flex items-center px-5 group overflow-hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.1 } }}
             transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-            onMouseLeave={() => {
-              if (!compactInputValue.trim()) {
-                setPanelState('hidden');
-              }
-            }}
           >
             <motion.div layoutId="ai-icon" className="shrink-0 flex items-center justify-center w-8 h-8 rounded-full bg-blue-50/50 me-3 cursor-pointer" onClick={() => setPanelState('expanded')}>
               <Sparkles className="w-5 h-5 text-[#3D52A0]" />

@@ -12,7 +12,7 @@ export default function SignInPage({ onNavigate }) {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen w-full flex bg-[#F8FAFC] transition-colors duration-300 overflow-hidden">
+    <div className="min-h-[100dvh] w-full flex bg-[#F8FAFC] transition-colors duration-300 overflow-hidden">
       {/* Left Panel - Branding & Visuals */}
       <div className="hidden lg:flex lg:w-[45%] relative bg-gradient-to-br from-dge-reliable via-dge-tech to-blue-400 overflow-hidden">
         {/* Abstract shapes for visual interest */}

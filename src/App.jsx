@@ -155,7 +155,7 @@ const MOCK_DATA = [
   }
 
   return (
-    <div className={`h-screen w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] transition-colors duration-300 ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
+    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] transition-colors duration-300 ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
       <BrandHeader onNavigate={handleNavigate} currentView={currentView} />
       
       {currentView === 'explorer' && (
