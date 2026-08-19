@@ -384,8 +384,15 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
         <MapEventHandler onMapClick={onMapClick} />
         
         {/* Render marker if a location is selected */}
-        {selectedLocation && (
-          <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={customPinIcon} />
+        {(selectedLocation || explorerState?.selectedDetail) && (
+          <Marker 
+            position={
+              selectedLocation 
+                ? [selectedLocation.lat, selectedLocation.lng] 
+                : [explorerState.selectedDetail.lat, explorerState.selectedDetail.lng]
+            } 
+            icon={customPinIcon} 
+          />
         )}
       </MapContainer>
 

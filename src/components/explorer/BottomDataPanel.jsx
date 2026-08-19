@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Minimize2, Maximize2, Sparkles, Mic, X } from 'lucide-react';
+import { Minimize2, Maximize2, Sparkles, Mic, X, Send } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import AiChatInterface from './AiChatInterface';
 import DetailSlidePanel from './DetailSlidePanel';
@@ -37,6 +37,12 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
 
   const handleCompactKeyDown = (e) => {
     if (e.key === 'Enter' && compactInputValue.trim()) {
+      handleCompactSubmit();
+    }
+  };
+
+  const handleCompactSubmit = () => {
+    if (compactInputValue.trim()) {
       setExplorerState(prev => ({ ...prev, aiPanelState: 'expanded', pendingQuery: compactInputValue }));
       setCompactInputValue('');
     }
@@ -105,16 +111,39 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
               transition={{ delay: 0.2 }}
               className="shrink-0 flex items-center gap-0.5"
             >
-              <button 
-                onClick={(e) => { e.stopPropagation(); setPanelState('expanded'); }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100 transition-colors"
-                title="Expand AI Assistant"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100 transition-colors cursor-pointer">
-                <Mic className="w-4 h-4" />
-              </div>
+              <AnimatePresence mode="popLayout">
+                {compactInputValue.trim() ? (
+                  <motion.button 
+                    key="send"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    onClick={(e) => { e.stopPropagation(); handleCompactSubmit(); }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center bg-[#3D52A0] text-white hover:opacity-90 transition-all shadow-sm"
+                  >
+                    <Send className="w-3.5 h-3.5 ms-[-1px] rtl:rotate-180" />
+                  </motion.button>
+                ) : (
+                  <motion.div 
+                    key="tools"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    className="flex items-center gap-0.5"
+                  >
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setPanelState('expanded'); }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100 transition-colors"
+                      title="Expand AI Assistant"
+                    >
+                      <Maximize2 className="w-4 h-4" />
+                    </button>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100 transition-colors cursor-pointer">
+                      <Mic className="w-4 h-4" />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <button 
                 onClick={(e) => { e.stopPropagation(); setPanelState('hidden'); }}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors ms-0.5"

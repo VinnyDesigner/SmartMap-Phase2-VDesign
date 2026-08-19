@@ -208,6 +208,7 @@ export default function AiChatInterface({ explorerState, setExplorerState }) {
               setExplorerState(prev => ({ 
                 ...prev, 
                 mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 },
+                selectedDetail: item,
                 aiPanelState: 'compact'
               })); 
             }}
