@@ -45,7 +45,7 @@ export default function BottomDataPanel({ explorerState, setExplorerState }) {
   return (
     <div className="absolute inset-0 pointer-events-none flex">
       {/* Morphing Components */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
 
         {/* 1. HIDDEN STATE (Floating Button) */}
         {panelState === 'hidden' && (
