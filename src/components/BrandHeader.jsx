@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, HelpCircle, Menu, X } from 'lucide-react';
+import { Sun, Moon, User, HelpCircle, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
@@ -8,7 +8,10 @@ import { useLanguage } from '../contexts/LanguageContext';
 
 export default function BrandHeader({ onNavigate, currentView }) {
   const { isArabic, setIsArabic, t } = useLanguage();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [pendingLanguage, setPendingLanguage] = useState(null);
   return (
     <>
       {/* Top Brand Gradient Line */}
@@ -59,7 +62,13 @@ export default function BrandHeader({ onNavigate, currentView }) {
             <div className={`w-9 h-8 flex items-center justify-center text-[16px] font-bold font-sans z-10 transition-colors ${isArabic ? 'text-dge-reliable' : 'text-slate-500'}`}>ع</div>
           </div>
           
-
+          <button 
+            onClick={toggleTheme}
+            className="hidden md:flex w-10 h-10 rounded-full items-center justify-center text-dge-reliable bg-white/70 backdrop-blur-md border border-white/60 hover:bg-white hover:shadow-sm transition-all shadow-sm"
+            title={isDarkMode ? t("Switch to Light Mode", "التبديل إلى الوضع الفاتح") : t("Switch to Dark Mode", "التبديل إلى الوضع الداكن")}
+          >
+            {isDarkMode ? <Moon className="w-[18px] h-[18px] fill-dge-reliable" /> : <Sun className="w-[18px] h-[18px] fill-dge-reliable" />}
+          </button>
           
           {/* Empty chunk as we move it to the end */}
           <button 
@@ -88,7 +97,12 @@ export default function BrandHeader({ onNavigate, currentView }) {
       </div>
     </header>
 
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={() => {
+      if (pendingLanguage !== null) {
+        setIsArabic(pendingLanguage);
+        setPendingLanguage(null);
+      }
+    }}>
       {isMobileMenuOpen && (
         <>
           {/* Backdrop */}
@@ -101,11 +115,11 @@ export default function BrandHeader({ onNavigate, currentView }) {
           />
           {/* Off Canvas Panel */}
           <motion.div
-            initial={{ x: isArabic ? '-100%' : '100%' }}
+            initial={{ x: isArabic ? '100%' : '-100%' }}
             animate={{ x: 0 }}
-            exit={{ x: isArabic ? '-100%' : '100%' }}
+            exit={{ x: isArabic ? '100%' : '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed top-0 bottom-0 end-0 w-[280px] bg-white z-[101] shadow-2xl flex flex-col pointer-events-auto lg:hidden"
+            className="fixed top-0 bottom-0 start-0 w-[280px] bg-white z-[101] shadow-2xl flex flex-col pointer-events-auto lg:hidden"
           >
             <div className="p-5 flex items-center justify-between border-b border-gray-100">
               <img src={dgeLogo} alt="DGE Logo" className="h-8 object-contain" />
@@ -136,7 +150,10 @@ export default function BrandHeader({ onNavigate, currentView }) {
               
               {/* Language Toggle for Mobile */}
               <div 
-                onClick={() => { setIsArabic(!isArabic); setIsMobileMenuOpen(false); }}
+                onClick={() => { 
+                  setPendingLanguage(!isArabic);
+                  setIsMobileMenuOpen(false);
+                }}
                 className="p-4 rounded-xl flex items-center justify-between text-slate-600 font-bold hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <span>{t('Language (English/Arabic)', 'اللغة (العربية/English)')}</span>
@@ -147,7 +164,16 @@ export default function BrandHeader({ onNavigate, currentView }) {
                 </div>
               </div>
               
-
+              {/* Theme Toggle for Mobile */}
+              <div 
+                onClick={() => { toggleTheme(); setIsMobileMenuOpen(false); }}
+                className="p-4 rounded-xl flex items-center justify-between text-slate-600 font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                <span>{isDarkMode ? t('Switch to Light Mode', 'التبديل إلى الوضع الفاتح') : t('Switch to Dark Mode', 'التبديل إلى الوضع الداكن')}</span>
+                <div className="flex items-center justify-center w-8 h-8 bg-slate-100 rounded-full text-dge-reliable">
+                  {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                </div>
+              </div>
 
             </div>
             <div className="p-4 border-t border-gray-100">
