@@ -58,7 +58,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
   );
 
   return (
-    <div className="absolute start-4 md:start-8 top-[64px] bottom-6 flex flex-col gap-3 pointer-events-auto z-30 pb-10 items-center">
+    <div className="absolute start-4 md:start-8 top-0 md:top-2 bottom-6 flex flex-col gap-3 pointer-events-auto z-30 pb-10 items-center">
       
       {/* Brand Colored Hamburger Button */}
       <button
