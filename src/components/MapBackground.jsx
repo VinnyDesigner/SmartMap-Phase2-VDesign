@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMap, useMapEvents, Polygon, Circle,
 import L from 'leaflet';
 import { motion, useTransform, useSpring } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
+import ArcGISBasemap from './explorer/ArcGISBasemap';
 
 const customPinIcon = L.divIcon({
   className: 'custom-map-pin-container',
@@ -39,8 +40,29 @@ const createCategoryIcon = (type) => {
 function MapController({ explorerState, setExplorerState, isExplorer }) {
   const map = useMap();
   
+  // ResizeObserver automatically calls map.invalidateSize() whenever container element resizes
+  useEffect(() => {
+    if (!map) return;
+
+    map.invalidateSize();
+
+    const container = map.getContainer();
+    if (!container) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      map.invalidateSize();
+    });
+
+    resizeObserver.observe(container);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [map]);
+
   useEffect(() => {
     if (isExplorer) {
+      map.invalidateSize();
       if (explorerState?.isDrawingMode || explorerState?.drawingTool) {
         map.dragging.disable();
       } else {
@@ -55,7 +77,7 @@ function MapController({ explorerState, setExplorerState, isExplorer }) {
       map.doubleClickZoom.disable();
       map.touchZoom.disable();
     }
-  }, [isExplorer, explorerState?.isDrawingMode, explorerState?.drawingTool, map]);
+  }, [isExplorer, explorerState?.isDrawingMode, explorerState?.drawingTool, explorerState?.resizeTrigger, map]);
 
   useEffect(() => {
     if (explorerState?.mapFocus) {
@@ -292,8 +314,8 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
     <motion.div 
       className="absolute z-0 pointer-events-auto"
       style={isExplorer ? {
-        width: '100vw',
-        height: '100dvh',
+        width: '100%',
+        height: '100%',
         top: 0,
         left: 0,
         x: 0,
@@ -328,17 +350,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           <CustomDrawControl explorerState={explorerState} setExplorerState={setExplorerState} />
         )}
         
-        <TileLayer
-          key={explorerState?.basemap || 'osm'}
-          url={
-            !isExplorer ? "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-            : explorerState?.basemap === 'satellite' ? "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-            : explorerState?.basemap === 'dark' ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            : explorerState?.basemap === 'light' ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          }
-          attribution='&copy; CartoDB'
-        />
+        <ArcGISBasemap activeBasemapId={explorerState?.activeBasemap || explorerState?.basemap || 'abu-dhabi-dge'} />
         
         {/* Render markers for active search results in explorer mode */}
         {isExplorer && explorerState?.activeResults && explorerState.activeResults

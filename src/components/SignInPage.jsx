@@ -4,15 +4,17 @@ import { Mail, Lock, ArrowLeft, Fingerprint, Eye, EyeOff, ShieldCheck } from 'lu
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 export default function SignInPage({ onNavigate }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { t } = useLanguage();
+  const { isDarkMode } = useTheme();
 
   return (
-    <div className="min-h-[100dvh] w-full flex bg-[#F8FAFC] transition-colors duration-300 overflow-hidden">
+    <div className={`min-h-[100dvh] w-full flex transition-colors duration-300 overflow-hidden ${isDarkMode ? 'bg-[#0b132b] text-white' : 'bg-[#F8FAFC] text-slate-900'}`}>
       {/* Left Panel - Branding & Visuals */}
       <div className="hidden lg:flex lg:w-[45%] relative bg-gradient-to-br from-dge-reliable via-dge-tech to-blue-400 overflow-hidden">
         {/* Abstract shapes for visual interest */}
@@ -60,17 +62,17 @@ export default function SignInPage({ onNavigate }) {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="flex-1 flex flex-col justify-center px-6 sm:px-16 lg:px-24 relative">
+      <div className={`flex-1 flex flex-col justify-center px-6 sm:px-16 lg:px-24 relative ${isDarkMode ? 'bg-[#0b132b]' : 'bg-slate-50'}`}>
         {/* Mobile Header / Back button */}
         <div className="absolute top-8 left-8 lg:hidden flex justify-between w-[calc(100%-4rem)]">
           <button
             onClick={() => onNavigate('landing')}
-            className="flex items-center gap-2 text-slate-600 hover:text-dge-reliable transition-colors group"
+            className={`flex items-center gap-2 transition-colors group ${isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-dge-reliable'}`}
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 rtl:rotate-180 rtl:group-hover:translate-x-1 transition-transform" />
             <span className="font-medium">{t("Back", "رجوع")}</span>
           </button>
-          <img src={dgeLogo} alt="DGE" className="h-8 object-contain" />
+          <img src={dgeLogo} alt="DGE" className={`h-8 object-contain ${isDarkMode ? 'brightness-0 invert' : ''}`} />
         </div>
 
         <motion.div
@@ -80,8 +82,8 @@ export default function SignInPage({ onNavigate }) {
           className="max-w-md w-full mx-auto"
         >
           <div className="mb-10 text-center lg:text-left rtl:lg:text-right">
-            <h2 className="text-3xl font-bold text-slate-900 mb-3">{t("Welcome Back", "مرحباً بعودتك")}</h2>
-            <p className="text-slate-500">{t("Sign in to access your GeoVision workspace.", "قم بتسجيل الدخول للوصول إلى مساحة عمل جيوفيجين الخاصة بك.")}</p>
+            <h2 className={`text-3xl font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{t("Welcome Back", "مرحباً بعودتك")}</h2>
+            <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>{t("Sign in to access your GeoVision workspace.", "قم بتسجيل الدخول للوصول إلى مساحة عمل جيوفيجين الخاصة بك.")}</p>
           </div>
 
           <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
@@ -95,7 +97,9 @@ export default function SignInPage({ onNavigate }) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full ps-11 pe-4 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-dge-tech/20 focus:border-dge-tech transition-all shadow-sm text-start"
+                  className={`block w-full ps-11 pe-4 py-3.5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-dge-tech/20 focus:border-dge-tech transition-all shadow-sm text-start ${
+                    isDarkMode ? 'bg-[#132042] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
                   placeholder="name@government.ae"
                   required
                 />
@@ -110,14 +114,16 @@ export default function SignInPage({ onNavigate }) {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full ps-11 pe-12 py-3.5 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-dge-tech/20 focus:border-dge-tech transition-all shadow-sm text-start"
+                  className={`block w-full ps-11 pe-12 py-3.5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-dge-tech/20 focus:border-dge-tech transition-all shadow-sm text-start ${
+                    isDarkMode ? 'bg-[#132042] border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-900'
+                  }`}
                   placeholder={t("Enter your password", "أدخل كلمة المرور")}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 end-0 pe-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  className="absolute inset-y-0 end-0 pe-4 flex items-center text-slate-400 hover:text-slate-300 transition-colors"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -127,9 +133,9 @@ export default function SignInPage({ onNavigate }) {
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-dge-tech focus:ring-dge-tech/20" />
-                <span className="text-slate-600 font-medium">{t("Remember me", "تذكرني")}</span>
+                <span className={isDarkMode ? 'text-slate-300 font-medium' : 'text-slate-600 font-medium'}>{t("Remember me", "تذكرني")}</span>
               </label>
-              <a href="#" className="text-dge-tech font-semibold hover:text-dge-reliable transition-colors">
+              <a href="#" className={`font-semibold transition-colors ${isDarkMode ? 'text-[#00e5ff] hover:text-white' : 'text-dge-tech hover:text-dge-reliable'}`}>
                 {t("Forgot password?", "هل نسيت كلمة المرور؟")}
               </a>
             </div>
@@ -137,17 +143,17 @@ export default function SignInPage({ onNavigate }) {
             <button
               type="submit"
               onClick={() => onNavigate('explorer')}
-              className="w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-gradient-to-r from-dge-tech to-dge-reliable hover:shadow-md transform hover:-translate-y-0.5 transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-dge-tech"
+              className={`w-full flex justify-center items-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white transition-all transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                isDarkMode ? 'bg-gradient-to-r from-[#00b4d8] to-[#215A9E] shadow-[0_4px_20px_rgba(0,180,216,0.3)]' : 'bg-gradient-to-r from-dge-tech to-dge-reliable shadow-sm'
+              }`}
             >
               {t("Sign In", "تسجيل الدخول")}
             </button>
           </form>
 
-
-
-          <p className="mt-10 text-center text-sm text-slate-500">
+          <p className="mt-10 text-center text-sm text-slate-400">
             {t("Don't have an account?", "ليس لديك حساب؟")}{' '}
-            <a href="#" className="font-bold text-dge-tech hover:text-dge-reliable transition-colors">
+            <a href="#" className={`font-bold transition-colors ${isDarkMode ? 'text-[#00e5ff] hover:text-white' : 'text-dge-tech hover:text-dge-reliable'}`}>
               {t("Request Access", "طلب وصول")}
             </a>
           </p>

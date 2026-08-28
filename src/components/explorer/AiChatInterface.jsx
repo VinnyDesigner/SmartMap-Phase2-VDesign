@@ -1,39 +1,109 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CheckCircle2, Mic, Send, Bot, User, MapPin, GraduationCap, PlusSquare, TreePine, Bus, Bookmark, Info, ChevronDown, MessageSquare, History } from 'lucide-react';
+import { 
+  Send, Bot, User, MapPin, GraduationCap, PlusSquare, TreePine, Bus, 
+  Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight 
+} from 'lucide-react';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine } from '../../services/mockAiEngine';
-import AiChart from './AiChart';
+import { executeAppAction } from '../../services/actionRegistry';
+import AiResponseRenderer from '../ai/AiResponseRenderer';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
 
-export default function AiChatInterface({ explorerState, setExplorerState }) {
+// Default seed saved locations for Abu Dhabi
+const SEED_SAVED_LOCATIONS = [
+  {
+    id: 'FAC-AD-001',
+    name: 'Cleveland Clinic Abu Dhabi',
+    name_ar: 'كليفلاند كلينك أبوظبي',
+    district: 'Al Maryah Island',
+    facilityType: 'HOSPITAL',
+    riskLevel: 'High',
+    riskScore: 88,
+    lat: 24.5011,
+    lng: 54.3942
+  },
+  {
+    id: 'FAC-AD-003',
+    name: 'Mussafah Industrial Manufacturing Hub',
+    name_ar: 'مجمع مصفح الصناعي والتصنيعي',
+    district: 'Mussafah',
+    facilityType: 'MANUFACTURING',
+    riskLevel: 'Critical',
+    riskScore: 92,
+    lat: 24.3540,
+    lng: 54.3540
+  }
+];
+
+// Default seed history sessions
+const SEED_HISTORY_SESSIONS = [
+  {
+    id: 'hist-ad-01',
+    timestamp: '04:15 PM',
+    preview: 'Show high-risk manufacturing facilities in Abu Dhabi',
+    messageCount: 4,
+    messages: [
+      { id: 1, role: 'assistant', content: 'Hello! Welcome to Abu Dhabi GeoAI Workspace.' },
+      { id: 2, role: 'user', content: 'Show high-risk manufacturing facilities in Abu Dhabi' },
+      { id: 3, role: 'assistant', content: 'Selected Mussafah Industrial Manufacturing Hub (#1 Risk candidate).' }
+    ]
+  },
+  {
+    id: 'hist-ad-02',
+    timestamp: '02:30 PM',
+    preview: 'Compare emissions between Mussafah and KIZAD',
+    messageCount: 3,
+    messages: [
+      { id: 1, role: 'user', content: 'Compare emissions between Mussafah and KIZAD' },
+      { id: 2, role: 'assistant', content: 'Mussafah emissions (98,000 tCO2e) exceed KIZAD by 17%.' }
+    ]
+  }
+];
+
+// Translation mapping for common user queries and preset buttons
+const USER_MSG_TRANSLATION_MAP = {
+  'Public parks': 'الحدائق العامة والمحميات الطبيعية',
+  'Show parks': 'عرض الحدائق العامة',
+  'Show hospitals': 'عرض المستشفيات والمراكز الطبية',
+  'Show schools': 'عرض المدارس والجامعات',
+  'Show emissions': 'عرض الانبعاثات',
+  'Undo': 'تراجع',
+  'Show high-risk manufacturing facilities in Abu Dhabi': 'عرض منشآت التصنيع عالية الخطورة في أبوظبي',
+  'Compare emissions between Mussafah and KIZAD': 'مقارنة الانبعاثات بين مصفح وكيزاد',
+  'Why is this facility high risk?': 'لماذا هذه المنشأة عالية الخطورة؟',
+  'Why is SSMC high risk?': 'لماذا مستشفى شخبوط عالي الخطورة؟',
+  'Compare Water Consumption': 'مقارنة استهلاك المياه'
+};
+
+export default function AiChatInterface({ explorerState, setExplorerState, onNavigate }) {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [bookmarks, setBookmarks] = useState([]);
-  const [activeTab, setActiveTab] = useState('chat');
-  const messagesEndRef = useRef(null);
+  const [activeStepText, setActiveStepText] = useState(null);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'saved' | 'history'
   const scrollContainerRef = useRef(null);
 
   // Auto-submit from compact input state
   useEffect(() => {
     if (explorerState?.pendingQuery) {
       const q = explorerState.pendingQuery;
-      // Clear it so it doesn't fire again
       setExplorerState(prev => ({ ...prev, pendingQuery: null }));
       handleSubmit(null, q);
     }
   }, [explorerState?.pendingQuery]);
 
-  const { t, isArabic } = useLanguage();
+  const { t, isArabic, setIsArabic } = useLanguage();
+  const { isDarkMode } = useTheme();
 
   const placeholderText = useTypewriterPlaceholder(
     isArabic ? [
-      'اسأل عن أي شيء حول أبوظبي...',
-      'البحث عن مستشفيات قريبة مني',
-      'عرض المدارس في العين'
+      'اسأل عن أي شيء حول منشآت أبوظبي...',
+      'مقارنة الانبعاثات بين مصفح وكيزاد',
+      'لماذا هذه المنشأة عالية الخطورة؟'
     ] : [
-      'Ask anything about Abu Dhabi...',
-      'Find hospitals near me',
-      'Show schools in Al Ain'
+      'Ask anything about Abu Dhabi facilities...',
+      'Compare emissions between Mussafah and KIZAD',
+      'Why is this facility high risk?'
     ]
   );
 
@@ -49,408 +119,487 @@ export default function AiChatInterface({ explorerState, setExplorerState }) {
   };
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (activeTab === 'chat') {
+      scrollToBottom();
+    }
+  }, [messages, activeStepText, activeTab]);
 
-  // Update initial message when language changes without clearing chat history
+  // Welcome Message & Dynamic Language Sync
   useEffect(() => {
     setExplorerState(prev => {
       const currentHistory = prev.chatHistory || [];
-      const welcomeMessage = {
-        id: 1,
-        role: 'assistant',
-        content: isArabic ? "مرحباً! أنا مساعد الخرائط الذكي. يمكنني مساعدتك في العثور على الأماكن والخدمات العامة. عما تبحث؟" : "Hello! I'm your AI Map Assistant. I can help you find places, public services, and understand spatial data in Abu Dhabi. What are you looking for?",
-        suggestions: isArabic ? ["البحث عن مستشفيات قريبة مني", "عرض المدارس في العين", "ما هي الحدائق القريبة؟"] : ["Find hospitals near me", "Show schools in Al Ain", "What parks are nearby?"]
-      };
+      const welcomeContent = isArabic 
+        ? "مرحباً! أنا منصة القرار الذكي للمعلومات المكانية أبوظبي GeoAI. أجمع بين التحليل الجغرافي، المؤشرات التفاعلية، والرسوم البيانية للمساعدة في اتخاذ القرارات." 
+        : "Hello! I'm your Abu Dhabi Conversational GeoAI Decision Intelligence Workspace. I perform WGS84 spatial analytics, compound risk modeling, and rich interactive visualization across Abu Dhabi.";
+      const welcomeSuggestions = isArabic 
+        ? ["عرض منشآت التصنيع عالية الخطورة في أبوظبي", "مقارنة الانبعاثات بين مصفح وكيزاد", "لماذا هذه المنشأة عالية الخطورة؟"] 
+        : ["Show high-risk manufacturing facilities in Abu Dhabi", "Compare emissions between Mussafah and KIZAD", "Why is this facility high risk?"];
 
-      if (currentHistory.length > 0) {
-        const newHistory = [...currentHistory];
-        if (newHistory[0].id === 1) {
-          newHistory[0] = { ...newHistory[0], ...welcomeMessage };
-        }
-        return { ...prev, chatHistory: newHistory };
+      if (currentHistory.length === 0) {
+        return {
+          ...prev,
+          chatHistory: [{ id: 1, role: 'assistant', content: welcomeContent, suggestions: welcomeSuggestions }]
+        };
       }
 
-      return {
-        ...prev,
-        chatHistory: [welcomeMessage]
-      };
+      if (currentHistory[0] && currentHistory[0].id === 1) {
+        const updatedHistory = [...currentHistory];
+        updatedHistory[0] = {
+          ...updatedHistory[0],
+          content: welcomeContent,
+          suggestions: welcomeSuggestions
+        };
+        return { ...prev, chatHistory: updatedHistory };
+      }
+
+      return prev;
     });
-  }, [isArabic, setExplorerState]);
+  }, [isArabic]);
 
-  const handleSubmit = async (e, overrideQuery = null) => {
+  const handleSubmit = async (e, forcedQuery = null) => {
     if (e) e.preventDefault();
-    const queryText = overrideQuery || inputValue;
-    if (!queryText.trim() || isTyping) return;
+    const queryToProcess = forcedQuery || inputValue;
+    if (!queryToProcess.trim() || isTyping) return;
 
-    const userMsg = { id: Date.now(), role: 'user', content: queryText };
+    if (!forcedQuery) setInputValue('');
+    setActiveTab('chat'); // Switch to chat view when submitting a query
+
+    // 1. Add User Message
+    const userMsg = { id: Date.now(), role: 'user', content: queryToProcess };
+    
     setExplorerState(prev => ({
       ...prev,
       chatHistory: [...(prev.chatHistory || []), userMsg]
     }));
 
-    setInputValue('');
+    // 2. Set Thinking / Processing State
     setIsTyping(true);
+    setActiveStepText(isArabic ? "جاري تحليل البيانات المكانية..." : "Analyzing spatial predicates...");
 
     try {
-      const response = await mockAiEngine.processQuery(queryText, explorerState, isArabic);
-      
+      // 3. Process via AI Orchestrator / Natural Language Engine
+      const aiResponse = await mockAiEngine.processQuery(queryToProcess, explorerState, isArabic);
+
+      // 4. Handle Dispatched Actions
+      if (aiResponse.actions && aiResponse.actions.length > 0) {
+        for (const action of aiResponse.actions) {
+          await executeAppAction(action, explorerState, setExplorerState, onNavigate, { setIsArabic });
+        }
+      }
+
+      // 5. Append Assistant Message
+      const assistantMsg = {
+        id: Date.now() + 1,
+        role: 'assistant',
+        content: aiResponse.reply,
+        blocks: aiResponse.blocks,
+        kpiGrid: aiResponse.kpiGrid,
+        chartData: aiResponse.chartData,
+        riskDecomposition: aiResponse.riskDecomposition,
+        insightData: aiResponse.insightData,
+        whyThisResult: aiResponse.whyThisResult,
+        executionLogs: aiResponse.executionLogs,
+        actionCards: aiResponse.actionCards,
+        suggestions: aiResponse.suggestions
+      };
+
       setExplorerState(prev => ({
         ...prev,
-        activeResults: response.results,
-        mapFocus: response.results.length > 0 ? { lat: response.results[0].lat, lng: response.results[0].lng, zoom: 12 } : null,
-        selectedDetail: null,
-        chatHistory: [
-          ...(prev.chatHistory || []), 
-          { 
-            id: Date.now(), 
-            role: 'assistant', 
-            content: response.reply, 
-            results: response.results,
-            suggestions: response.suggestions,
-            chartData: response.chartData
-          }
-        ]
+        activeResults: aiResponse.results || prev.activeResults,
+        chatHistory: [...(prev.chatHistory || []), assistantMsg]
       }));
-    } catch (error) {
-      console.error("AI Engine Error:", error);
+
+    } catch (err) {
+      console.error("AI Assistant Execution Error:", err);
       setExplorerState(prev => ({
         ...prev,
         chatHistory: [
-          ...(prev.chatHistory || []), 
+          ...(prev.chatHistory || []),
           { 
-            id: Date.now(), 
+            id: Date.now() + 1, 
             role: 'assistant', 
-            content: "I'm sorry, I encountered a connection error. Please try again.", 
+            content: "I encountered an error executing this request. Please try again.", 
           }
         ]
       }));
     } finally {
       setIsTyping(false);
+      setActiveStepText(null);
     }
   };
 
-  const handleBookmarkToggle = (msg) => {
-    setBookmarks(prev => {
-      if (prev.some(b => b.id === msg.id)) {
-        return prev.filter(b => b.id !== msg.id);
-      }
-      return [{ ...msg, bookmarkedAt: Date.now() }, ...prev];
-    });
+  const handleActionCardClick = async (card) => {
+    if (!card) return;
+    setActiveStepText(isArabic ? "جاري تشغيل الإجراء..." : "Executing action...");
+    try {
+      await executeAppAction({ type: card.actionType, params: card.params }, explorerState, setExplorerState, onNavigate, { setIsArabic });
+    } finally {
+      setActiveStepText(null);
+    }
   };
 
-  const renderRichText = (text) => {
-    if (!text) return null;
-    return text.split('\n').map((paragraph, pIdx) => (
-      <p key={pIdx} className={pIdx > 0 ? "mt-2" : ""}>
-        {paragraph.split('**').map((part, i) => 
-          i % 2 === 1 ? <strong key={i} className="font-bold text-[#1e2749]">{part}</strong> : part
-        )}
-      </p>
-    ));
+  const handleEntityClick = (facility) => {
+    if (facility && facility.lat && facility.lng) {
+      setExplorerState(prev => ({
+        ...prev,
+        selectedLocation: facility,
+        activeSlidePanel: 'detail',
+        mapFocus: { lat: facility.lat, lng: facility.lng, zoom: 16 }
+      }));
+    }
   };
 
-  const renderResultCard = (item) => {
-    let CategoryIcon = MapPin;
-    if (item.type === 'EDUCATION') CategoryIcon = GraduationCap;
-    else if (item.type === 'HOSPITAL') CategoryIcon = PlusSquare;
-    else if (item.type === 'PARK') CategoryIcon = TreePine;
-    else if (item.type === 'TRANSPORT') CategoryIcon = Bus;
+  // Saved Items Management
+  const savedLocations = explorerState?.savedLocations?.length > 0 
+    ? explorerState.savedLocations 
+    : SEED_SAVED_LOCATIONS;
 
-    const typeMap = { 
-      'EDUCATION': t('Education', 'تعليم'), 
-      'HOSPITAL': t('Healthcare', 'رعاية صحية'), 
-      'TRANSPORT': t('Transport', 'نقل'), 
-      'PARK': t('Environment', 'بيئة') 
-    };
-
-    return (
-      <div 
-        key={item.id} 
-        onClick={() => setExplorerState(prev => ({ ...prev, selectedDetail: item, mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 } }))}
-        className="mt-2 bg-white rounded-xl border border-gray-200/60 p-3 shadow-sm hover:shadow-md hover:border-[#3D52A0]/30 transition-all cursor-pointer flex flex-col gap-2 relative overflow-hidden group/card"
-      >
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#3D52A0] opacity-0 group-hover/card:opacity-100 transition-opacity" />
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#f0f4ff] text-[#3D52A0] flex items-center justify-center shrink-0 mt-0.5">
-            <CategoryIcon className="w-4 h-4" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-[#1e2749] text-[13px] leading-tight mb-1 truncate">{isArabic && item.name_ar ? item.name_ar : item.name}</h4>
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
-              <span className="font-medium">{typeMap[item.type] || item.type}</span>
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-              <span className="truncate">{isArabic && item.location_ar ? item.location_ar : item.location}</span>
-            </div>
-            {item.distance && (
-              <div className="text-[10px] font-semibold text-[#3D52A0] bg-[#eef3ff] px-2 py-0.5 rounded mt-1.5 inline-block">
-                {item.distance} {t('away', 'بعيد')}
-              </div>
-            )}
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-between mt-1 pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-1">
-            <button className="text-gray-400 hover:text-[#3D52A0] transition-colors w-7 h-7 flex items-center justify-center rounded-lg hover:bg-[#f0f4ff]">
-              <Bookmark className="w-3.5 h-3.5" />
-            </button>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setExplorerState(prev => ({ ...prev, selectedDetail: item })); }}
-              className="text-gray-400 hover:text-gray-600 transition-colors w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100"
-            >
-              <Info className="w-3.5 h-3.5" />
-            </button>
-          </div>
-          <button 
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              setExplorerState(prev => ({ 
-                ...prev, 
-                mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 },
-                selectedDetail: item,
-                aiPanelState: 'compact'
-              })); 
-            }}
-            className="text-[11px] font-bold text-[#3D52A0] hover:text-[#2a3b7a] flex items-center gap-1 px-2 py-1"
-          >
-            {t('Show on map', 'عرض على الخريطة')} <MapPin className="w-3 h-3" />
-          </button>
-        </div>
-      </div>
-    );
+  const handleRemoveSavedLocation = (id) => {
+    setExplorerState(prev => ({
+      ...prev,
+      savedLocations: (prev.savedLocations || SEED_SAVED_LOCATIONS).filter(item => item.id !== id)
+    }));
   };
 
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
+  const handleClearAllSaved = () => {
+    setExplorerState(prev => ({
+      ...prev,
+      savedLocations: []
+    }));
+  };
+
+  // History Management
+  const historySessions = explorerState?.savedChatHistory?.length > 0 
+    ? explorerState.savedChatHistory 
+    : SEED_HISTORY_SESSIONS;
+
+  const handleRestoreHistorySession = (session) => {
+    setExplorerState(prev => ({
+      ...prev,
+      chatHistory: session.messages || []
+    }));
+    setActiveTab('chat');
+  };
+
+  const handleRemoveHistorySession = (id) => {
+    setExplorerState(prev => ({
+      ...prev,
+      savedChatHistory: (prev.savedChatHistory || SEED_HISTORY_SESSIONS).filter(s => s.id !== id)
+    }));
+  };
+
+  const handleClearAllHistory = () => {
+    setExplorerState(prev => ({
+      ...prev,
+      savedChatHistory: []
+    }));
   };
 
   return (
-    <div 
-      className="flex flex-col h-full bg-transparent relative overflow-hidden"
-    >
-      {/* Header Tabs */}
-      <div className="relative z-10 flex items-center gap-1 p-2 bg-white/50 backdrop-blur-md border-b border-white/20 shrink-0">
-        <button onClick={() => setActiveTab('chat')} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${activeTab === 'chat' ? 'bg-white shadow-sm text-[#3D52A0]' : 'text-slate-500 hover:bg-white/50'}`}><MessageSquare className="w-3.5 h-3.5"/> {t('Chat', 'دردشة')}</button>
-        <button onClick={() => setActiveTab('bookmarks')} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${activeTab === 'bookmarks' ? 'bg-white shadow-sm text-[#3D52A0]' : 'text-slate-500 hover:bg-white/50'}`}>
-          <Bookmark className="w-3.5 h-3.5"/> {t('Saved', 'المحفوظة')}
-          {bookmarks.length > 0 && <span className="bg-[#3D52A0] text-white text-[9px] px-1.5 rounded-full mx-1">{bookmarks.length}</span>}
+    <div className={`flex flex-col h-full w-full overflow-hidden relative transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#060a12] text-slate-100' : 'bg-white text-slate-800'
+    }`}>
+      {/* Tab Selector Header */}
+      <div className={`flex items-center justify-around border-b shrink-0 px-2 py-2 z-20 ${
+        isDarkMode ? 'bg-[#0a0f1d] border-slate-800/80' : 'bg-white border-slate-200'
+      }`}>
+        <button 
+          onClick={() => setActiveTab('chat')} 
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            activeTab === 'chat' 
+              ? (isDarkMode ? 'bg-[#131b2e] text-white border border-slate-700/80 shadow-xs' : 'bg-[#eef3ff] text-[#3D52A0]') 
+              : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+          }`}
+        >
+          <MessageSquare className="w-3.5 h-3.5" />
+          <span>{t('Chat', 'الدردشة')}</span>
         </button>
-        <button onClick={() => setActiveTab('history')} className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${activeTab === 'history' ? 'bg-white shadow-sm text-[#3D52A0]' : 'text-slate-500 hover:bg-white/50'}`}><History className="w-3.5 h-3.5"/> {t('History', 'السجل')}</button>
+
+        <button 
+          onClick={() => setActiveTab('saved')} 
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
+            activeTab === 'saved' 
+              ? (isDarkMode ? 'bg-[#131b2e] text-white border border-slate-700/80 shadow-xs' : 'bg-[#eef3ff] text-[#3D52A0]') 
+              : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+          }`}
+        >
+          <Bookmark className="w-3.5 h-3.5" />
+          <span>{t('Saved', 'المحفوظات')}</span>
+          {savedLocations.length > 0 && (
+            <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#0d1424] text-[#c084fc] border border-slate-800' : 'bg-[#3D52A0] text-white'}`}>
+              {savedLocations.length}
+            </span>
+          )}
+        </button>
+
+        <button 
+          onClick={() => setActiveTab('history')} 
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
+            activeTab === 'history' 
+              ? (isDarkMode ? 'bg-[#131b2e] text-white border border-slate-700/80 shadow-xs' : 'bg-[#eef3ff] text-[#3D52A0]') 
+              : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+          }`}
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>{t('History', 'السجل')}</span>
+          {historySessions.length > 0 && (
+            <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
+              {historySessions.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      <div className="relative z-10 flex-1 overflow-hidden">
-        {/* Chat Tab */}
-        <div className={`absolute inset-0 flex flex-col transition-opacity duration-300 ${activeTab === 'chat' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-          <div className="flex-1 overflow-y-auto px-4 md:px-5 pb-5 pt-4 space-y-5 sleek-scrollbar relative" ref={scrollContainerRef}>
-        
-        {/* Empty State */}
-        {messages.length === 0 && (
-          <div className="flex flex-col h-full items-center justify-center text-center opacity-80 mt-10">
-            <div className="w-12 h-12 rounded-full bg-[#eef3ff] flex items-center justify-center mb-4">
-              <Bot className="w-6 h-6 text-[#3D52A0]" />
-            </div>
-            <h3 className="text-[#1e2749] font-bold text-[16px] mb-2">{t('Explore Abu Dhabi using natural language.', 'استكشف أبوظبي باستخدام اللغة الطبيعية.')}</h3>
-            <p className="text-slate-500 text-[13px] mb-8 max-w-[250px]">{t('I can help you find places, public services, and understand spatial data.', 'يمكنني مساعدتك في العثور على الأماكن والخدمات العامة وفهم البيانات المكانية.')}</p>
-            
-            <div className="w-full flex flex-col gap-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">{t('Try asking:', 'جرب السؤال عن:')}</span>
-              <button onClick={() => handleSubmit(null, isArabic ? "البحث عن مستشفيات قريبة مني" : "Find hospitals near me")} className="text-start px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-medium text-slate-700 hover:bg-[#f0f4ff] hover:text-[#3D52A0] hover:border-[#3D52A0]/30 transition-all shadow-sm">
-                "{isArabic ? "البحث عن مستشفيات قريبة مني" : "Find hospitals near me"}"
-              </button>
-              <button onClick={() => handleSubmit(null, isArabic ? "عرض المدارس في العين" : "Show schools in Al Ain")} className="text-start px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-medium text-slate-700 hover:bg-[#f0f4ff] hover:text-[#3D52A0] hover:border-[#3D52A0]/30 transition-all shadow-sm">
-                "{isArabic ? "عرض المدارس في العين" : "Show schools in Al Ain"}"
-              </button>
-              <button onClick={() => handleSubmit(null, isArabic ? "ما هي الحدائق القريبة؟" : "What parks are nearby?")} className="text-start px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-medium text-slate-700 hover:bg-[#f0f4ff] hover:text-[#3D52A0] hover:border-[#3D52A0]/30 transition-all shadow-sm">
-                "{isArabic ? "ما هي الحدائق القريبة؟" : "What parks are nearby?"}"
-              </button>
-            </div>
-          </div>
-        )}
+      {/* 1. CHAT TAB CONTENT */}
+      {activeTab === 'chat' && (
+        <>
+          <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-[#060a12]' : 'bg-white'}`}>
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {msg.role === 'assistant' && (
+                  <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${
+                    isDarkMode ? 'bg-[#0d1424] border border-slate-800 text-[#c084fc]' : 'bg-gradient-to-br from-[#3D52A0] to-[#1e2749]'
+                  }`}>
+                    <Bot className="w-4 h-4" />
+                  </div>
+                )}
 
-        {/* Chat History */}
-        {messages.map((msg, index) => (
-          <div key={msg.id} className={`flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-            
-            {/* Message Bubble */}
-            <div className={`flex gap-3 max-w-[95%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 relative z-10 border ${
-                msg.role === 'assistant' ? 'bg-white border-gray-100 shadow-sm' : 'bg-[#eef3ff] border-[#dce6ff]'
-              }`}>
-                {msg.role === 'assistant' ? <Bot className="w-4 h-4 text-[#3D52A0]" /> : <User className="w-4 h-4 text-[#3D52A0]" />}
-              </div>
-              
-              <div className={`flex flex-col relative`}>
-                <div 
-                  className={`px-4 py-3 rounded-[20px] text-[13px] leading-relaxed relative z-10 ${
-                    msg.role === 'user' 
-                      ? 'bg-[#3D52A0] text-white rounded-tr-sm shadow-sm' 
-                      : 'bg-white text-[#333333] rounded-tl-sm shadow-sm border border-gray-100'
-                  }`}
-                >
-                  {renderRichText(msg.content)}
-                  
-                  {/* Inline Analytics Chart */}
-                  {msg.role === 'assistant' && msg.chartData && (
-                    <AiChart 
-                      chartData={msg.chartData}
-                      results={msg.results}
-                      isBookmarked={bookmarks.some(b => b.id === msg.id)}
-                      onBookmark={() => handleBookmarkToggle(msg)}
+                <div className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-2xs relative ${
+                  msg.role === 'user' 
+                    ? (isDarkMode 
+                        ? 'bg-[#131b2e] text-white rounded-br-none font-medium border border-slate-700/80 shadow-xs' 
+                        : 'bg-[#3D52A0] text-white rounded-br-none font-medium')
+                    : (isDarkMode 
+                        ? 'bg-[#0d1424] border border-slate-800/80 text-slate-100 rounded-bl-none shadow-[0_4px_20px_rgba(0,0,0,0.3)]' 
+                        : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-none')
+                }`}>
+                  {msg.role === 'assistant' ? (
+                    <AiResponseRenderer 
+                      response={msg} 
+                      onEntityClick={handleEntityClick}
+                      onActionClick={handleActionCardClick}
+                      onSuggestionClick={(sug) => handleSubmit(null, sug)}
                     />
+                  ) : (
+                    <p>{isArabic ? (USER_MSG_TRANSLATION_MAP[msg.content] || msg.content_ar || msg.content) : msg.content}</p>
                   )}
                 </div>
+
+                {msg.role === 'user' && (
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
+                    <User className="w-4 h-4" />
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
 
-            {/* Results Rendering (Only for AI) */}
-            {msg.role === 'assistant' && msg.results && msg.results.length > 0 && (
-              <div className="w-full pl-11 pr-2 mt-1">
-                {/* Contextual Filters Mini-Bar */}
-                <div className="flex items-center gap-2 mb-2 overflow-x-auto hide-scrollbar">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mx-1">{t('Filters:', 'عوامل التصفية:')}</span>
-                  <button className="whitespace-nowrap px-2 py-1 bg-white border border-gray-200 rounded-md text-[11px] font-medium text-gray-600 flex items-center gap-1 hover:bg-gray-50">
-                    {t('All Types', 'جميع الأنواع')} <ChevronDown className="w-3 h-3" />
-                  </button>
-                  <button className="whitespace-nowrap px-2 py-1 bg-white border border-gray-200 rounded-md text-[11px] font-medium text-gray-600 flex items-center gap-1 hover:bg-gray-50">
-                    {t('Distance', 'المسافة')} <ChevronDown className="w-3 h-3" />
-                  </button>
-                  <button className="whitespace-nowrap px-2 py-1 bg-white border border-gray-200 rounded-md text-[11px] font-medium text-gray-600 flex items-center gap-1 hover:bg-gray-50">
-                    {t('Open Now', 'مفتوح الآن')}
-                  </button>
+            {isTyping && (
+              <div className="flex gap-2.5 justify-start items-center">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 animate-pulse ${isDarkMode ? 'bg-[#0d1424] text-[#c084fc] border border-slate-800' : 'bg-[#3D52A0] text-white'}`}>
+                  <Bot className="w-4 h-4" />
                 </div>
-
-                <div className="flex flex-col gap-1">
-                  {msg.results.map(item => renderResultCard(item))}
+                <div className={`border rounded-2xl px-3.5 py-2 text-xs font-semibold flex items-center gap-2 ${
+                  isDarkMode ? 'bg-[#0d1424] border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200/80 text-[#3D52A0]'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full animate-ping ${isDarkMode ? 'bg-[#c084fc]' : 'bg-[#3D52A0]'}`} />
+                  <span>{activeStepText || t("AI Agent is reasoning...", "جاري معالجة الاستعلام المكاني...")}</span>
                 </div>
               </div>
             )}
-
-            {/* AI Contextual Suggestions */}
-            {msg.role === 'assistant' && msg.suggestions && msg.suggestions.length > 0 && (
-              <div className="w-full ps-11 mt-2">
-                <span className="text-[11px] font-medium text-slate-400 mb-1 block">{t('Would you like me to:', 'هل تود مني:')}</span>
-                <div className="flex flex-wrap gap-2">
-                  {msg.suggestions.map((suggestion, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => handleSubmit(null, suggestion)}
-                      className="px-3 py-1.5 bg-[#eef3ff] text-[#3D52A0] text-[11px] font-semibold rounded-lg hover:bg-[#dce6ff] transition-colors"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-          </div>
-        ))}
-
-        {/* Typing Indicator */}
-        {isTyping && (
-          <div className="flex flex-col gap-2 items-start">
-            <div className="flex gap-3 max-w-[95%] flex-row">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 relative z-10 border bg-white border-gray-100 shadow-sm">
-                <Bot className="w-4 h-4 text-[#3D52A0]" />
-              </div>
-              <div className="flex flex-col relative">
-                <div className="px-4 py-3 rounded-[20px] text-[13px] leading-relaxed relative z-10 bg-white text-[#333333] rounded-tl-sm shadow-sm border border-gray-100 flex items-center gap-1.5 h-[42px]">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
           </div>
 
-          {/* Natural Language Input */}
-          <div className="shrink-0 p-4 pt-2 bg-white/30 border-t border-white/20">
-            <form onSubmit={(e) => handleSubmit(e)} className="relative group rounded-full shadow-sm overflow-hidden p-[1.5px] flex items-center pointer-events-auto bg-white transition-shadow focus-within:shadow-[0_8px_24px_rgba(33,90,158,0.12)](0,0,0,0.3)]">
-              <div className="absolute inset-0 bg-slate-200" />
-              <div className="relative z-10 bg-white rounded-full w-full flex items-center p-1.5 ps-4">
-                <input 
-                  type="text" 
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={placeholderText} 
-                  className="flex-1 bg-transparent border-none py-1 text-[13px] font-medium focus:outline-none text-[#1e2749] placeholder:text-gray-400"
-                />
-                <div className="flex items-center gap-1 pe-1 shrink-0">
-                  <button type="button" className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors rounded-full bg-gray-50 hover:bg-gray-100">
-                    <Mic className="w-4 h-4" />
-                  </button>
-                  <button 
-                    type="submit" 
-                    disabled={!inputValue.trim() || isTyping}
-                    className={`w-8 h-8 flex items-center justify-center text-white transition-all rounded-full shadow-sm ${inputValue.trim() && !isTyping ? 'bg-[#3D52A0] hover:opacity-90' : 'bg-gray-300'}`}
-                  >
-                    <Send className="w-3.5 h-3.5 ms-[-1px] rtl:rotate-180" />
-                  </button>
-                </div>
-              </div>
+          {/* Bottom Chat Input Form */}
+          <div className={`p-3 border-t shrink-0 relative z-20 ${isDarkMode ? 'bg-[#0a0f1d] border-slate-800/80' : 'bg-white border-slate-200'}`}>
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder={placeholderText}
+                className={`flex-1 text-xs font-medium rounded-full px-4 py-2.5 border outline-none transition-all ${
+                  isDarkMode 
+                    ? 'bg-[#0d1527] text-white placeholder-slate-400 border-slate-800 focus:border-slate-600' 
+                    : 'bg-slate-100/90 hover:bg-slate-100 focus:bg-white text-slate-800 placeholder-slate-400 border-transparent focus:border-[#3D52A0]/50'
+                }`}
+              />
+              <button
+                type="submit"
+                disabled={!inputValue.trim() || isTyping}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                  inputValue.trim() && !isTyping
+                    ? (isDarkMode ? 'bg-[#131b2e] hover:bg-[#1e2a44] text-white border border-slate-700/80 shadow-xs' : 'bg-[#3D52A0] text-white shadow-sm hover:bg-[#2d3e7d]')
+                    : (isDarkMode ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed')
+                }`}
+              >
+                <Send className="w-4 h-4 rtl:-scale-x-100" />
+              </button>
             </form>
           </div>
-        </div>
+        </>
+      )}
 
-        {/* Bookmarks Tab */}
-        <div className={`absolute inset-0 overflow-y-auto sleek-scrollbar p-5 transition-opacity duration-300 ${activeTab === 'bookmarks' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-          {bookmarks.length === 0 ? (
-            <div className="flex flex-col h-full items-center justify-center text-center opacity-70 mt-10">
-              <Bookmark className="w-8 h-8 text-slate-400 mb-3" />
-              <h3 className="text-[#1e2749] font-bold text-[14px]">{t('No saved charts', 'لا توجد رسوم بيانية محفوظة')}</h3>
-              <p className="text-slate-500 text-xs max-w-[200px] mt-1">{t('Click the bookmark icon on any AI chart to save it here for quick access.', 'انقر على أيقونة الإشارة المرجعية على أي رسم بياني للذكاء الاصطناعي لحفظه هنا للوصول السريع.')}</p>
+      {/* 2. SAVED TAB CONTENT */}
+      {activeTab === 'saved' && (
+        <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-[#060a12]' : 'bg-slate-50/50'}`}>
+          <div className={`flex items-center justify-between pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+            <div className="flex items-center gap-2">
+              <Bookmark className={`w-4 h-4 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
+                {t('SAVED LOCATIONS', 'المواقع المحفوظة')} ({savedLocations.length})
+              </h3>
             </div>
-          ) : (
-            <div className="flex flex-col gap-6">
-              {bookmarks.map((msg, idx) => (
-                <div key={`bm-${msg.id}-${idx}`} className="flex flex-col">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-slate-500 line-clamp-1 flex-1 pe-2">"{messages.find((_, i) => messages[i+1]?.id === msg.id)?.content || 'Query'}"</span>
-                    <button onClick={() => handleBookmarkToggle(msg)} className="text-slate-400 hover:text-red-500 transition-colors">
-                      <Bookmark className="w-4 h-4 fill-current" />
-                    </button>
+            {savedLocations.length > 0 && (
+              <button 
+                onClick={handleClearAllSaved}
+                className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+              >
+                {t('Clear All', 'مسح الكل')}
+              </button>
+            )}
+          </div>
+
+          {savedLocations.length > 0 ? (
+            <div className="space-y-2">
+              {savedLocations.map(item => (
+                <div 
+                  key={item.id}
+                  className={`border rounded-2xl p-3.5 transition-all flex items-center justify-between group ${
+                    isDarkMode 
+                      ? 'bg-[#0d1527] border-slate-800/90 text-white hover:border-[#00e5ff]/50' 
+                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-[#3D52A0]/40 shadow-2xs'
+                  }`}
+                >
+                  <div 
+                    onClick={() => handleEntityClick(item)}
+                    className="flex-1 cursor-pointer min-w-0 me-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <h4 className={`font-bold text-xs truncate transition-colors ${
+                        isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#3D52A0]'
+                      }`}>
+                        {isArabic && item.name_ar ? item.name_ar : item.name}
+                      </h4>
+                      {item.riskLevel && (
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
+                          item.riskLevel === 'Critical' 
+                            ? (isDarkMode ? 'bg-rose-950/80 text-rose-300' : 'bg-rose-100 text-rose-700') 
+                            : (isDarkMode ? 'bg-amber-950/80 text-amber-300' : 'bg-amber-100 text-amber-700')
+                        }`}>
+                          {item.riskLevel}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] font-medium text-slate-400 mt-0.5">
+                      {item.district || item.location}
+                    </p>
                   </div>
-                  <AiChart chartData={msg.chartData} results={msg.results} />
+
+                  <button
+                    onClick={() => handleRemoveSavedLocation(item.id)}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                      isDarkMode ? 'text-slate-400 hover:bg-slate-800 hover:text-rose-400' : 'text-slate-400 hover:bg-slate-100 hover:text-rose-600'
+                    }`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* History Tab */}
-        <div className={`absolute inset-0 overflow-y-auto sleek-scrollbar p-5 transition-opacity duration-300 ${activeTab === 'history' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}`}>
-          {messages.filter(m => m.role === 'user').length === 0 ? (
-             <div className="flex flex-col items-center justify-center text-center opacity-70 mt-10">
-               <History className="w-8 h-8 text-slate-400 mb-3" />
-               <p className="text-slate-500 text-xs">{t('Your chat history will appear here.', 'سيظهر سجل الدردشة الخاص بك هنا.')}</p>
-             </div>
           ) : (
-             <div className="flex flex-col gap-3">
-               {messages.filter(m => m.role === 'user').reverse().map((msg, idx) => (
-                 <button key={`hist-${msg.id}-${idx}`} onClick={() => setActiveTab('chat')} className="text-start px-4 py-3 bg-white border border-slate-100 rounded-xl hover:border-[#3D52A0]/30 hover:shadow-sm transition-all group flex items-start gap-3">
-                   <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#eef3ff] group-hover:text-[#3D52A0] transition-colors">
-                     <History className="w-3 h-3" />
-                   </div>
-                   <div className="flex flex-col min-w-0">
-                     <span className="text-[13px] font-medium text-slate-700 truncate block">{msg.content}</span>
-                     <span className="text-[10px] text-slate-400 mt-0.5">{t('Past Query', 'استعلام سابق')}</span>
-                   </div>
-                 </button>
-               ))}
-             </div>
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
+              <Bookmark className={`w-10 h-10 mb-3 opacity-30 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <p className={`font-bold text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t('No saved locations yet', 'لا توجد مواقع محفوظة حتى الآن')}</p>
+            </div>
           )}
         </div>
+      )}
 
-      </div>
+      {/* 3. HISTORY TAB CONTENT */}
+      {activeTab === 'history' && (
+        <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-[#060a12]' : 'bg-slate-50/50'}`}>
+          <div className={`flex items-center justify-between pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
+            <div className="flex items-center gap-2">
+              <History className={`w-4 h-4 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
+                {t('PAST CHAT SESSIONS', 'سجل المحادثات')} ({historySessions.length})
+              </h3>
+            </div>
+            {historySessions.length > 0 && (
+              <button 
+                onClick={handleClearAllHistory}
+                className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+              >
+                {t('Clear History', 'مسح السجل')}
+              </button>
+            )}
+          </div>
+
+          {historySessions.length > 0 ? (
+            <div className="space-y-2">
+              {historySessions.map(session => (
+                <div 
+                  key={session.id}
+                  className={`border rounded-2xl p-3.5 transition-all flex items-center justify-between group ${
+                    isDarkMode 
+                      ? 'bg-[#0d1527] border-slate-800/90 text-white hover:border-[#00e5ff]/50' 
+                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-[#3D52A0]/40 shadow-2xs'
+                  }`}
+                >
+                  <div 
+                    onClick={() => handleRestoreHistorySession(session)}
+                    className="flex-1 cursor-pointer min-w-0 me-2"
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-[10px] font-bold text-slate-400">
+                        {session.timestamp || 'Today'}
+                      </span>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                        isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        {session.messages?.length || session.messageCount || 3} {t('msgs', 'رسائل')}
+                      </span>
+                    </div>
+                    <h4 className={`font-bold text-xs truncate transition-colors ${
+                      isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#3D52A0]'
+                    }`}>
+                      {session.preview || session.title || 'Abu Dhabi GeoAI Conversation'}
+                    </h4>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleRestoreHistorySession(session)}
+                      className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 cursor-pointer ${
+                        isDarkMode 
+                          ? 'bg-[#111c34] text-[#00e5ff] hover:bg-[#00e5ff] hover:text-slate-950' 
+                          : 'bg-[#eef3ff] text-[#3D52A0] hover:bg-[#3D52A0] hover:text-white'
+                      }`}
+                      title={t('Restore session', 'استعادة المحادثة')}
+                    >
+                      <span>{t('Restore', 'استعادة')}</span>
+                      <ArrowRight className="w-3 h-3 rtl:-scale-x-100" />
+                    </button>
+                    <button
+                      onClick={() => handleRemoveHistorySession(session.id)}
+                      className={`w-7 h-7 rounded-lg text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors cursor-pointer ${
+                        isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-rose-50'
+                      }`}
+                      title={t('Delete session', 'حذف المحادثة')}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
+              <History className={`w-10 h-10 mb-3 opacity-30 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <p className={`font-bold text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t('No chat history yet', 'لا يوجد سجل محادثات حتى الآن')}</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,74 @@
+{
+  "FAC-AD-001": {
+    "facilityId": "FAC-AD-001",
+    "name": "Cleveland Clinic Abu Dhabi",
+    "historical12m": [
+      { "month": "Jan", "riskScore": 82, "emissions": 3600, "water": 11500 },
+      { "month": "Feb", "riskScore": 80, "emissions": 3400, "water": 11200 },
+      { "month": "Mar", "riskScore": 81, "emissions": 3500, "water": 11800 },
+      { "month": "Apr", "riskScore": 83, "emissions": 3700, "water": 12400 },
+      { "month": "May", "riskScore": 85, "emissions": 3900, "water": 13200 },
+      { "month": "Jun", "riskScore": 87, "emissions": 4100, "water": 13900 },
+      { "month": "Jul", "riskScore": 90, "emissions": 4300, "water": 14500 },
+      { "month": "Aug", "riskScore": 92, "emissions": 4400, "water": 14800 },
+      { "month": "Sep", "riskScore": 89, "emissions": 4200, "water": 14100 },
+      { "month": "Oct", "riskScore": 86, "emissions": 4000, "water": 13500 },
+      { "month": "Nov", "riskScore": 84, "emissions": 3800, "water": 12800 },
+      { "month": "Dec", "riskScore": 88, "emissions": 4100, "water": 14200 }
+    ]
+  },
+  "FAC-AD-002": {
+    "facilityId": "FAC-AD-002",
+    "name": "Sheikh Shakhbout Medical City",
+    "historical12m": [
+      { "month": "Jan", "riskScore": 86, "emissions": 4800, "water": 15000 },
+      { "month": "Feb", "riskScore": 85, "emissions": 4600, "water": 14800 },
+      { "month": "Mar", "riskScore": 87, "emissions": 4900, "water": 15500 },
+      { "month": "Apr", "riskScore": 89, "emissions": 5100, "water": 16200 },
+      { "month": "May", "riskScore": 91, "emissions": 5400, "water": 17100 },
+      { "month": "Jun", "riskScore": 93, "emissions": 5700, "water": 17800 },
+      { "month": "Jul", "riskScore": 96, "emissions": 6000, "water": 18600 },
+      { "month": "Aug", "riskScore": 98, "emissions": 6100, "water": 19000 },
+      { "month": "Sep", "riskScore": 95, "emissions": 5800, "water": 18200 },
+      { "month": "Oct", "riskScore": 92, "emissions": 5500, "water": 17400 },
+      { "month": "Nov", "riskScore": 90, "emissions": 5200, "water": 16600 },
+      { "month": "Dec", "riskScore": 94, "emissions": 5600, "water": 18500 }
+    ]
+  },
+  "FAC-AD-003": {
+    "facilityId": "FAC-AD-003",
+    "name": "Mussafah Industrial Manufacturing Hub",
+    "historical12m": [
+      { "month": "Jan", "riskScore": 84, "emissions": 7200, "water": 22000 },
+      { "month": "Feb", "riskScore": 82, "emissions": 7000, "water": 21500 },
+      { "month": "Mar", "riskScore": 85, "emissions": 7500, "water": 23000 },
+      { "month": "Apr", "riskScore": 87, "emissions": 7800, "water": 24200 },
+      { "month": "May", "riskScore": 90, "emissions": 8200, "water": 25800 },
+      { "month": "Jun", "riskScore": 92, "emissions": 8600, "water": 26900 },
+      { "month": "Jul", "riskScore": 95, "emissions": 9000, "water": 28100 },
+      { "month": "Aug", "riskScore": 96, "emissions": 9200, "water": 28900 },
+      { "month": "Sep", "riskScore": 93, "emissions": 8800, "water": 27500 },
+      { "month": "Oct", "riskScore": 89, "emissions": 8300, "water": 26000 },
+      { "month": "Nov", "riskScore": 87, "emissions": 7900, "water": 24800 },
+      { "month": "Dec", "riskScore": 92, "emissions": 8500, "water": 28400 }
+    ]
+  },
+  "FAC-AD-004": {
+    "facilityId": "FAC-AD-004",
+    "name": "Al Taweelah Metals & KIZAD Industrial Plant",
+    "historical12m": [
+      { "month": "Jan", "riskScore": 78, "emissions": 6200, "water": 19000 },
+      { "month": "Feb", "riskScore": 76, "emissions": 6000, "water": 18500 },
+      { "month": "Mar", "riskScore": 79, "emissions": 6400, "water": 19800 },
+      { "month": "Apr", "riskScore": 81, "emissions": 6700, "water": 20800 },
+      { "month": "May", "riskScore": 83, "emissions": 7100, "water": 22100 },
+      { "month": "Jun", "riskScore": 85, "emissions": 7500, "water": 23200 },
+      { "month": "Jul", "riskScore": 88, "emissions": 7900, "water": 24400 },
+      { "month": "Aug", "riskScore": 90, "emissions": 8100, "water": 25000 },
+      { "month": "Sep", "riskScore": 87, "emissions": 7700, "water": 23800 },
+      { "month": "Oct", "riskScore": 84, "emissions": 7300, "water": 22500 },
+      { "month": "Nov", "riskScore": 82, "emissions": 6900, "water": 21200 },
+      { "month": "Dec", "riskScore": 86, "emissions": 7400, "water": 24100 }
+    ]
+  }
+}

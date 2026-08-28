@@ -7,7 +7,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 export default function ExplorerHeader({ onNavigate, currentView }) {
   const { isArabic, setIsArabic, t } = useLanguage();
   return (
-    <header className="pointer-events-auto bg-white border-b border-gray-100 shadow-sm px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
+    <header className="pointer-events-auto bg-white border-b border-slate-200 shadow-xs px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
       {/* Left: Logo */}
       <div className="flex items-center gap-3 md:gap-5">
         <img src={dgeLogo} alt="Department of Government Enablement" className="h-8 md:h-10 object-contain drop-shadow-sm cursor-pointer" onClick={() => onNavigate?.('landing')} />

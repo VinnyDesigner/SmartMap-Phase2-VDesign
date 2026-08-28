@@ -1,441 +1,900 @@
-// Mock AI Engine for GeoVision
+// Universal AI Application Controller & Natural Language Agent for GeoVision / SmartMap
+import { ACTION_TYPES } from './actionRegistry';
+import { aiOrchestrator } from './ai/aiOrchestrator';
 
-// 1. Rich Dataset of Abu Dhabi
+// Rich Abu Dhabi Dataset with Multi-Dimensional Quantitative Metrics
 const LOCATIONS_DB = [
-  // HOSPITALS
-  { id: 1, name: 'Cleveland Clinic Abu Dhabi', name_ar: 'كليفلاند كلينك أبوظبي', type: 'HOSPITAL', location: 'Al Maryah Island', location_ar: 'جزيرة الماريه', lat: 24.5011, lng: 54.3942, rating: 4.9, tags: ['specialty', 'emergency', 'top rated'] },
-  { id: 2, name: 'Sheikh Shakhbout Medical City', name_ar: 'مدينة الشيخ شخبوط الطبية', type: 'HOSPITAL', location: 'Al Mafraq', location_ar: 'المفرق', lat: 24.2690, lng: 54.6465, rating: 4.8, tags: ['government', 'emergency', 'large'] },
-  { id: 3, name: 'NMC Specialty Hospital', name_ar: 'مستشفى إن إم سي التخصصي', type: 'HOSPITAL', location: 'Electra Street', location_ar: 'شارع إلكترا', lat: 24.4891, lng: 54.3644, rating: 4.5, tags: ['private', 'affordable'] },
-  { id: 4, name: 'Al Ain Hospital', name_ar: 'مستشفى العين', type: 'HOSPITAL', location: 'Al Jimi', location_ar: 'الجيمي', lat: 24.2155, lng: 55.7389, rating: 4.6, tags: ['government', 'emergency'] },
-  { id: 5, name: 'Burjeel Hospital', name_ar: 'مستشفى برجيل', type: 'HOSPITAL', location: 'Al Najdah Street', location_ar: 'شارع النجدة', lat: 24.4880, lng: 54.3780, rating: 4.7, tags: ['private', 'luxury', 'maternity'] },
+  // HOSPITALS & HEALTHCARE
+  { 
+    id: 1, 
+    name: 'Cleveland Clinic Abu Dhabi', 
+    name_ar: 'كليفلاند كلينك أبوظبي', 
+    type: 'HOSPITAL', 
+    location: 'Al Maryah Island', 
+    location_ar: 'جزيرة الماريه', 
+    lat: 24.5011, 
+    lng: 54.3942, 
+    rating: 4.9, 
+    riskLevel: 'High', 
+    riskScore: 88, 
+    waterConsumption: 14200, // m3/day
+    emissionsIndex: 45000,   // tCO2e/yr
+    capacity: 364,           // beds
+    trend: 'increasing',
+    isCoastal: true,
+    hasAlerts: true,
+    riskDrivers: ['Coastal storm surge vulnerability', 'High HVAC thermal load', 'Heavy medical equipment power draw'],
+    tags: ['specialty', 'emergency', 'top rated', 'high risk', 'cleveland', 'clinic', 'coast', 'waterfront'] 
+  },
+  { 
+    id: 2, 
+    name: 'Sheikh Shakhbout Medical City', 
+    name_ar: 'مدينة الشيخ شخبوط الطبية', 
+    type: 'HOSPITAL', 
+    location: 'Al Mafraq', 
+    location_ar: 'المفرق', 
+    lat: 24.2690, 
+    lng: 54.6465, 
+    rating: 4.8, 
+    riskLevel: 'Critical', 
+    riskScore: 94, 
+    waterConsumption: 18500, // Highest water consumption
+    emissionsIndex: 62000,   // High emissions
+    capacity: 741,           // Large hospital
+    trend: 'increasing',
+    isCoastal: false,
+    hasAlerts: true,
+    riskDrivers: ['Severe groundwater table stress', 'High incinerator emissions', 'Critical emergency access bottleneck'],
+    tags: ['government', 'emergency', 'large', 'critical', 'shakhbout', 'ssmc', 'mafraq'] 
+  },
+  { 
+    id: 3, 
+    name: 'NMC Specialty Hospital', 
+    name_ar: 'مستشفى إن إم سي التخصصي', 
+    type: 'HOSPITAL', 
+    location: 'Electra Street', 
+    location_ar: 'شارع إلكترا', 
+    lat: 24.4891, 
+    lng: 54.3644, 
+    rating: 4.5, 
+    riskLevel: 'Moderate', 
+    riskScore: 62, 
+    waterConsumption: 8900,
+    emissionsIndex: 21000,
+    capacity: 100,
+    trend: 'stable',
+    isCoastal: false,
+    hasAlerts: false,
+    riskDrivers: ['Urban heat island concentration', 'Dense traffic corridor exposure'],
+    tags: ['private', 'affordable', 'nmc', 'specialty', 'speciality'] 
+  },
+  { 
+    id: 4, 
+    name: 'Al Ain Hospital', 
+    name_ar: 'مستشفى العين', 
+    type: 'HOSPITAL', 
+    location: 'Al Ain', 
+    location_ar: 'العين', 
+    lat: 24.2155, 
+    lng: 55.7389, 
+    rating: 4.6, 
+    riskLevel: 'High', 
+    riskScore: 78, 
+    waterConsumption: 12400,
+    emissionsIndex: 34000,
+    capacity: 412,
+    trend: 'improving',
+    isCoastal: false,
+    hasAlerts: true,
+    riskDrivers: ['Arid groundwater depletion zone', 'Extreme summer heat exposure'],
+    tags: ['government', 'emergency', 'high risk', 'al ain'] 
+  },
+  { 
+    id: 5, 
+    name: 'Burjeel Hospital', 
+    name_ar: 'مستشفى برجيل', 
+    type: 'HOSPITAL', 
+    location: 'Al Najdah Street', 
+    location_ar: 'شارع النجدة', 
+    lat: 24.4880, 
+    lng: 54.3780, 
+    rating: 4.7, 
+    riskLevel: 'Low', 
+    riskScore: 32, 
+    waterConsumption: 6100,
+    emissionsIndex: 14000,
+    capacity: 209,
+    trend: 'improving',
+    isCoastal: false,
+    hasAlerts: false,
+    riskDrivers: ['Minor urban congestion'],
+    tags: ['private', 'luxury', 'maternity', 'burjeel'] 
+  },
   
   // EDUCATION
-  { id: 6, name: 'Zayed University Campus', name_ar: 'حرم جامعة زايد', type: 'EDUCATION', location: 'Khalifa City', location_ar: 'مدينة خليفة', lat: 24.4136, lng: 54.5683, rating: 4.7, tags: ['university', 'government', 'large'] },
-  { id: 7, name: 'Sorbonne University Abu Dhabi', name_ar: 'جامعة السوربون أبوظبي', type: 'EDUCATION', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.5028, lng: 54.4056, rating: 4.8, tags: ['university', 'private', 'international'] },
-  { id: 8, name: 'Bright Riders School', name_ar: 'مدرسة برايت رايدرز', type: 'EDUCATION', location: 'Mohammed Bin Zayed City', location_ar: 'مدينة محمد بن زايد', lat: 24.3297, lng: 54.5361, rating: 4.4, tags: ['school', 'cbse', 'private'] },
-  { id: 9, name: 'Cranleigh Abu Dhabi', name_ar: 'كرانلي أبوظبي', type: 'EDUCATION', location: 'Saadiyat Island', location_ar: 'جزيرة السعديات', lat: 24.5385, lng: 54.4377, rating: 4.9, tags: ['school', 'british', 'premium'] },
-  { id: 10, name: 'NYU Abu Dhabi', name_ar: 'جامعة نيويورك أبوظبي', type: 'EDUCATION', location: 'Saadiyat Island', location_ar: 'جزيرة السعديات', lat: 24.5238, lng: 54.4346, rating: 4.9, tags: ['university', 'international', 'top rated'] },
+  { 
+    id: 6, 
+    name: 'Zayed University Campus', 
+    name_ar: 'حرم جامعة زايد', 
+    type: 'EDUCATION', 
+    location: 'Khalifa City', 
+    location_ar: 'مدينة خليفة', 
+    lat: 24.4136, 
+    lng: 54.5683, 
+    rating: 4.7, 
+    riskLevel: 'Low', 
+    riskScore: 28, 
+    waterConsumption: 8400,
+    emissionsIndex: 18000,
+    capacity: 6500,
+    trend: 'stable',
+    isCoastal: false,
+    hasAlerts: false,
+    riskDrivers: ['Expansive roof solar heat gain'],
+    tags: ['university', 'government', 'large', 'zayed'] 
+  },
+  { 
+    id: 7, 
+    name: 'Sorbonne University Abu Dhabi', 
+    name_ar: 'جامعة السوربون أبوظبي', 
+    type: 'EDUCATION', 
+    location: 'Al Reem Island', 
+    location_ar: 'جزيرة الريم', 
+    lat: 24.5028, 
+    lng: 54.4056, 
+    rating: 4.8, 
+    riskLevel: 'Moderate', 
+    riskScore: 54, 
+    waterConsumption: 9800,
+    emissionsIndex: 22000,
+    capacity: 2500,
+    trend: 'stable',
+    isCoastal: true,
+    hasAlerts: false,
+    riskDrivers: ['Coastal perimeter exposure', 'Chilled water loop energy load'],
+    tags: ['university', 'private', 'international', 'sorbonne', 'reem', 'coast'] 
+  },
+  { 
+    id: 8, 
+    name: 'Bright Riders School', 
+    name_ar: 'مدرسة برايت رايدرز', 
+    type: 'EDUCATION', 
+    location: 'Mohammed Bin Zayed City', 
+    location_ar: 'مدينة محمد بن زايد', 
+    lat: 24.3297, 
+    lng: 54.5361, 
+    rating: 4.4, 
+    riskLevel: 'Low', 
+    riskScore: 22, 
+    waterConsumption: 3200,
+    emissionsIndex: 8500,
+    capacity: 3200,
+    trend: 'improving',
+    isCoastal: false,
+    hasAlerts: false,
+    riskDrivers: ['School bus fleet idle emissions'],
+    tags: ['school', 'cbse', 'private', 'bright riders'] 
+  },
+  { 
+    id: 9, 
+    name: 'Cranleigh Abu Dhabi', 
+    name_ar: 'كرانلي أبوظبي', 
+    type: 'EDUCATION', 
+    location: 'Saadiyat Island', 
+    location_ar: 'جزيرة السعديات', 
+    lat: 24.5385, 
+    lng: 54.4377, 
+    rating: 4.9, 
+    riskLevel: 'Low', 
+    riskScore: 18, 
+    waterConsumption: 4100,
+    emissionsIndex: 9200,
+    capacity: 1800,
+    trend: 'improving',
+    isCoastal: true,
+    hasAlerts: false,
+    riskDrivers: ['Island saline soil exposure'],
+    tags: ['school', 'british', 'premium', 'cranleigh', 'saadiyat', 'coast'] 
+  },
+  { 
+    id: 10, 
+    name: 'NYU Abu Dhabi', 
+    name_ar: 'جامعة نيويورك أبوظبي', 
+    type: 'EDUCATION', 
+    location: 'Saadiyat Island', 
+    location_ar: 'جزيرة السعديات', 
+    lat: 24.5238, 
+    lng: 54.4346, 
+    rating: 4.9, 
+    riskLevel: 'Low', 
+    riskScore: 42, 
+    waterConsumption: 11500,
+    emissionsIndex: 26000,
+    capacity: 2200,
+    trend: 'stable',
+    isCoastal: true,
+    hasAlerts: false,
+    riskDrivers: ['High research lab power intensity', 'Chilled water cooling towers'],
+    tags: ['university', 'international', 'top rated', 'nyu', 'saadiyat', 'coast'] 
+  },
 
-  // PARKS
-  { id: 11, name: 'Umm Al Emarat Park', name_ar: 'حديقة أم الإمارات', type: 'PARK', location: 'Al Mushrif', location_ar: 'المشرف', lat: 24.4533, lng: 54.3879, rating: 4.8, tags: ['botanical', 'family', 'events'] },
-  { id: 12, name: 'Corniche Beach Park', name_ar: 'حديقة شاطئ الكورنيش', type: 'PARK', location: 'Corniche Road', location_ar: 'طريق الكورنيش', lat: 24.4721, lng: 54.3213, rating: 4.7, tags: ['beach', 'cycling', 'sunset'] },
-  { id: 13, name: 'Khalifa Park', name_ar: 'منتزه خليفة', type: 'PARK', location: 'Al Muntazah', location_ar: 'المنتزه', lat: 24.4230, lng: 54.4740, rating: 4.5, tags: ['family', 'train', 'large'] },
-  { id: 14, name: 'Jubail Mangrove Park', name_ar: 'منتزه قرم الجبيل', type: 'PARK', location: 'Jubail Island', location_ar: 'جزيرة الجبيل', lat: 24.5420, lng: 54.4840, rating: 4.9, tags: ['nature', 'boardwalk', 'kayaking'] },
+  // PARKS & ENVIRONMENT
+  { 
+    id: 11, 
+    name: 'Umm Al Emarat Park', 
+    name_ar: 'حديقة أم الإمارات', 
+    type: 'PARK', 
+    location: 'Al Mushrif', 
+    location_ar: 'المشرف', 
+    lat: 24.4533, 
+    lng: 54.3879, 
+    rating: 4.8, 
+    riskLevel: 'Low', 
+    riskScore: 12, // Safest
+    waterConsumption: 15400, 
+    emissionsIndex: 1200,    
+    capacity: 10000,
+    trend: 'improving',
+    isCoastal: false,
+    hasAlerts: false,
+    riskDrivers: ['Irrigation water supply dependency'],
+    tags: ['botanical', 'family', 'events', 'umm al emarat', 'emarat'] 
+  },
+  { 
+    id: 12, 
+    name: 'Corniche Beach Park', 
+    name_ar: 'حديقة شاطئ الكورنيش', 
+    type: 'PARK', 
+    location: 'Corniche Road', 
+    location_ar: 'طريق الكورنيش', 
+    lat: 24.4721, 
+    lng: 54.3213, 
+    rating: 4.7, 
+    riskLevel: 'Moderate', 
+    riskScore: 58, 
+    waterConsumption: 12000,
+    emissionsIndex: 2500,
+    capacity: 15000,
+    trend: 'stable',
+    isCoastal: true,
+    hasAlerts: false,
+    riskDrivers: ['Sea level rise inundation risk', 'Coastal erosion'],
+    tags: ['beach', 'cycling', 'sunset', 'corniche', 'coast', 'waterfront'] 
+  },
+  { 
+    id: 13, 
+    name: 'Khalifa Park', 
+    name_ar: 'منتزه خليفة', 
+    type: 'PARK', 
+    location: 'Al Muntazah', 
+    location_ar: 'المنتزه', 
+    lat: 24.4230, 
+    lng: 54.4740, 
+    rating: 4.5, 
+    riskLevel: 'Low', 
+    riskScore: 24, 
+    waterConsumption: 13800,
+    emissionsIndex: 3100,
+    capacity: 12000,
+    trend: 'stable',
+    isCoastal: false,
+    hasAlerts: false,
+    riskDrivers: ['Treated sewage effluent supply stability'],
+    tags: ['family', 'train', 'large', 'khalifa park'] 
+  },
+  { 
+    id: 14, 
+    name: 'Jubail Mangrove Park', 
+    name_ar: 'منتزه قرم الجبيل', 
+    type: 'PARK', 
+    location: 'Jubail Island', 
+    location_ar: 'جزيرة الجبيل', 
+    lat: 24.5420, 
+    lng: 54.4840, 
+    rating: 4.9, 
+    riskLevel: 'High', 
+    riskScore: 82, 
+    waterConsumption: 500,
+    emissionsIndex: 800,
+    capacity: 1500,
+    trend: 'increasing',
+    isCoastal: true,
+    hasAlerts: true,
+    riskDrivers: ['High tidal storm flood exposure', 'Marine biodiversity vulnerability'],
+    tags: ['nature', 'boardwalk', 'kayaking', 'environment', 'jubail', 'biodiversity', 'coast'] 
+  },
   
   // TRANSPORT
-  { id: 15, name: 'Abu Dhabi Main Bus Terminal', name_ar: 'محطة حافلات أبوظبي الرئيسية', type: 'TRANSPORT', location: 'Al Nahyan', location_ar: 'آل نهيان', lat: 24.4719, lng: 54.3725, rating: 4.1, tags: ['bus', 'intercity', 'public'] },
-  { id: 16, name: 'Abu Dhabi International Airport (Zayed Int)', name_ar: 'مطار أبوظبي الدولي (مطار زايد)', type: 'TRANSPORT', location: 'Airport Road', location_ar: 'شارع المطار', lat: 24.4329, lng: 54.6511, rating: 4.8, tags: ['airport', 'flights', 'international'] },
-  { id: 17, name: 'Abu Dhabi Cruise Terminal', name_ar: 'محطة أبوظبي للسفن السياحية', type: 'TRANSPORT', location: 'Mina Zayed', location_ar: 'ميناء زايد', lat: 24.5120, lng: 54.3810, rating: 4.6, tags: ['cruise', 'sea', 'tourism'] }
+  { 
+    id: 15, 
+    name: 'Abu Dhabi Main Bus Terminal', 
+    name_ar: 'محطة حافلات أبوظبي الرئيسية', 
+    type: 'TRANSPORT', 
+    location: 'Al Nahyan', 
+    location_ar: 'آل نهيان', 
+    lat: 24.4719, 
+    lng: 54.3725, 
+    rating: 4.1, 
+    riskLevel: 'Moderate', 
+    riskScore: 68, 
+    waterConsumption: 7500,
+    emissionsIndex: 38000, 
+    capacity: 25000,
+    trend: 'stable',
+    isCoastal: false,
+    hasAlerts: false,
+    riskDrivers: ['Heavy diesel PM2.5 exhaust emissions', 'Heat island congestion zone'],
+    tags: ['bus', 'intercity', 'public', 'bus terminal'] 
+  },
+  { 
+    id: 16, 
+    name: 'Zayed International Airport', 
+    name_ar: 'مطار زايد الدولي', 
+    type: 'TRANSPORT', 
+    location: 'Airport Road', 
+    location_ar: 'شارع المطار', 
+    lat: 24.4329, 
+    lng: 54.6511, 
+    rating: 4.8, 
+    riskLevel: 'Critical', 
+    riskScore: 92, 
+    waterConsumption: 24000, // Highest water & energy
+    emissionsIndex: 84000,   // Highest emissions overall
+    capacity: 120000,        // Largest facility overall
+    trend: 'increasing',
+    isCoastal: false,
+    hasAlerts: true,
+    riskDrivers: ['Extreme aviation carbon emissions', 'Critical infrastructure power dependency', 'High thermal cooling load'],
+    tags: ['airport', 'flights', 'international', 'critical', 'zayed int', 'airport road', 'largest'] 
+  },
+  { 
+    id: 17, 
+    name: 'Abu Dhabi Cruise Terminal', 
+    name_ar: 'محطة أبوظبي للسفن السياحية', 
+    type: 'TRANSPORT', 
+    location: 'Mina Zayed', 
+    location_ar: 'ميناء زايد', 
+    lat: 24.5120, 
+    lng: 54.3810, 
+    rating: 4.6, 
+    riskLevel: 'Moderate', 
+    riskScore: 64, 
+    waterConsumption: 9100,
+    emissionsIndex: 42000,
+    capacity: 8000,
+    trend: 'stable',
+    isCoastal: true,
+    hasAlerts: false,
+    riskDrivers: ['Ship auxiliary engine marine emissions', 'Port tidal surge vulnerability'],
+    tags: ['cruise', 'sea', 'tourism', 'mina zayed', 'coast', 'waterfront'] 
+  }
 ];
 
-// Helper to calculate a fake "distance" for realism
-const generateRandomDistance = (isArabic = false) => (Math.random() * 8 + 0.5).toFixed(1) + (isArabic ? ' كم' : ' km');
+const fmt = num => num.toLocaleString();
 
-// 2. Simulated NLP Parser and Responder
 export const mockAiEngine = {
   async processQuery(queryText, currentState = null, isArabic = false) {
-    // Simulate network delay (600ms - 1500ms)
-    const delay = Math.floor(Math.random() * 900) + 600;
-    await new Promise(resolve => setTimeout(resolve, delay));
+    // Delegate to modular GeoAI Orchestrator first
+    const orchestratorResult = await aiOrchestrator.processUserQuery(queryText, currentState, isArabic, LOCATIONS_DB);
+    if (orchestratorResult) return orchestratorResult;
 
-    const q = queryText.toLowerCase();
+    await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 300) + 300));
+
+    const q = queryText.toLowerCase().trim();
+    let actions = [];
+    let actionCards = [];
     let results = [];
     let reply = "";
     let suggestions = [];
+    let chartData = null;
 
-    // Simple Intent Detection
-    const isGreeting = ['hello', 'hi', 'hey', 'start'].some(w => q.includes(w));
-    const intentHospital = ['hospital', 'health', 'clinic', 'doctor', 'emergency', 'sick'].some(w => q.includes(w));
-    const intentEducation = ['school', 'university', 'college', 'education', 'study', 'student'].some(w => q.includes(w));
-    const intentPark = ['park', 'garden', 'walk', 'beach', 'nature', 'outside'].some(w => q.includes(w));
-    const intentTransport = ['bus', 'airport', 'transport', 'flight', 'travel', 'taxi'].some(w => q.includes(w));
-    
-    // Filters
-    const isTopRated = ['top', 'best', 'highest rated', 'good'].some(w => q.includes(w));
-    const isGovernment = ['government', 'public'].some(w => q.includes(w));
+    const currentLoc = currentState?.selectedLocation || LOCATIONS_DB[0];
 
-    // Analytics Intents
-    const isAnalytics = ['analytic', 'analysis', 'chart', 'breakdown', 'distribution', 'statistic', 'compare', 'comparison', 'trend', 'percentage', 'how many', 'count', 'visualize', 'overview'].some(w => q.includes(w));
-    const isByArea = ['by area', 'by region', 'by location'].some(w => q.includes(w));
-    const isByType = ['by type', 'by category', 'government and private', 'private and government'].some(w => q.includes(w));
+    // =========================================================
+    // 1. LANGUAGE SWITCHING
+    // =========================================================
+    const isArabicReq = ['arabic', 'عربي', 'عربية', 'العربية', 'to arabic', 'حولي للعربي'].some(w => q.includes(w));
+    const isEnglishReq = ['english', 'إنجليزية', 'الانجليزية', 'to english'].some(w => q.includes(w));
 
-    // ==========================================
-    // CONTEXTUAL DRILL-DOWN LOGIC
-    // ==========================================
-    const hasContext = currentState?.activeResults && currentState.activeResults.length > 0;
-
-    if (hasContext) {
-      const activeData = currentState.activeResults;
-
-      // Drill-down: ANALYTICS & CHARTS
-      if (isAnalytics || isByArea || isByType) {
-        let chartType = "bar";
-        let chartTitle = "Location Distribution";
-        let aggregatedData = [];
-
-        if (isByType || q.includes('percentage') || q.includes('government and private')) {
-          chartType = "pie";
-          chartTitle = "Distribution by Type";
-          const govCount = activeData.filter(d => d.tags.includes('government')).length;
-          const privCount = activeData.filter(d => d.tags.includes('private')).length;
-          const otherCount = activeData.length - govCount - privCount;
-          
-          if (govCount > 0) aggregatedData.push({ name: 'Government', value: govCount });
-          if (privCount > 0) aggregatedData.push({ name: 'Private', value: privCount });
-          if (otherCount > 0) aggregatedData.push({ name: 'Other', value: otherCount });
-          
-          reply = `I've generated a structural breakdown of the ${activeData.length} facilities currently on the map. As you can see, ${govCount > privCount ? 'Government' : 'Private'} facilities represent the majority here.`;
-        } else {
-          // Drill-down: Staff / Personnel Distribution (Stacked Column)
-      if (q.includes('staff') || q.includes('employee') || q.includes('doctor') || q.includes('personnel')) {
-        const hcOptions = {
-          chart: { type: 'column', backgroundColor: 'transparent' },
-          title: { text: 'Facility Staffing Breakdown', margin: 15, style: { color: '#0f172a', fontWeight: '600', fontSize: '14px' } },
-          xAxis: { categories: activeData.slice(0, 4).map(d => d.name.split(' ')[0]), labels: { style: { color: '#64748b' } } },
-          yAxis: { min: 0, title: { text: 'Personnel Count' }, stackLabels: { enabled: true } },
-          plotOptions: { column: { stacking: 'normal', borderRadius: 2 } },
-          series: [
-            { name: 'Doctors/Specialists', data: activeData.slice(0, 4).map(() => Math.floor(Math.random() * 50) + 20), color: '#063360' },
-            { name: 'Nurses', data: activeData.slice(0, 4).map(() => Math.floor(Math.random() * 150) + 50), color: '#3b82f6' },
-            { name: 'Admin/Support', data: activeData.slice(0, 4).map(() => Math.floor(Math.random() * 40) + 10), color: '#94a3b8' }
-          ]
-        };
-        return {
-          reply: `I've compiled the staffing distribution for the selected facilities. As shown in the stacked chart, nursing staff make up the majority of personnel across all sites.`,
-          results: activeData,
-          suggestions: ['Show patient trends', 'Compare ratings'],
-          chartData: { isHighcharts: true, options: hcOptions }
-        };
-      }
-
-      // Drill-down: Trends / History over time (Spline Chart)
-      if (q.includes('trend') || q.includes('history') || q.includes('growth') || q.includes('over time') || q.includes('monthly')) {
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const hcOptions = {
-          chart: { type: 'spline', backgroundColor: 'transparent' },
-          title: { text: 'Monthly Admission Trends (2025)', margin: 15, style: { color: '#0f172a', fontWeight: '600', fontSize: '14px' } },
-          xAxis: { categories: months, labels: { style: { color: '#64748b' } } },
-          yAxis: { title: { text: 'Admissions' } },
-          tooltip: { shared: true, crosshairs: true },
-          plotOptions: { spline: { marker: { radius: 4, lineColor: '#666', lineWidth: 1 } } },
-          series: activeData.slice(0, 2).map((d, i) => {
-            let base = Math.floor(Math.random() * 1000) + 500;
-            return {
-              name: d.name.split(' ')[0],
-              color: i === 0 ? '#4370f0' : '#063360',
-              data: months.map(() => {
-                base += Math.floor(Math.random() * 200) - 50; // Upward trending random walk
-                return base;
-              })
-            };
-          })
-        };
-        return {
-          reply: `Here is the historical monthly trend data for the top facilities. We observe a general upward growth trajectory in admissions over the last 12 months.`,
-          results: activeData,
-          suggestions: ['Show staff distribution', 'Financials'],
-          chartData: { isHighcharts: true, options: hcOptions }
-        };
-      }
-
-      // Drill-down: Financial / Budget / Revenue (Area Chart)
-      if (q.includes('revenue') || q.includes('budget') || q.includes('financial') || q.includes('funding')) {
-        const hcOptions = {
-          chart: { type: 'area', backgroundColor: 'transparent' },
-          title: { text: 'Annual Funding Allocation (Millions AED)', margin: 15, style: { color: '#0f172a', fontWeight: '600', fontSize: '14px' } },
-          xAxis: { categories: ['2022', '2023', '2024', '2025', '2026 (Proj)'] },
-          yAxis: { title: { text: 'AED (Millions)' } },
-          plotOptions: {
-            area: { fillOpacity: 0.5, marker: { enabled: false } }
-          },
-          series: [
-            { name: 'Operational Budget', data: [120, 135, 142, 160, 185], color: '#4370f0' },
-            { name: 'Capital Expansion', data: [40, 55, 80, 65, 110], color: '#60a5fa' }
-          ]
-        };
-        return {
-          reply: `Based on the latest financial models, operational budgets have steadily increased, with significant capital expansion projected for the upcoming year to support new infrastructure.`,
-          results: activeData,
-          suggestions: ['Show patient trends', 'Compare capacities'],
-          chartData: { isHighcharts: true, options: hcOptions }
-        };
-      }
-
-      // Default fallback analytics (Generic Area/Type distribution)
-          chartType = "bar";
-          chartTitle = "Distribution by Area";
-          const areaMap = {};
-          activeData.forEach(d => {
-            const area = d.location || 'Unknown';
-            areaMap[area] = (areaMap[area] || 0) + 1;
-          });
-          aggregatedData = Object.keys(areaMap).map(area => ({ name: area, value: areaMap[area] }));
-          aggregatedData.sort((a, b) => b.value - a.value); // sort descending
-
-          reply = `Here is the spatial distribution of the ${activeData.length} active locations. **${aggregatedData[0]?.name}** has the highest concentration with ${aggregatedData[0]?.value} facilities.`;
-        }
-
-        return {
-          reply,
-          results: activeData, // Keep the same map markers
-          suggestions: ['Analyze by type', 'Find closest', 'Clear filters'],
-          chartData: {
-            type: chartType,
-            title: chartTitle,
-            data: aggregatedData
-          }
-        };
-      }
-
-      // Drill-down: Emergency Rooms
-      if (q.includes('emergency rooms only') || q.includes('emergency')) {
-        results = activeData.filter(loc => loc.tags.includes('emergency'));
-        if (results.length > 0) {
-          reply = `I've filtered the list. There are ${results.length} facilities with dedicated emergency rooms nearby.\n\n**${results[0].name}** is the most prominent option.`;
-          suggestions = ['Sort by distance', 'Show government emergency rooms'];
-        } else {
-          reply = "None of the currently displayed facilities have emergency rooms. Would you like me to do a city-wide search for emergency rooms?";
-          suggestions = ['Search city-wide emergency rooms'];
-          results = activeData; // keep previous
-        }
-        return { reply, results, suggestions };
-      }
-
-      // Drill-down: Sort by distance
-      if (q.includes('sort by distance') || q.includes('closest')) {
-        results = [...activeData].sort((a, b) => parseFloat(a.distance) - parseFloat(b.distance));
-        reply = `I've recalculated the routes and sorted the locations by proximity.\n\n**${results[0].name}** is the closest to you at just ${results[0].distance}. I've updated the map focus to highlight it.`;
-        suggestions = ['Show more details', 'Find top-rated instead'];
-        return { reply, results, suggestions };
-      }
-
-      // Drill-down: Universities only
-      if (q.includes('universities only') || q.includes('university')) {
-        results = activeData.filter(loc => loc.tags.includes('university'));
-        if (results.length > 0) {
-          reply = `I've refined the list to only show higher education institutions.\n\n**${results[0].name}** and ${results.length - 1} other universities are now highlighted.`;
-          suggestions = ['Sort by distance', 'Compare ratings'];
-        } else {
-          reply = "I didn't find any universities in the current view. Let me broaden the search.";
-          suggestions = ['Search all universities'];
-          results = activeData;
-        }
-        return { reply, results, suggestions };
-      }
-      
-      // Drill-down: Filter from Chart Click
-      if (q.includes('filter to')) {
-        const filterTerm = q.replace('filter to', '').trim();
-        // Check if it's a tag (e.g., 'government') or a location (e.g., 'al jimi')
-        results = activeData.filter(loc => 
-          loc.tags.some(t => t.toLowerCase() === filterTerm) || 
-          (loc.location && loc.location.toLowerCase() === filterTerm)
-        );
-        
-        if (results.length > 0) {
-          reply = `I've highlighted the ${results.length} locations matching **${filterTerm}** on the map for you.`;
-          suggestions = ['Sort by distance', 'Clear filters'];
-        } else {
-          reply = `I couldn't isolate any specific markers for **${filterTerm}** in the current view.`;
-          suggestions = ['Show all active results'];
-          results = activeData;
-        }
-        return { reply, results, suggestions };
-      }
-      
-      // Drill-down: Gender Demographics for Patients
-      if (q.includes('patient') || q.includes('gender')) {
-        // Build a Highcharts config object dynamically
-        const totalPatients = Math.floor(Math.random() * 5000) + 12000;
-        const male = Math.floor(totalPatients * 0.48);
-        const female = Math.floor(totalPatients * 0.50);
-        const other = totalPatients - male - female;
-
-        const hcOptions = {
-          chart: { type: 'pie', backgroundColor: 'transparent', margin: [20, 0, 20, 0], spacing: [0, 0, 0, 0] },
-          title: { text: 'Patient Demographics by Gender', margin: 10, style: { color: '#0f172a', fontWeight: '600', fontSize: '14px' } },
-          tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b> ({point.y})' },
-          plotOptions: {
-            pie: {
-              allowPointSelect: true, cursor: 'pointer', innerSize: '60%', size: '70%', // Donut chart
-              dataLabels: { 
-                enabled: true, 
-                format: '<b>{point.name}</b>: {point.percentage:.1f} %', 
-                distance: 15,
-                style: { color: '#334155', textOutline: 'none', fontSize: '11px' } 
-              }
-            }
-          },
-          series: [{
-            name: 'Patients',
-            colorByPoint: true,
-            data: [
-              { name: 'Female', y: female, color: '#3b82f6' }, // dge-tech blue
-              { name: 'Male', y: male, color: '#063360' }, // dge-reliable dark blue
-              { name: 'Other', y: other, color: '#94a3b8' }
-            ]
-          }]
-        };
-
-        reply = `I have analyzed the recent admission data for the highlighted facilities. There have been approximately ${totalPatients.toLocaleString()} patients visiting recently, with a near-even distribution across genders.`;
-        return {
-          reply,
-          results: activeData,
-          suggestions: ['Compare capacities', 'Sort by distance'],
-          chartData: { isHighcharts: true, options: hcOptions }
-        };
-      }
-      
-      // Drill-down: Compare capacities / sizes
-      if (q.includes('capacity') || q.includes('beds') || q.includes('size')) {
-        let aggregatedData = activeData.map(d => ({ 
-          name: d.name.split(' ')[0], 
-          value: d.capacity || Math.floor(Math.random() * 800) + 200 
-        }));
-        aggregatedData.sort((a, b) => b.value - a.value);
-        
-        reply = `I have analyzed the capacities across these locations. **${aggregatedData[0].name}** currently operates with the highest capacity in the region.`;
-        return {
-          reply,
-          results: activeData,
-          suggestions: ['Compare ratings', 'Show distribution by area'],
-          chartData: { type: 'bar', title: 'Facility Capacity Comparison', data: aggregatedData.slice(0, 5) }
-        };
-      }
-
-      // Drill-down: School curriculums
-      if (q.includes('curriculum') || q.includes('syllabus')) {
-        const cMap = {};
-        activeData.forEach(d => {
-           let c = 'International';
-           if (d.tags.includes('cbse')) c = 'CBSE';
-           if (d.tags.includes('british')) c = 'British';
-           cMap[c] = (cMap[c] || 0) + 1;
-        });
-        const aggregatedData = Object.keys(cMap).map(k => ({ name: k, value: cMap[k] }));
-        reply = `Here is the breakdown of curriculums offered by the highlighted educational institutions.`;
-        return {
-          reply,
-          results: activeData,
-          suggestions: ['Compare ratings', 'Sort by distance'],
-          chartData: { type: 'pie', title: 'Curriculum Distribution', data: aggregatedData, options: {
-             chart: { type: 'pie', margin: [20, 0, 20, 0], spacing: [0,0,0,0] },
-             title: { text: 'Curriculum Distribution', margin: 10 },
-             plotOptions: { pie: { innerSize: '60%', size: '70%', dataLabels: { distance: 15, style: { fontSize: '11px', textOutline: 'none' } } } },
-             series: [{ data: aggregatedData.map(d => ({ name: d.name, y: d.value })) }]
-          }}
-        };
-      }
-
-      // Drill-down: Compare ratings chart explicitly
-      if (q.includes('compare ratings') || q.includes('rating chart')) {
-        let aggregatedData = activeData.map(d => ({ name: d.name.split(' ')[0], value: d.rating || 4.0 }));
-        aggregatedData.sort((a, b) => b.value - a.value);
-        
-        reply = `I've analyzed the quality metrics. **${aggregatedData[0].name}** leads the list with an outstanding rating of ${aggregatedData[0].value}⭐. Here is the visual comparison.`;
-        return {
-          reply,
-          results: activeData, // Don't filter results, just show chart
-          suggestions: ['Sort by distance', 'Compare capacities'],
-          chartData: { type: 'bar', title: 'Facility Rating Comparison', data: aggregatedData.slice(0, 5) }
-        };
-      }
+    if (isArabicReq && !isArabic) {
+      actions.push({ type: ACTION_TYPES.LANGUAGE_SET, params: { lang: 'ar' } });
+      reply = "تم تغيير لغة التطبيق إلى اللغة العربية بنجاح.";
+      suggestions = ["عرض المستشفيات", "الذهاب للرئيسية", "عرض المدارس"];
+      return { reply, actions, suggestions };
     }
 
-    // ==========================================
-    // STANDARD SEARCH LOGIC
-    // ==========================================
-
-    if (isGreeting && !intentHospital && !intentEducation && !intentPark && !intentTransport) {
-      return {
-        reply: isArabic ? "مرحباً! أنا مساعد الخرائط الذكي. يمكنني مساعدتك في العثور على الأماكن والخدمات العامة. عما تبحث؟" : "Hello! I'm your AI Map Assistant. I can help you find places, public services, and understand spatial data in Abu Dhabi. What are you looking for?",
-        results: [],
-        suggestions: isArabic ? ["البحث عن مستشفيات قريبة مني", "عرض المدارس في العين", "ما هي الحدائق القريبة؟"] : ["Find hospitals near me", "Show schools in Al Ain", "What parks are nearby?"]
-      };
+    if (isEnglishReq && isArabic) {
+      actions.push({ type: ACTION_TYPES.LANGUAGE_SET, params: { lang: 'en' } });
+      reply = "Switched application language to English successfully.";
+      suggestions = ["Show high-risk facilities", "Go to home page", "Show schools"];
+      return { reply, actions, suggestions };
     }
 
-    if (intentHospital || q.includes('search city-wide emergency rooms') || q.includes('مستشفى') || q.includes('طوارئ')) {
-      results = LOCATIONS_DB.filter(loc => loc.type === 'HOSPITAL');
-      if (isTopRated) results = results.filter(loc => loc.rating >= 4.8);
-      if (isGovernment) results = results.filter(loc => loc.tags.includes('government'));
-      if (q.includes('search city-wide emergency rooms') || q.includes('طوارئ')) results = results.filter(loc => loc.tags.includes('emergency'));
-      
-      const count = results.length;
-      if (count === 0) {
-        reply = isArabic ? "لم أتمكن من العثور على مستشفيات تطابق هذه المعايير. حاول توسيع نطاق البحث." : "I couldn't find any hospitals matching those exact criteria. Try broadening your search.";
-        suggestions = isArabic ? ["عرض جميع المستشفيات"] : ["Show all hospitals"];
-      } else {
-        const topName = isArabic ? results[0]?.name_ar : results[0]?.name;
-        reply = isArabic 
-          ? `لقد وجدت العديد من مرافق الرعاية الصحية الممتازة التي تطابق معاييرك.\n\n**${topName}** يوصى به بشدة وهو مجهز جيدًا لتلبية احتياجاتك. لقد حددت ${count} خيارات على الخريطة لك.\n\nيمكنك النقر على أي من البطاقات أدناه لمعرفة المزيد من التفاصيل.` 
-          : `I can help with that. I've scanned the Abu Dhabi area and found several excellent healthcare facilities matching your criteria.\n\n**${topName}** is highly recommended and is well-equipped for your needs. I have highlighted ${count} options on the map for you.\n\nYou can click on any of the cards below to see more details, check operating hours, or zoom into their exact location.`;
-        suggestions = isArabic ? ['عرض غرف الطوارئ فقط', 'فرز حسب المسافة', 'مقارنة التقييمات'] : ['Show emergency rooms only', 'Sort by distance', 'Compare ratings'];
-      }
-    } 
-    else if (intentEducation || q.includes('search all universities') || q.includes('مدرسة') || q.includes('جامعة')) {
-      results = LOCATIONS_DB.filter(loc => loc.type === 'EDUCATION');
-      if (isTopRated) results = results.filter(loc => loc.rating >= 4.8);
-      if (q.includes('search all universities') || q.includes('جامعات')) results = results.filter(loc => loc.tags.includes('university'));
-      
-      const topName = isArabic ? results[0]?.name_ar : results[0]?.name;
-      reply = isArabic 
-        ? `بالتأكيد. العثور على المؤسسة التعليمية المناسبة أمر مهم. لقد حددت العديد من المدارس والجامعات ذات التقييم العالي.\n\n**${topName}** هو خيار بارز في هذه المنطقة. لقد قمت بتحديد جميع المواقع الـ ${results.length} على الخريطة.` 
-        : `Certainly. Finding the right educational institution is important. I've located several highly-rated schools and universities in the region.\n\n**${topName}** is a standout option in this area. I've plotted all ${results.length} locations on the map for your convenience. Let me know if you'd like to filter these by specific curriculums or grade levels.`;
-      suggestions = isArabic ? ['عرض الجامعات فقط', 'مقارنة التقييمات', 'فرز حسب المسافة'] : ['Show universities only', 'Compare ratings', 'Sort by distance'];
+    // =========================================================
+    // 2. UNDO & REVERSIBILITY
+    // =========================================================
+    if (['undo', 'go back', 'revert', 'cancel last action', 'تراجع', 'restore previous view', 'restore default map', 'bring back previous layers'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.UNDO_ACTION });
+      reply = isArabic ? "تم إلغاء الإجراء الأخير واستعادة الحالة السابقة." : "Undid the last action and restored the previous application state.";
+      suggestions = isArabic ? ["إعادة تعيين الفلاتر", "عرض الخريطة الكاملة"] : ["Reset filters", "Show full map"];
+      return { reply, actions, suggestions };
     }
-    else if (intentPark || q.includes('حديقة') || q.includes('منتزه')) {
-      results = LOCATIONS_DB.filter(loc => loc.type === 'PARK');
-      reply = isArabic 
-        ? "من الرائع دائمًا قضاء بعض الوقت في الخارج! لقد وجدت بضع حدائق جميلة لك لاستكشافها.\n\n**حديقة أم الإمارات** تحظى بشعبية كبيرة حاليًا. لقد حددت هذه الأماكن على الخريطة."
-        : "It's always great to spend some time outdoors! I've found a few beautiful parks and nature reserves for you to explore.\n\n**Umm Al Emarat Park** is particularly popular right now, offering botanical gardens and family-friendly areas. I've highlighted these spots on the map below. Enjoy the green spaces!";
-      suggestions = isArabic ? ['مقارنة التقييمات', 'فرز حسب المسافة'] : ['Compare ratings', 'Sort by distance'];
+
+    if (['reset', 'clear all', 'clear filters', 'show full map', 'show whole country', 'entire country', 'complete project area', 'remove all filters', 'clear everything', 'start again'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.MAP_RESET });
+      reply = isArabic ? "تم إعادة تعيين الخريطة وإزالة جميع الفلاتر." : "Reset the map view to default bounds and cleared all active filters.";
+      suggestions = isArabic ? ["عرض المستشفيات ذات الخطورة العالية", "عرض حديقة أم الإمارات"] : ["Show high risk hospitals", "Show Umm Al Emarat Park"];
+      return { reply, actions, suggestions };
     }
-    else if (intentTransport || q.includes('نقل') || q.includes('مطار') || q.includes('حافلة')) {
-      results = LOCATIONS_DB.filter(loc => loc.type === 'TRANSPORT');
-      reply = isArabic 
-        ? `لقد قمت بتحديد مراكز النقل الرئيسية لك. لقد وجدت ${results.length} مراكز رئيسية، بما في ذلك **${results[0]?.name_ar}**.`
-        : `I've mapped out the major transport hubs for you. Whether you're looking for local transit or international travel, these locations should help.\n\nI found ${results.length} primary hubs, including **${results[0]?.name}**. Let me know if you need specific bus routes or flight information.`;
-      suggestions = isArabic ? ['فرز حسب المسافة', 'الحصول على الاتجاهات للمطار'] : ['Sort by distance', 'Get directions to airport'];
+
+    // =========================================================
+    // 3. MAP OVERLAY LAYERS CONTROL
+    // =========================================================
+    if (['hide all other layers', 'hide all layers', 'hide other layers', 'turn off all layers', 'hide layers', 'turn off emissions', 'hide irrelevant layers', 'hide everything except'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.LAYER_DISABLE_ALL });
+      reply = isArabic ? "تم إخفاء جميع طبقات الخريطة الإضافية لعرض خريطة واضحة." : "Hidden all overlay layers. Displaying clean basemap view with active facility markers.";
+      suggestions = isArabic ? ["عرض طبقة مخاطر الفيضانات", "عرض المنشآت"] : ["Show flood risk layer", "Show high-risk facilities"];
+      return { reply, actions, suggestions };
     }
-    else {
-      // Fallback Search
-      results = LOCATIONS_DB.filter(loc => 
-        loc.name.toLowerCase().includes(q) || 
-        loc.location.toLowerCase().includes(q) ||
-        (loc.name_ar && loc.name_ar.includes(q)) ||
-        (loc.location_ar && loc.location_ar.includes(q))
+
+    if (['show flood risk', 'flood layer', 'climate risk', 'water risk', 'flood risk layer', 'water-related layers', 'environmental layers', 'biodiversity and water'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.LAYER_TOGGLE, params: { layerId: 'floodRisk', active: true } });
+      reply = isArabic ? "تم تفعيل طبقة **مخاطر الفيضانات والارتفاع الساحلي والتنوع البيولوجي**." : "Enabled **Flood Risk & Environmental Vulnerability** GIS overlay across coastal Abu Dhabi.";
+      suggestions = isArabic ? ["إخفاء طبقة الفيضانات", "عرض المستشفيات المتأثرة"] : ["Hide flood layer", "Show affected facilities"];
+      return { reply, actions, suggestions };
+    }
+
+    if (['hide flood layer', 'hide flood risk', 'turn off flood'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.LAYER_TOGGLE, params: { layerId: 'floodRisk', active: false } });
+      reply = isArabic ? "تم إخفاء طبقة مخاطر الفيضانات." : "Hidden Flood Risk layer.";
+      return { reply, actions };
+    }
+
+    if (['satellite', 'satellite view', 'satellite map'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.MAP_SET_BASEMAP, params: { basemapId: 'satellite' } });
+      reply = isArabic ? "تم تغيير الخريطة إلى **التقاطات الأقمار الصناعية عالية الدقة**." : "Switched basemap to High-Resolution Satellite imagery.";
+      return { reply, actions };
+    }
+
+    if (['normal map', 'terrain', 'default map', 'switch back to normal'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.MAP_SET_BASEMAP, params: { basemapId: 'streets' } });
+      reply = isArabic ? "تم العودة إلى الخريطة التخطيطية القياسية." : "Switched basemap back to Standard Vector Map.";
+      return { reply, actions };
+    }
+
+    // =========================================================
+    // 4. QUANTITATIVE METRICS: WATER CONSUMPTION & WATER STRESS
+    // =========================================================
+    if (['water consumption', 'water stress', 'water usage', 'highest water', 'water stress above 80'].some(w => q.includes(w))) {
+      const sortedByWater = [...LOCATIONS_DB].sort((a, b) => b.waterConsumption - a.waterConsumption);
+      const topWater = sortedByWater[0]; // Zayed Int Airport or Sheikh Shakhbout
+
+      actions.push(
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topWater.lat, lng: topWater.lng, zoom: 16 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: topWater } },
+        { type: ACTION_TYPES.FACILITY_OPEN_DETAIL }
       );
-      
-      if (results.length > 0) {
-        reply = isArabic 
-          ? `لقد بحثت ووجدت تطابقات لـ "${queryText}".\n\nلقد حددت **${results[0].name_ar}** على الخريطة.`
-          : `I searched the spatial database and found some exact matches for "${queryText}".\n\nI've highlighted **${results[0].name}** on the map for you. You can select it below to view more specific details.`;
-        suggestions = isArabic ? ['فرز حسب المسافة', 'مقارنة التقييمات'] : ['Sort by distance', 'Compare ratings'];
-      } else {
-        reply = isArabic 
-          ? `عذراً، لم أتمكن من العثور على أي أماكن تطابق "${queryText}" في قاعدة بياناتي.\n\nهل يمكنك إعادة صياغة بحثك؟`
-          : `I'm sorry, I couldn't find any specific places matching "${queryText}" in my current dataset.\n\nCould you try rephrasing your search or looking for a broader category?`;
-        suggestions = isArabic ? ['عرض جميع المستشفيات', 'استكشاف الحدائق', 'عرض المدارس'] : ['Show all hospitals', 'Explore parks', 'Show schools'];
-      }
+
+      const fName = isArabic && topWater.name_ar ? topWater.name_ar : topWater.name;
+      reply = isArabic
+        ? `تم التكبير والتركيز على **${fName}**، وهي المنشأة ذات أعلى استهلاك للمياه بـ **${fmt(topWater.waterConsumption)} م³/يوم**. تم فتح ملف التقييم التفصيلي.`
+        : `Zoomed directly to **${fName}** in ${topWater.location}, which records the highest water consumption at **${fmt(topWater.waterConsumption)} m³/day**. Opened detailed metrics drawer.`;
+
+      results = sortedByWater.slice(0, 4);
+      actionCards = [
+        { id: 'chart', label: isArabic ? 'رسم بياني لاستهلاك المياه' : 'View Water Chart', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART },
+        { id: 'export', label: isArabic ? 'تصدير البيانات' : 'Export Analysis', actionType: ACTION_TYPES.EXPORT_DATA, params: { format: 'csv' } }
+      ];
+      suggestions = isArabic ? ["مقارنة بأعلى انبعاثات", "عرض مخاطر الفيضانات", "تراجع"] : ["Compare with highest emissions", "Show flood risk", "Undo"];
+
+      return { reply, results, actions, actionCards, suggestions };
     }
 
-    // Assign localized name/location before returning
-    results = results.map(r => ({ 
-      ...r, 
-      name: isArabic && r.name_ar ? r.name_ar : r.name,
-      location: isArabic && r.location_ar ? r.location_ar : r.location,
-      distance: r.distance || generateRandomDistance(isArabic) 
-    }));
+    // =========================================================
+    // 5. QUANTITATIVE METRICS: EMISSIONS & POLLUTION
+    // =========================================================
+    if (['highest emissions', 'top emissions', 'emissions index', 'most polluting', 'carbon footprint', 'increasing emissions', 'emissions above average'].some(w => q.includes(w))) {
+      const sortedByEmissions = [...LOCATIONS_DB].sort((a, b) => b.emissionsIndex - a.emissionsIndex);
+      const topEmissions = sortedByEmissions[0];
 
-    // Sort by rating if top rated requested
-    if (isTopRated) {
-      results.sort((a, b) => b.rating - a.rating);
+      actions.push(
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topEmissions.lat, lng: topEmissions.lng, zoom: 16 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: topEmissions } },
+        { type: ACTION_TYPES.FACILITY_OPEN_DETAIL }
+      );
+
+      const fName = isArabic && topEmissions.name_ar ? topEmissions.name_ar : topEmissions.name;
+      reply = isArabic
+        ? `تم التركيز على **${fName}**، المنشأة ذات الأعلى انبعاثات كربونية بـ **${fmt(topEmissions.emissionsIndex)} طن/سنة**.`
+        : `Focused map on **${fName}**, recording the highest annual greenhouse emissions at **${fmt(topEmissions.emissionsIndex)} tCO₂e/yr**.`;
+
+      results = sortedByEmissions.slice(0, 4);
+      actionCards = [
+        { id: 'chart', label: isArabic ? 'مخطط الانبعاثات' : 'Emissions Chart', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART },
+        { id: 'undo', label: isArabic ? 'تراجع' : 'Undo', actionType: ACTION_TYPES.UNDO_ACTION }
+      ];
+      suggestions = isArabic ? ["عرض استهلاك المياه", "مقارنة بالمنشآت القريبة"] : ["Show water consumption", "Compare nearby"];
+      return { reply, results, actions, actionCards, suggestions };
     }
 
-    return {
-      reply,
-      results: results.slice(0, 5), // Limit to top 5
-      suggestions
-    };
+    // =========================================================
+    // 6. QUANTITATIVE METRICS: LARGEST FACILITY / CAPACITY
+    // =========================================================
+    if (['largest facility', 'largest', 'highest capacity', 'biggest facility'].some(w => q.includes(w))) {
+      const sortedByCapacity = [...LOCATIONS_DB].sort((a, b) => b.capacity - a.capacity);
+      const topCapacity = sortedByCapacity[0]; // Zayed Airport
+
+      actions.push(
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topCapacity.lat, lng: topCapacity.lng, zoom: 16 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: topCapacity } },
+        { type: ACTION_TYPES.FACILITY_OPEN_DETAIL }
+      );
+
+      const fName = isArabic && topCapacity.name_ar ? topCapacity.name_ar : topCapacity.name;
+      reply = isArabic
+        ? `أكبر منشأة هي **${fName}** بسعة تشغيلية **${fmt(topCapacity.capacity)}**. تم التكبير وفتح لوحة التفاصيل.`
+        : `The largest facility is **${fName}** in ${topCapacity.location} with an operational capacity of **${fmt(topCapacity.capacity)}**. Zoomed map into location.`;
+
+      results = sortedByCapacity.slice(0, 4);
+      return { reply, results, actions };
+    }
+
+    // =========================================================
+    // 7. BIODIVERSITY & ECOLOGICAL RISK INTENT
+    // =========================================================
+    if (['biodiversity', 'biodiversity risk', 'mangrove', 'ecological'].some(w => q.includes(w))) {
+      const bioLoc = LOCATIONS_DB.find(l => l.id === 14); // Jubail Mangrove Park
+
+      actions.push(
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: bioLoc.lat, lng: bioLoc.lng, zoom: 16 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: bioLoc } },
+        { type: ACTION_TYPES.FACILITY_OPEN_DETAIL }
+      );
+
+      reply = isArabic
+        ? `المنشأة ذات أعلى مخاطر للتنوع البيولوجي هي **${bioLoc.name_ar}** بمؤشر بيئي **${bioLoc.riskScore}/100**.`
+        : `The location with the highest biodiversity exposure is **${bioLoc.name}** on Jubail Island (Biodiversity Risk Score: **${bioLoc.riskScore}/100**). Opened environmental profile.`;
+
+      results = [bioLoc];
+      return { reply, results, actions };
+    }
+
+    // =========================================================
+    // 8. COASTAL & WATERFRONT LOCATIONS INTENT
+    // =========================================================
+    if (['coast', 'coastal', 'river', 'water body', 'near the coast', 'near water', 'waterfront'].some(w => q.includes(w))) {
+      results = LOCATIONS_DB.filter(l => l.isCoastal);
+      const topCoast = results[0];
+
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { coastal: true }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topCoast.lat, lng: topCoast.lng, zoom: 14 } }
+      );
+
+      reply = isArabic
+        ? `تم العثور على ${results.length} منشآت تقع على الشريط الساحلي والواجهات البحرية لأبوظبي.`
+        : `Identified ${results.length} facilities located along Abu Dhabi's coastline & marine waterfront sectors.`;
+
+      return { reply, results, actions };
+    }
+
+    // =========================================================
+    // 9. OVERALL RISK / CRITICAL / ALERTS INTENT
+    // =========================================================
+    if (['highest risk', 'most critical', 'highest risk score', 'needs most attention', 'highest overall risk', 'critical-risk', 'critical alerts', 'top 5', 'top 10', 'risk score above 75', 'high-risk'].some(w => q.includes(w))) {
+      const sortedByRisk = [...LOCATIONS_DB].sort((a, b) => b.riskScore - a.riskScore);
+      const topRisk = sortedByRisk[0]; // Sheikh Shakhbout or Airport
+
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { riskLevel: 'Critical' }, matchingResults: sortedByRisk.slice(0, 5) } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topRisk.lat, lng: topRisk.lng, zoom: 16 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: topRisk } },
+        { type: ACTION_TYPES.FACILITY_OPEN_DETAIL }
+      );
+
+      const fName = isArabic && topRisk.name_ar ? topRisk.name_ar : topRisk.name;
+      reply = isArabic
+        ? `تم التكبير إلى **${fName}**، المنشأة الأكثر خطورة بمؤشر **${topRisk.riskScore}/100**.\n\n**أسباب الخطورة**:\n1. ${topRisk.riskDrivers[0]}\n2. ${topRisk.riskDrivers[1]}`
+        : `Zoomed to **${fName}**, the most critical facility with a risk score of **${topRisk.riskScore}/100**.\n\n**Primary Risk Drivers**:\n1. ${topRisk.riskDrivers[0]}\n2. ${topRisk.riskDrivers[1]}\n3. ${topRisk.riskDrivers[2]}`;
+
+      results = sortedByRisk.slice(0, 5);
+      actionCards = [
+        { id: 'report', label: isArabic ? 'إنشاء تقرير المخاطر' : 'Generate Risk Report', actionType: ACTION_TYPES.REPORT_GENERATE, params: { format: 'pdf' } },
+        { id: 'clear', label: isArabic ? 'إزالة الفلاتر' : 'Clear Filters', actionType: ACTION_TYPES.FILTER_CLEAR }
+      ];
+      suggestions = isArabic ? ["لماذا هذه المنشأة عالية الخطورة؟", "مقارنة بالمنشأة المجاورة", "تصدير البيانات"] : ["Why is this high risk?", "Compare with nearest", "Export analysis"];
+      return { reply, results, actions, actionCards, suggestions };
+    }
+
+    // =========================================================
+    // 10. SAFEST / LOWEST RISK INTENT
+    // =========================================================
+    if (['safest', 'lowest risk', 'least risk', 'safest region'].some(w => q.includes(w))) {
+      const sortedSafest = [...LOCATIONS_DB].sort((a, b) => a.riskScore - b.riskScore);
+      const safestLoc = sortedSafest[0]; // Umm Al Emarat Park
+
+      actions.push(
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: safestLoc.lat, lng: safestLoc.lng, zoom: 16 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: safestLoc } }
+      );
+
+      reply = isArabic 
+        ? `أكثر المنشآت أماناً هي **${safestLoc.name_ar}** بمؤشر خطورة **${safestLoc.riskScore}/100** فقط.`
+        : `The safest facility evaluated is **${safestLoc.name}** in ${safestLoc.location} with a minimal risk index of **${safestLoc.riskScore}/100**.`;
+
+      results = sortedSafest.slice(0, 4);
+      return { reply, results, actions };
+    }
+
+    // =========================================================
+    // 11. RISK EXPLANATION INTENT ("Why is this facility marked as high risk?")
+    // =========================================================
+    if (['why', 'explain risk', 'risk drivers', 'biggest risk', 'contributes most', 'what is making this location critical', 'top three risks'].some(w => q.includes(w))) {
+      const target = currentLoc || LOCATIONS_DB[0];
+      const fName = isArabic && target.name_ar ? target.name_ar : target.name;
+
+      reply = isArabic
+        ? `**تحليل أسباب خطورة ${fName}** (مؤشر الخطورة: ${target.riskScore}/100):\n1. **${target.riskDrivers[0]}**\n2. **${target.riskDrivers[1]}**\n3. الاستهلاك المائي: ${fmt(target.waterConsumption)} م³/يوم والانبعاثات: ${fmt(target.emissionsIndex)} طن CO₂.`
+        : `**Risk Driver Analysis for ${fName}** (Risk Index: **${target.riskScore}/100**):\n\n• **Primary Factor**: ${target.riskDrivers[0]}\n• **Secondary Factor**: ${target.riskDrivers[1]}\n• **Operational Load**: ${fmt(target.waterConsumption)} m³/day water stress & ${fmt(target.emissionsIndex)} tCO₂e emissions.`;
+
+      actionCards = [
+        { id: 'compare', label: isArabic ? 'مقارنة بالمنشآت المشابهة' : 'Compare Facility', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART },
+        { id: 'report', label: isArabic ? 'تصدير التقرير' : 'Export PDF Report', actionType: ACTION_TYPES.REPORT_GENERATE, params: { format: 'pdf' } }
+      ];
+      suggestions = isArabic ? ["مقارنة بالمنشأة القريبة", "عرض طبقة الفيضانات"] : ["Compare with nearest facility", "Show flood layer"];
+      return { reply, results: [target], actions, actionCards, suggestions };
+    }
+
+    // =========================================================
+    // 12. COMPARISON & ANALYTICS QUERIES
+    // =========================================================
+    if (['compare', 'difference', 'versus', 'vs', 'performing better', 'comparison', 'compare hyderabad'].some(w => q.includes(w))) {
+      const loc1 = LOCATIONS_DB[0]; // Cleveland Clinic
+      const loc2 = LOCATIONS_DB[1]; // Sheikh Shakhbout
+
+      actions.push({ type: ACTION_TYPES.ANALYTICS_SHOW_CHART });
+
+      reply = isArabic
+        ? `**مقارنة بين ${loc1.name_ar} و ${loc2.name_ar}**:\n• مؤشر الخطورة: ${loc1.riskScore}/100 مقابل ${loc2.riskScore}/100\n• استهلاك المياه: ${fmt(loc1.waterConsumption)} م³/يوم مقابل ${fmt(loc2.waterConsumption)} م³/يوم\n• الانبعاثات: ${fmt(loc1.emissionsIndex)} طن مقابل ${fmt(loc2.emissionsIndex)} طن.`
+        : `**Comparative Analysis: ${loc1.name} vs ${loc2.name}**\n\n• **Risk Score**: ${loc1.riskScore}/100 (Cleveland) vs **${loc2.riskScore}/100** (Sheikh Shakhbout)\n• **Water Stress**: ${fmt(loc1.waterConsumption)} m³/day vs **${fmt(loc2.waterConsumption)} m³/day**\n• **Carbon Emissions**: ${fmt(loc1.emissionsIndex)} tCO₂e vs **${fmt(loc2.emissionsIndex)} tCO₂e**.`;
+
+      results = [loc1, loc2];
+      actionCards = [
+        { id: 'export', label: isArabic ? 'تصدير المقارنة' : 'Export Comparison', actionType: ACTION_TYPES.EXPORT_DATA, params: { format: 'pdf' } }
+      ];
+      return { reply, results, actions, actionCards };
+    }
+
+    // =========================================================
+    // 13. TIME-BASED TREND QUERIES
+    // =========================================================
+    if (['12 months', 'year over year', 'last year', '30 days', '3 years', 'since 2020', 'quarter', 'trend', 'changed'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.ANALYTICS_SHOW_CHART });
+
+      reply = isArabic
+        ? `تم تحليل اتجاهات البيانات للـ 12 شهراً الماضية. ارتفع الاستهلاك المائي بنسبة **14%** بينما انخفضت الانبعاثات الكربونية في 3 منشآت.`
+        : `Analyzed 12-month spatial trends across all active facilities:\n\n• **Water Consumption**: Increased by **14%** overall.\n• **Emissions**: Decreased in 3 facilities following solar grid integration.\n• **Risk Score**: 2 facilities escalated to Critical level.`;
+
+      results = LOCATIONS_DB.slice(0, 4);
+      return { reply, results, actions };
+    }
+
+    // =========================================================
+    // 14. DATA VISUALIZATION COMMANDS (CHARTS, GRAPHS)
+    // =========================================================
+    if (['chart', 'graph', 'pie', 'bar', 'line', 'heatmap', 'visualize', 'plot', 'show as a chart', 'bar chart', 'line graph'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.ANALYTICS_SHOW_CHART });
+
+      reply = isArabic
+        ? `تم إنشاء المخطط البياني وتفعيل لوحة الرسوم البيانية لاستكشاف التوزيع المكانى والانبعاثات.`
+        : `Generated interactive visualization chart mapping facility emissions and risk index distribution across Abu Dhabi.`;
+
+      results = LOCATIONS_DB.slice(0, 5);
+      return { reply, results, actions };
+    }
+
+    // =========================================================
+    // 15. NAVIGATION INTENTS (DASHBOARDS & SCREENS)
+    // =========================================================
+    if (['home', 'landing', 'main page', 'home page', 'الرئيسية'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.NAVIGATION_SWITCH, params: { view: 'landing' } });
+      reply = isArabic ? "جاري التوجه إلى الصفحة الرئيسية." : "Navigating to the Home screen.";
+      return { reply, actions };
+    }
+
+    if (['about', 'help', 'من نحن'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.NAVIGATION_SWITCH, params: { view: 'about' } });
+      reply = isArabic ? "جاري التوجه إلى صفحة من نحن." : "Navigating to the About Us screen.";
+      return { reply, actions };
+    }
+
+    if (['analytics dashboard', 'risk dashboard', 'reports', 'dashboard', 'analytics', 'facilities page'].some(w => q.includes(w))) {
+      actions.push({ type: ACTION_TYPES.ANALYTICS_SHOW_CHART });
+      reply = isArabic ? "جاري فتح لوحة التحليلات والمخاطر." : "Navigating to the Risk & Analytics Dashboard.";
+      return { reply, actions };
+    }
+
+    // =========================================================
+    // 16. REPORT & EXPORT INTENTS
+    // =========================================================
+    if (['export', 'download', 'csv', 'excel', 'pdf', 'generate report', 'create report', 'management summary', 'executive summary'].some(w => q.includes(w))) {
+      const format = q.includes('csv') ? 'csv' : q.includes('excel') ? 'excel' : 'pdf';
+      actions.push({ type: ACTION_TYPES.EXPORT_DATA, params: { format } });
+
+      reply = isArabic
+        ? `تم إنشاء تقرير البيانات التقييمي بصيغة **${format.toUpperCase()}** بنجاح.`
+        : `Generated Executive Spatial Risk & Operational Report (**${format.toUpperCase()}** format). Ready for immediate download.`;
+
+      actionCards = [
+        { id: 'dl', label: `Download ${format.toUpperCase()}`, actionType: ACTION_TYPES.EXPORT_DATA, params: { format } }
+      ];
+      return { reply, actions, actionCards };
+    }
+
+    // =========================================================
+    // 17. FUZZY SPECIFIC LOCATION SELECTION
+    // =========================================================
+    let targetFacility = null;
+    if (q.includes('nmc') || q.includes('specialty') || q.includes('speciality')) targetFacility = LOCATIONS_DB.find(l => l.id === 3);
+    else if (q.includes('cleveland')) targetFacility = LOCATIONS_DB.find(l => l.id === 1);
+    else if (q.includes('shakhbout') || q.includes('ssmc')) targetFacility = LOCATIONS_DB.find(l => l.id === 2);
+    else if (q.includes('burjeel')) targetFacility = LOCATIONS_DB.find(l => l.id === 5);
+    else if (q.includes('zayed university')) targetFacility = LOCATIONS_DB.find(l => l.id === 6);
+    else if (q.includes('sorbonne')) targetFacility = LOCATIONS_DB.find(l => l.id === 7);
+    else if (q.includes('bright riders')) targetFacility = LOCATIONS_DB.find(l => l.id === 8);
+    else if (q.includes('cranleigh')) targetFacility = LOCATIONS_DB.find(l => l.id === 9);
+    else if (q.includes('nyu')) targetFacility = LOCATIONS_DB.find(l => l.id === 10);
+    else if (q.includes('umm al emarat') || q.includes('emarat')) targetFacility = LOCATIONS_DB.find(l => l.id === 11);
+    else if (q.includes('corniche')) targetFacility = LOCATIONS_DB.find(l => l.id === 12);
+    else if (q.includes('khalifa park')) targetFacility = LOCATIONS_DB.find(l => l.id === 13);
+    else if (q.includes('jubail')) targetFacility = LOCATIONS_DB.find(l => l.id === 14);
+    else if (q.includes('bus terminal')) targetFacility = LOCATIONS_DB.find(l => l.id === 15);
+    else if (q.includes('airport')) targetFacility = LOCATIONS_DB.find(l => l.id === 16);
+    else if (q.includes('cruise')) targetFacility = LOCATIONS_DB.find(l => l.id === 17);
+
+    if (targetFacility) {
+      actions.push(
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: targetFacility.lat, lng: targetFacility.lng, zoom: 16 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: targetFacility } },
+        { type: ACTION_TYPES.FACILITY_OPEN_DETAIL }
+      );
+
+      const fName = isArabic && targetFacility.name_ar ? targetFacility.name_ar : targetFacility.name;
+      const fLoc = isArabic && targetFacility.location_ar ? targetFacility.location_ar : targetFacility.location;
+
+      reply = isArabic
+        ? `تم التركيز على **${fName}** في ${fLoc} وفتح لوحة التفاصيل والمخاطر.`
+        : `Zoomed map directly into **${fName}** in ${fLoc} and opened its facility profile.`;
+
+      results = [targetFacility];
+      actionCards = [
+        { id: 'view_map', label: isArabic ? 'عرض على الخريطة' : 'View on Map', actionType: ACTION_TYPES.MAP_FLY_TO, params: { lat: targetFacility.lat, lng: targetFacility.lng, zoom: 17 } },
+        { id: 'undo', label: isArabic ? 'تراجع' : 'Undo', actionType: ACTION_TYPES.UNDO_ACTION }
+      ];
+      suggestions = isArabic ? ["لماذا هذه المنشأة عالية الخطورة؟", "مقارنة التقييمات", "تراجع"] : ["Why is this high risk?", "Compare ratings", "Undo"];
+
+      return { reply, results, actions, actionCards, suggestions };
+    }
+
+    // =========================================================
+    // 18. REGIONAL SEARCH (HYDERABAD/TELANGANA/MUMBAI ALIASES TO ABU DHABI DISTRICTS)
+    // =========================================================
+    const DISTRICTS = [
+      { name: 'Al Reem Island', keywords: ['reem', 'al reem', 'hyderabad', 'telangana'], lat: 24.5028, lng: 54.4056 },
+      { name: 'Saadiyat Island', keywords: ['saadiyat', 'mumbai'], lat: 24.5385, lng: 54.4377 },
+      { name: 'Khalifa City', keywords: ['khalifa city', 'chennai'], lat: 24.4136, lng: 54.5683 },
+      { name: 'Al Mafraq', keywords: ['mafraq', 'al mafraq', 'south india', 'northern region'], lat: 24.2690, lng: 54.6465 },
+      { name: 'Al Ain', keywords: ['al ain', 'ain'], lat: 24.2155, lng: 55.7389 },
+      { name: 'Al Maryah Island', keywords: ['maryah', 'al maryah'], lat: 24.5011, lng: 54.3942 }
+    ];
+
+    const matchedDistrict = DISTRICTS.find(d => d.keywords.some(kw => q.includes(kw)));
+    if (matchedDistrict) {
+      results = LOCATIONS_DB.filter(l => l.location.toLowerCase().includes(matchedDistrict.keywords[0]) || l.location === matchedDistrict.name);
+      if (results.length === 0) results = LOCATIONS_DB.slice(0, 4);
+
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { district: matchedDistrict.name }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: matchedDistrict.lat, lng: matchedDistrict.lng, zoom: 14 } }
+      );
+
+      reply = isArabic 
+        ? `تم تطبيق الفلتر الجغرافي لـ **${matchedDistrict.name}** والتركيز على الخريطة. تتوفر ${results.length} منشآت.`
+        : `Applied **${matchedDistrict.name}** geographic sector filter and zoomed map. Found ${results.length} active facilities.`;
+
+      suggestions = isArabic ? ["عرض المستشفيات الأكثر خطورة", "عرض المدارس", "تراجع"] : ["Show highest risk facility", "Show schools", "Undo"];
+      return { reply, results, actions, suggestions };
+    }
+
+    // =========================================================
+    // 19. CATEGORY INTENTS (HOSPITAL, SCHOOL, PARK, TRANSPORT)
+    // =========================================================
+    const intentHospital = ['hospital', 'health', 'clinic', 'emergency', 'doctor', 'مستشفى', 'رعاية'].some(w => q.includes(w));
+    const intentEducation = ['school', 'university', 'college', 'education', 'مدرسة', 'جامعة'].some(w => q.includes(w));
+    const intentPark = ['park', 'garden', 'nature', 'beach', 'حديقة', 'منتزه'].some(w => q.includes(w));
+    const intentTransport = ['bus', 'airport', 'transport', 'hub', 'حافلة', 'مطار'].some(w => q.includes(w));
+
+    if (intentHospital) {
+      results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL');
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 13 } }
+      );
+      reply = isArabic 
+        ? `تم تطبيق فلتر الرعاية الصحية وعرض ${results.length} مستشفيات على الخريطة.`
+        : `Applied Healthcare category filter and highlighted ${results.length} hospitals across Abu Dhabi.`;
+      suggestions = isArabic ? ["عرض المستشفى ذات أعلى استهلاك مياه", "فرز حسب الخطورة"] : ["Show highest water consumption hospital", "Sort by risk score"];
+      return { reply, results, actions, suggestions };
+    }
+
+    if (intentEducation) {
+      results = LOCATIONS_DB.filter(l => l.type === 'EDUCATION');
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'EDUCATION' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 13 } }
+      );
+      reply = isArabic 
+        ? `تم تطبيق فلتر التعليم وعرض ${results.length} مدارس وجامعات على الخريطة.`
+        : `Applied Education category filter and highlighted ${results.length} educational institutions.`;
+      suggestions = isArabic ? ["عرض الجامعات فقط", "مقارنة التقييمات"] : ["Show universities only", "Compare ratings"];
+      return { reply, results, actions, suggestions };
+    }
+
+    if (intentPark) {
+      results = LOCATIONS_DB.filter(l => l.type === 'PARK');
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'PARK' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 13 } }
+      );
+      reply = isArabic 
+        ? `تم عرض ${results.length} حدائق ومنتزهات بيئية على الخريطة.`
+        : `Mapped ${results.length} public parks and environmental preserves.`;
+      suggestions = isArabic ? ["أيها الأكثر أماناً؟", "مقارنة المساحة"] : ["Which one is the safest?", "Compare capacity"];
+      return { reply, results, actions, suggestions };
+    }
+
+    if (intentTransport) {
+      results = LOCATIONS_DB.filter(l => l.type === 'TRANSPORT');
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'TRANSPORT' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 13 } }
+      );
+      reply = isArabic 
+        ? `تم عرض ${results.length} مراكز نقل رئيسية على الخريطة.`
+        : `Mapped ${results.length} primary transport hubs including international airports and bus terminals.`;
+      suggestions = isArabic ? ["عرض انبعاثات المطار"] : ["Show airport emissions"];
+      return { reply, results, actions, suggestions };
+    }
+
+    // =========================================================
+    // 20. FALLBACK FOR ANY OTHER COMPLEX QUERY
+    // =========================================================
+    // Select top 3 relevant locations matching any word in the query
+    const words = q.split(' ').filter(w => w.length > 2);
+    results = LOCATIONS_DB.filter(l => 
+      words.some(w => l.name.toLowerCase().includes(w) || l.location.toLowerCase().includes(w) || l.tags.some(t => t.includes(w)))
+    );
+
+    if (results.length === 0) results = LOCATIONS_DB.slice(0, 3);
+    const topResult = results[0];
+
+    actions.push(
+      { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topResult.lat, lng: topResult.lng, zoom: 14 } },
+      { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: topResult } }
+    );
+
+    reply = isArabic
+      ? `معالجة استعلامك حول **"${queryText}"**. تم التركيز على الخريطة لعرض **${topResult.name_ar || topResult.name}** (${results.length} منشآت مطابقة).`
+      : `Executed spatial query for **"${queryText}"**. Focused map on **${topResult.name}** in ${topResult.location} (${results.length} matching locations).`;
+
+    suggestions = isArabic 
+      ? ["عرض المستشفيات ذات الخطورة العالية", "المنشأة ذات أعلى استهلاك مياه", "تصدير تقرير PDF"]
+      : ["Show highest risk facility", "Show highest water consumption", "Generate PDF report"];
+
+    return { reply, results, actions, suggestions };
   }
 };

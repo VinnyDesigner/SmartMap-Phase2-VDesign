@@ -1,0 +1,134 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "FAC-TEL-001",
+      "geometry": { "type": "Point", "coordinates": [78.4867, 17.3850] },
+      "properties": {
+        "id": "FAC-TEL-001",
+        "name": "Hyderabad Industrial Manufacturing Hub",
+        "name_ar": "مركز هيدرآباد الصناعي للتصنيع",
+        "country": "India",
+        "state": "Telangana",
+        "city": "Hyderabad",
+        "facilityType": "MANUFACTURING",
+        "sector": "Industrial Manufacturing",
+        "riskScore": 92,
+        "riskLevel": "Critical",
+        "waterConsumption": 22400,
+        "emissionsIndex": 78000,
+        "capacity": 15000,
+        "trend": "increasing",
+        "isCoastal": false,
+        "hasAlerts": true,
+        "riskDrivers": ["High groundwater drawdown in Musi Basin", "Heavy industrial furnace emissions", "High flood plain inundation risk"],
+        "tags": ["manufacturing", "telangana", "hyderabad", "industrial", "critical risk", "pharma"]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "FAC-TEL-002",
+      "geometry": { "type": "Point", "coordinates": [78.5482, 17.4435] },
+      "properties": {
+        "id": "FAC-TEL-002",
+        "name": "Telangana Advanced Tech & Semiconductor Plant",
+        "name_ar": "مصنع تيلانجانا للتقنية المتقدمة وأشباه الموصلات",
+        "country": "India",
+        "state": "Telangana",
+        "city": "Hyderabad",
+        "facilityType": "MANUFACTURING",
+        "sector": "Electronics & Semiconductors",
+        "riskScore": 86,
+        "riskLevel": "High",
+        "waterConsumption": 19800,
+        "emissionsIndex": 42000,
+        "capacity": 8500,
+        "trend": "increasing",
+        "isCoastal": false,
+        "hasAlerts": true,
+        "riskDrivers": ["Ultrapure water processing stress", "Chemical waste storage proximity"],
+        "tags": ["manufacturing", "telangana", "tech", "semiconductor", "high risk"]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "FAC-TEL-003",
+      "geometry": { "type": "Point", "coordinates": [78.3820, 17.4399] },
+      "properties": {
+        "id": "FAC-TEL-003",
+        "name": "HITEC City Eco Solar Manufacturing Park",
+        "name_ar": "مجمع هايتك سيتي للطاقة الشمسية",
+        "country": "India",
+        "state": "Telangana",
+        "city": "Hyderabad",
+        "facilityType": "MANUFACTURING",
+        "sector": "Clean Energy Equipment",
+        "riskScore": 42,
+        "riskLevel": "Low",
+        "waterConsumption": 5200,
+        "emissionsIndex": 12000,
+        "capacity": 4200,
+        "trend": "improving",
+        "isCoastal": false,
+        "hasAlerts": false,
+        "riskDrivers": ["Minor urban heat island gain"],
+        "tags": ["manufacturing", "telangana", "hitec", "solar", "low risk"]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "FAC-AD-001",
+      "geometry": { "type": "Point", "coordinates": [54.3942, 24.5011] },
+      "properties": {
+        "id": "FAC-AD-001",
+        "name": "Cleveland Clinic Abu Dhabi",
+        "name_ar": "كليفلاند كلينك أبوظبي",
+        "country": "United Arab Emirates",
+        "state": "Abu Dhabi",
+        "city": "Abu Dhabi",
+        "facilityType": "HOSPITAL",
+        "sector": "Healthcare",
+        "riskScore": 88,
+        "riskLevel": "High",
+        "waterConsumption": 14200,
+        "emissionsIndex": 45000,
+        "capacity": 364,
+        "trend": "increasing",
+        "isCoastal": true,
+        "hasAlerts": true,
+        "riskDrivers": ["Coastal storm surge vulnerability", "High HVAC thermal load"],
+        "tags": ["hospital", "healthcare", "abu dhabi", "al maryah", "cleveland"]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "FAC-AD-002",
+      "geometry": { "type": "Point", "coordinates": [54.6465, 24.2690] },
+      "properties": {
+        "id": "FAC-AD-002",
+        "name": "Sheikh Shakhbout Medical City",
+        "name_ar": "مدينة الشيخ شخبوط الطبية",
+        "country": "United Arab Emirates",
+        "state": "Abu Dhabi",
+        "city": "Abu Dhabi",
+        "facilityType": "HOSPITAL",
+        "sector": "Healthcare",
+        "riskScore": 94,
+        "riskLevel": "Critical",
+        "waterConsumption": 18500,
+        "emissionsIndex": 62000,
+        "capacity": 741,
+        "trend": "increasing",
+        "isCoastal": false,
+        "hasAlerts": true,
+        "riskDrivers": ["Severe groundwater table stress", "High incinerator emissions"],
+        "tags": ["hospital", "healthcare", "abu dhabi", "shakhbout", "mafraq"]
+      }
+    }
+  ]
+}

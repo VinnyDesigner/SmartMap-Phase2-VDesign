@@ -11,7 +11,10 @@ import AboutUsPage from './components/AboutUsPage';
 import SignInPage from './components/SignInPage';
 import WebGLFluidReveal from './components/WebGLFluidReveal';
 
+import { useTheme } from './contexts/ThemeContext';
+
 function App() {
+  const { isDarkMode } = useTheme();
   const mouseX = useMotionValue(window.innerWidth / 2);
   const mouseY = useMotionValue(window.innerHeight / 2);
 
@@ -155,30 +158,17 @@ const MOCK_DATA = [
   }
 
   return (
-    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] transition-colors duration-300 ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
+    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] theme-dark:bg-[#0b132b] transition-colors duration-300 ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
       <BrandHeader onNavigate={handleNavigate} currentView={currentView} />
-      
-      {currentView === 'explorer' && (
-        <MapBackground 
-          mouseX={mouseX} 
-          mouseY={mouseY} 
-          isSearchFocused={isSearchFocused} 
-          onMapClick={() => {}}
-          selectedLocation={selectedLocation}
-          isExplorer={true}
-          explorerState={explorerState}
-          setExplorerState={setExplorerState}
-        />
-      )}
       
       {currentView === 'landing' && (
         <div className="absolute inset-0 z-0 pointer-events-none">
-          <WebGLFluidReveal mouseX={smoothMouseX} mouseY={smoothMouseY} />
+          <WebGLFluidReveal mouseX={smoothMouseX} mouseY={smoothMouseY} isDarkMode={isDarkMode} />
         </div>
       )}
       
-      {/* Ambient Drifting Orbs */}
-      {currentView === 'landing' && (
+      {/* Ambient Drifting Orbs - Light Mode Only */}
+      {currentView === 'landing' && !isDarkMode && (
         <>
           <motion.div 
             className="absolute w-[300px] h-[300px] md:w-[600px] md:h-[600px] rounded-full pointer-events-none z-0"
@@ -195,8 +185,8 @@ const MOCK_DATA = [
         </>
       )}
       
-      {/* WebGL-like Volumetric Cursor Glow - hide in explorer view to avoid noise */}
-      {currentView === 'landing' && (
+      {/* WebGL-like Volumetric Cursor Glow - Light Mode Only */}
+      {currentView === 'landing' && !isDarkMode && (
         <motion.div 
           className="absolute w-[800px] h-[800px] rounded-full pointer-events-none z-10"
           style={{
@@ -233,6 +223,10 @@ const MOCK_DATA = [
           onNavigate={handleNavigate} 
           explorerState={explorerState}
           setExplorerState={setExplorerState}
+          mouseX={mouseX} 
+          mouseY={mouseY} 
+          isSearchFocused={isSearchFocused} 
+          selectedLocation={selectedLocation}
         />
       ) : (
         <AboutUsPage onNavigate={handleNavigate} />

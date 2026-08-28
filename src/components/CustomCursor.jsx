@@ -73,9 +73,9 @@ const ParticleTrail = ({ cursorX, cursorY, isVisible }) => {
         } else {
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(239, 63, 67, ${p.life})`; // DGE Brand Red metallic hue
+          ctx.fillStyle = `rgba(168, 85, 247, ${p.life})`; // DGE Brand Purple metallic hue
           ctx.shadowBlur = 3;
-          ctx.shadowColor = `rgba(239, 63, 67, ${p.life * 0.8})`;
+          ctx.shadowColor = `rgba(168, 85, 247, ${p.life * 0.8})`;
           ctx.fill();
         }
       }
@@ -104,12 +104,12 @@ function PinModel({ cursorX, cursorY }) {
   useEffect(() => {
     clonedScene.traverse((child) => {
       if (child.isMesh) {
-        // Apply a premium red metallic material
+        // Apply a premium purple metallic material
         child.material = new THREE.MeshPhysicalMaterial({
-          color: '#ef3f43', // Custom Red
-          emissive: '#8a1f23',
-          emissiveIntensity: 0.2,
-          metalness: 0.8,
+          color: '#8b5cf6', // DGE Purple Accent
+          emissive: '#5b21b6',
+          emissiveIntensity: 0.25,
+          metalness: 0.85,
           roughness: 0.15,
           clearcoat: 1.0,
           clearcoatRoughness: 0.1,
@@ -243,7 +243,7 @@ export default function CustomCursor({ mouseX, mouseY, isSearchFocused, isHoveri
         <Canvas camera={{ position: [0, 2, 8], fov: 40 }} style={{ pointerEvents: 'none' }}>
           <ambientLight intensity={1.5} />
           <directionalLight position={[5, 10, 5]} intensity={2.5} color="#ffffff" />
-          <directionalLight position={[-5, 5, -5]} intensity={1} color="#60a5fa" />
+          <directionalLight position={[-5, 5, -5]} intensity={1.2} color="#c084fc" />
           <React.Suspense fallback={null}>
             <PinModel cursorX={cursorX} cursorY={cursorY} />
           </React.Suspense>

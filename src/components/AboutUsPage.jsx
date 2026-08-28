@@ -4,68 +4,75 @@ import { Shield, Lightbulb, Users, Layers, Database, Crosshair, MapPin, Building
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 
-function SectionCard({ icon: Icon, title, description }) {
+function SectionCard({ icon: Icon, title, description, isDarkMode }) {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex gap-5 items-start hover:shadow-md transition-shadow">
-      <div className="bg-blue-50 p-3 rounded-full text-dge-tech shrink-0 mt-1">
+    <div className={`rounded-2xl p-6 shadow-sm border flex gap-5 items-start transition-shadow ${
+      isDarkMode ? 'bg-[#0f1b38] border-slate-700/70 text-white shadow-md' : 'bg-white border-gray-100'
+    }`}>
+      <div className={`p-3 rounded-full shrink-0 mt-1 ${isDarkMode ? 'bg-[#1e2e5a] text-[#00e5ff]' : 'bg-blue-50 text-dge-tech'}`}>
         <Icon className="w-6 h-6" />
       </div>
       <div>
-        <h4 className="text-[15px] font-bold text-dge-reliable mb-2">{title}</h4>
-        <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
+        <h4 className={`text-[15px] font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{title}</h4>
+        <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>
       </div>
     </div>
   );
 }
 
-function MissionCard({ icon: Icon, title, description }) {
+function MissionCard({ icon: Icon, title, description, isDarkMode }) {
   return (
-    <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 flex flex-col items-center text-center hover:shadow-md transition-shadow flex-1">
-      <div className="bg-blue-50 p-4 rounded-full text-dge-tech mb-6">
+    <div className={`rounded-3xl p-8 shadow-sm border flex flex-col items-center text-center transition-shadow flex-1 ${
+      isDarkMode ? 'bg-[#0f1b38] border-slate-700/70 text-white shadow-md' : 'bg-white border-gray-100'
+    }`}>
+      <div className={`p-4 rounded-full mb-6 ${isDarkMode ? 'bg-[#1e2e5a] text-[#00e5ff]' : 'bg-blue-50 text-dge-tech'}`}>
         <Icon className="w-6 h-6" />
       </div>
-      <h4 className="text-lg font-bold text-dge-reliable mb-3">{title}</h4>
-      <p className="text-[15px] text-slate-500 leading-relaxed">{description}</p>
+      <h4 className={`text-lg font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{title}</h4>
+      <p className={`text-[15px] leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>{description}</p>
     </div>
   );
 }
 
 export default function AboutUsPage({ onNavigate }) {
   const { t, isArabic } = useLanguage();
+  const { isDarkMode } = useTheme();
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-20 flex flex-col bg-white overflow-hidden pt-24 transition-colors duration-300"
+      className={`absolute inset-0 z-20 flex flex-col overflow-hidden pt-24 transition-colors duration-300 ${
+        isDarkMode ? 'bg-[#0b132b] text-white' : 'bg-white text-slate-900'
+      }`}
     >
       <div className="relative z-10 w-full flex-1 overflow-y-auto">
         
         {/* Hero Section */}
         <section className="max-w-6xl mx-auto px-8 py-20 flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 space-y-6">
-            <h1 className="text-6xl font-extrabold text-dge-reliable tracking-tight">{t('About Us', 'من نحن')}</h1>
-            <p className="text-[17px] text-slate-600 leading-relaxed max-w-lg">
+            <h1 className={`text-6xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{t('About Us', 'من نحن')}</h1>
+            <p className={`text-[17px] leading-relaxed max-w-lg ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
               {t("A collaborative initiative uniting Abu Dhabi's leading government technology organizations to deliver seamless, integrated public services across Abu Dhabi.", "مبادرة تعاونية توحد المنظمات التكنولوجية الحكومية الرائدة في أبوظبي لتقديم خدمات عامة متكاملة وسلسة عبر أبوظبي.")}
             </p>
           </div>
-          <div className="flex-1 w-full h-[320px] rounded-[32px] bg-gradient-to-br from-blue-100 to-slate-200 relative overflow-hidden shadow-inner">
-            {/* Placeholder for the aerial image in the screenshot */}
+          <div className="flex-1 w-full h-[320px] rounded-[32px] bg-gradient-to-br from-blue-900/50 to-slate-900 relative overflow-hidden shadow-inner">
             <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1512632578888-169bbbc64f33?auto=format&fit=crop&q=80&w=1600')] bg-cover bg-center" />
-            <div className="absolute inset-0 bg-gradient-to-t from-dge-reliable/40 to-transparent" />
-            <div className="absolute bottom-8 left-8 bg-white p-2 rounded-full shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-t from-dge-reliable/60 to-transparent" />
+            <div className="absolute bottom-8 left-8 bg-white/90 p-2 rounded-full shadow-lg">
               <MapPin className="w-5 h-5 text-dge-tech" />
             </div>
-            <div className="absolute top-1/3 right-1/3 bg-white p-2 rounded-full shadow-lg">
+            <div className="absolute top-1/3 right-1/3 bg-white/90 p-2 rounded-full shadow-lg">
               <MapPin className="w-5 h-5 text-dge-tech" />
             </div>
           </div>
         </section>
 
         {/* DGE Section */}
-        <section className="bg-[#F8FAFC] py-24 transition-colors duration-300">
+        <section className={`py-24 transition-colors duration-300 ${isDarkMode ? 'bg-[#0a1128]' : 'bg-[#F8FAFC]'}`}>
           <div className="max-w-6xl mx-auto px-8 flex flex-col md:flex-row gap-16 items-center">
             <div className="flex-1 space-y-6">
               <h2 className="text-4xl font-extrabold text-dge-reliable leading-tight">{t('Department of Government Enablement', 'دائرة التمكين الحكومي')}</h2>
