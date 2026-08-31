@@ -1,61 +1,103 @@
-import React, { useState } from 'react';
-import { Sun, User, HelpCircle } from 'lucide-react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Sun, Moon, User, HelpCircle } from 'lucide-react';
 import dgeLogo from '../../assets/dge-logo.png';
 import sdiLogo from '../../assets/sdilogo.png';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import LanguageSelector from '../common/LanguageSelector';
 
 export default function ExplorerHeader({ onNavigate, currentView }) {
-  const { isArabic, setIsArabic, t } = useLanguage();
+  const { t } = useLanguage();
+  const { isDarkMode, toggleTheme } = useTheme();
+
   return (
-    <header className="pointer-events-auto bg-white border-b border-slate-200 shadow-xs px-4 md:px-8 py-3 md:py-4 flex items-center justify-between">
+    <header className={`pointer-events-auto border-b shadow-xs px-4 md:px-8 h-14 md:h-16 flex items-center justify-between shrink-0 relative transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#060a12] border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
+    }`}>
       {/* Left: Logo */}
-      <div className="flex items-center gap-3 md:gap-5">
-        <img src={dgeLogo} alt="Department of Government Enablement" className="h-8 md:h-10 object-contain drop-shadow-sm cursor-pointer" onClick={() => onNavigate?.('landing')} />
+      <div className="flex items-center gap-3 md:gap-5 h-full">
+        <img 
+          src={dgeLogo} 
+          alt="Department of Government Enablement" 
+          className={`h-7 md:h-8 object-contain drop-shadow-sm cursor-pointer transition-all ${isDarkMode ? 'brightness-0 invert' : ''}`} 
+          onClick={() => onNavigate?.('landing')} 
+        />
       </div>
 
-      <div className="hidden lg:flex items-center gap-6">
-        <button 
-          onClick={() => onNavigate?.('landing')}
-          className={`px-6 py-2 rounded-full text-[15px] font-bold transition-all ${currentView === 'landing' ? 'bg-white text-dge-tech border border-dge-tech/30 shadow-sm' : 'text-dge-reliable hover:text-dge-tech'}`}
-        >
-          {t('Home', 'الرئيسية')}
-        </button>
-        <button 
-          onClick={() => onNavigate?.('explorer')}
-          className={`px-6 py-2 rounded-full text-[15px] font-bold transition-all ${currentView === 'explorer' ? 'bg-white text-dge-tech border border-dge-tech/30 shadow-sm' : 'text-dge-reliable hover:text-dge-tech'}`}
-        >
-          {t('Map View', 'عرض الخريطة')}
-        </button>
-      </div>
+      {/* Center: SDI-Style Navigation */}
+      <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+        {[
+          { id: 'Home', en: 'Home', ar: 'الرئيسية', view: 'landing' },
+          { id: 'Map View', en: 'Map View', ar: 'عرض الخريطة', view: 'explorer' },
+          { id: 'About Us', en: 'About Us', ar: 'من نحن', view: 'about' }
+        ].map((item) => {
+          const isActive = currentView === item.view;
+          return (
+            <button 
+              key={item.id} 
+              onClick={() => onNavigate?.(item.view)}
+              className={`relative py-1 text-sm md:text-[15px] font-semibold transition-colors duration-200 cursor-pointer select-none ${
+                isActive 
+                  ? isDarkMode ? 'text-white font-bold' : 'text-slate-900 font-bold' 
+                  : isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-[#7c3aed]'
+              }`}
+            >
+              {t(item.en, item.ar)}
+              {isActive && (
+                <motion.div 
+                  layoutId="sdiExplorerNavUnderline"
+                  className="absolute bottom-[-4px] left-0 right-0 h-[3px] bg-[#7c3aed] rounded-full"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-2 md:gap-5">
+      <div className="flex items-center gap-2 md:gap-4">
         <div className="hidden md:flex items-center gap-2">
-          {/* Language Toggle Switch */}
-          <div 
-            onClick={() => setIsArabic(!isArabic)}
-            className="flex items-center bg-gray-100 p-1 rounded-full shadow-inner border border-gray-200 cursor-pointer w-20 relative mr-2"
+          {/* SDI-style Text-Only Language Selector */}
+          <LanguageSelector isDarkMode={isDarkMode} className="mx-1" />
+
+          {/* Dark / Light Theme Toggle */}
+          <button 
+            onClick={toggleTheme}
+            className={`w-9 h-9 rounded-full flex items-center justify-center border shadow-xs transition-all cursor-pointer ${
+              isDarkMode ? 'bg-[#0f172a] border-slate-800 text-amber-300 hover:bg-slate-800' : 'bg-slate-100 border-slate-200 text-[#7c3aed] hover:bg-white'
+            }`}
+            title={isDarkMode ? t("Switch to Light Mode", "التبديل إلى الوضع الفاتح") : t("Switch to Dark Mode", "التبديل إلى الوضع الداكن")}
           >
-            <div className={`absolute left-1 top-1 w-8 h-8 bg-white rounded-full shadow-sm transition-transform duration-300 ease-in-out ${isArabic ? 'translate-x-[36px]' : 'translate-x-0'}`}></div>
-            <div className={`w-9 h-8 flex items-center justify-center text-[13px] font-bold z-10 transition-colors ${!isArabic ? 'text-dge-reliable' : 'text-slate-500'}`}>EN</div>
-            <div className={`w-9 h-8 flex items-center justify-center text-[16px] font-bold font-sans z-10 transition-colors ${isArabic ? 'text-dge-reliable' : 'text-slate-500'}`}>ع</div>
-          </div>
-          
-          <button className="w-10 h-10 flex items-center justify-center text-dge-reliable hover:bg-gray-50 rounded-full transition-all">
-            <Sun className="w-5 h-5 fill-dge-reliable" />
+            {isDarkMode ? <Sun className="w-4 h-4 fill-current" /> : <Moon className="w-4 h-4 fill-current" />}
           </button>
+
+          {/* Help/About Button */}
           <button 
             onClick={() => onNavigate?.('about')}
-            className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 rounded-full transition-all"
+            className={`w-9 h-9 rounded-full flex items-center justify-center border shadow-xs transition-all cursor-pointer ${
+              isDarkMode ? 'bg-[#0f172a] border-slate-800 text-white hover:bg-slate-800' : 'bg-slate-100 border-slate-200 text-slate-700 hover:bg-white'
+            }`}
           >
-            <HelpCircle className="w-6 h-6 fill-dge-reliable text-white" />
+            <HelpCircle className="w-4 h-4" />
           </button>
         </div>
-        <button className="h-9 px-4 md:h-10 md:px-7 rounded-full bg-[#3D52A0] text-white text-[13px] md:text-sm font-bold tracking-wide hover:opacity-90 transition-all flex items-center gap-2 shadow-sm transform hover:-translate-y-0.5">
-          <User className="w-4 h-4" fill="currentColor" />
+
+        {/* Sign In Button - SDI Default Black, Hover Purple */}
+        <button 
+          onClick={() => onNavigate?.('login')}
+          className="h-9 px-6 rounded-full bg-black text-white text-[13px] md:text-sm font-bold tracking-wide hover:bg-[#7c3aed] transition-all duration-300 flex items-center gap-2 shadow-xs cursor-pointer transform hover:-translate-y-0.5"
+        >
+          <User className="w-3.5 h-3.5" fill="currentColor" />
           <span className="hidden sm:inline">{t('Sign In', 'تسجيل الدخول')}</span>
         </button>
-        <img src={sdiLogo} alt="Abu Dhabi Spatial Data" className="h-7 md:h-9 object-contain ml-1 md:ml-2 hidden md:block" />
+
+        <img 
+          src={sdiLogo} 
+          alt="Abu Dhabi Spatial Data" 
+          className={`h-7 md:h-8 object-contain ml-1 md:ml-2 hidden md:block transition-all ${isDarkMode ? 'brightness-0 invert' : ''}`} 
+        />
       </div>
     </header>
   );

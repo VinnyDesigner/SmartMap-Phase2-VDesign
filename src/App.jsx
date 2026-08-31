@@ -158,7 +158,7 @@ const MOCK_DATA = [
   }
 
   return (
-    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] theme-dark:bg-[#0b132b] transition-colors duration-300 ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
+    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] dark:bg-[#060a12] transition-colors duration-300 ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
       <BrandHeader onNavigate={handleNavigate} currentView={currentView} />
       
       {currentView === 'landing' && (
@@ -178,7 +178,7 @@ const MOCK_DATA = [
           />
           <motion.div 
             className="absolute w-[250px] h-[250px] md:w-[500px] md:h-[500px] rounded-full pointer-events-none z-0 right-[10%] bottom-[10%]"
-            style={{ background: 'radial-gradient(circle, rgba(67, 112, 240, 0.1) 0%, transparent 70%)', filter: 'blur(60px)' }}
+            style={{ background: 'radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%)', filter: 'blur(60px)' }}
             animate={{ x: [0, -150, 100, 0], y: [0, 100, -150, 0] }}
             transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
           />
@@ -192,7 +192,7 @@ const MOCK_DATA = [
           style={{
             x: orbX,
             y: orbY,
-            background: 'radial-gradient(circle, rgba(33, 90, 158, 0.2) 0%, rgba(67, 112, 240, 0.1) 40%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(33, 90, 158, 0.15) 0%, rgba(124, 58, 237, 0.06) 40%, transparent 70%)',
             filter: 'blur(60px)',
             opacity: isSearchFocused ? 0.3 : 1,
             transition: 'opacity 0.7s ease'

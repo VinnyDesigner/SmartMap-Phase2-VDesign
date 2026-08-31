@@ -5,6 +5,7 @@ import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import LanguageSelector from './common/LanguageSelector';
 
 
 
@@ -15,56 +16,59 @@ export default function BrandHeader({ onNavigate, currentView }) {
   const [pendingLanguage, setPendingLanguage] = useState(null);
   return (
     <>
-      {/* Top Brand Gradient Line */}
-      <div className="absolute top-0 left-0 right-0 h-1.5 z-50 bg-gradient-to-r from-[#c084fc] via-[#8b5cf6] to-[#6d28d9]" />
+      {/* Top SDI Brand Line */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 z-50 bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed]" />
 
-      <header className={`absolute top-1.5 left-0 right-0 z-40 px-4 md:px-8 h-14 md:h-16 flex items-center justify-between backdrop-blur-2xl border-b pointer-events-auto transition-all duration-300 ${
-        isDarkMode ? 'bg-[#060a12]/85 border-slate-800/80 shadow-[0_4px_30px_rgba(0,0,0,0.5)] text-white' : 'bg-white/95 border-slate-200 shadow-xs text-slate-800'
+      <header className={`absolute top-1.5 left-0 right-0 z-40 px-4 md:px-8 h-14 md:h-16 flex items-center justify-between pointer-events-auto transition-all duration-300 ${
+        currentView === 'explorer'
+          ? isDarkMode 
+            ? 'bg-[#060a12] border-b border-slate-800/90 text-white shadow-md' 
+            : 'bg-white border-b border-slate-200 text-slate-900 shadow-xs'
+          : isDarkMode 
+            ? 'bg-transparent border-b border-transparent text-white' 
+            : 'bg-transparent border-b border-transparent text-slate-800'
       }`}>
         {/* Left: Logos */}
         <div className="flex items-center pointer-events-auto gap-3 md:gap-4 h-full">
           <img 
             src={dgeLogo} 
             alt="Department of Government Enablement" 
-            className={`h-8 md:h-9 object-contain drop-shadow-sm cursor-pointer transition-all ${isDarkMode ? 'brightness-0 invert' : ''}`} 
+            className={`h-7 md:h-8 object-contain drop-shadow-sm cursor-pointer transition-all ${isDarkMode ? 'brightness-0 invert' : ''}`} 
             onClick={() => onNavigate?.('landing')} 
           />
+
         </div>
 
-        {/* Center: Navigation Pills */}
-        <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 p-[1px] rounded-full overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)] pointer-events-auto group">
-          <div 
-            className="absolute aspect-square w-[300%] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-[spin_8s_linear_infinite] z-0 opacity-40"
-            style={{ background: 'conic-gradient(from 0deg, transparent 0%, transparent 40%, rgba(168, 85, 247, 0.4) 60%, #c084fc 85%, transparent 100%)' }} 
-          />
-          <nav className={`relative z-10 flex items-center backdrop-blur-2xl p-1 rounded-full h-9 border transition-colors ${
-            isDarkMode ? 'bg-[#0c1322]/90 border-slate-800/90' : 'bg-white/90 border-transparent'
-          }`}>
-            {['Home', 'Map View'].map((item) => {
-              const isActive = (item === 'Home' && currentView === 'landing') || (item === 'Map View' && currentView === 'explorer');
-              return (
-                <button 
-                  key={item} 
-                  onClick={() => {
-                    if (item === 'Home') onNavigate?.('landing');
-                    else if (item === 'Map View') onNavigate?.('explorer');
-                  }}
-                  className={`px-5 h-7 flex items-center justify-center rounded-full text-xs md:text-sm font-semibold tracking-wide transition-all duration-300 ${
-                    isActive 
-                      ? isDarkMode 
-                        ? 'bg-gradient-to-r from-[#7c3aed] to-[#5b21b6] text-white shadow-sm font-bold' 
-                        : 'bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white shadow-sm font-bold'
-                      : isDarkMode 
-                        ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' 
-                        : 'text-slate-600 hover:text-[#7c3aed] hover:bg-slate-100/60'
-                  }`}
-                >
-                  {t(item, item === 'Home' ? 'الرئيسية' : 'عرض الخريطة')}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        {/* Center: SDI-Style Navigation */}
+        <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+          {[
+            { id: 'Home', en: 'Home', ar: 'الرئيسية', view: 'landing' },
+            { id: 'Map View', en: 'Map View', ar: 'عرض الخريطة', view: 'explorer' },
+            { id: 'About Us', en: 'About Us', ar: 'من نحن', view: 'about' }
+          ].map((item) => {
+            const isActive = currentView === item.view;
+            return (
+              <button 
+                key={item.id} 
+                onClick={() => onNavigate?.(item.view)}
+                className={`relative py-1 text-sm md:text-[15px] font-semibold transition-colors duration-200 cursor-pointer select-none ${
+                  isActive 
+                    ? isDarkMode ? 'text-white font-bold' : 'text-slate-900 font-bold' 
+                    : isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-[#7c3aed]'
+                }`}
+              >
+                {t(item.en, item.ar)}
+                {isActive && (
+                  <motion.div 
+                    layoutId="sdiNavUnderline"
+                    className="absolute bottom-[-4px] left-0 right-0 h-[3px] bg-[#7c3aed] rounded-full"
+                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </nav>
 
         {/* Right: Actions & Logo */}
         <div className="flex items-center gap-3 md:gap-4 pointer-events-auto h-full">
@@ -75,15 +79,11 @@ export default function BrandHeader({ onNavigate, currentView }) {
           />
           
           <div className="flex items-center gap-2 md:gap-3">
-            {/* Language Toggle Switch */}
-            <div 
-              onClick={() => setIsArabic(!isArabic)}
-              className={`hidden md:flex items-center backdrop-blur-md p-0.5 rounded-full shadow-sm border cursor-pointer w-20 h-9 relative ${isDarkMode ? 'bg-[#0f172a]/90 border-slate-800' : 'bg-white/70 border-white/60'}`}
-            >
-              <div className={`absolute left-0.5 top-0.5 w-8 h-8 rounded-full shadow-sm transition-transform duration-300 ease-in-out ${isDarkMode ? 'bg-[#7c3aed]' : 'bg-[#7c3aed]'} ${isArabic ? 'translate-x-[36px]' : 'translate-x-0'}`} />
-              <div className={`w-9 h-8 flex items-center justify-center text-[12px] font-bold z-10 transition-colors ${!isArabic ? 'text-white' : 'text-slate-400'}`}>EN</div>
-              <div className={`w-9 h-8 flex items-center justify-center text-[14px] font-bold font-sans z-10 transition-colors ${isArabic ? 'text-white' : 'text-slate-400'}`}>ع</div>
+            {/* SDI-style Text-Only Language Selector */}
+            <div className="hidden md:flex items-center">
+              <LanguageSelector isDarkMode={isDarkMode} />
             </div>
+
             
             {/* Dark/Light Theme Toggle */}
             <button 
@@ -102,17 +102,13 @@ export default function BrandHeader({ onNavigate, currentView }) {
               <HelpCircle className={`w-4 h-4 ${isDarkMode ? 'fill-white text-[#0f172a]' : 'fill-[#7c3aed] text-white'}`} />
             </button>
             
-            {/* Sign In Button */}
+            {/* Sign In Button - SDI Default Black, Hover Purple */}
             <button 
               onClick={() => onNavigate?.('login')}
-              className={`hidden lg:flex h-9 px-5 rounded-full items-center gap-2 text-white transition-all transform hover:-translate-y-0.5 ${
-                isDarkMode 
-                  ? 'bg-gradient-to-r from-[#7c3aed] to-[#5b21b6] hover:from-[#6d28d9] hover:to-[#4c1d95] shadow-sm border border-[#7c3aed]/40' 
-                  : 'bg-gradient-to-r from-[#7c3aed] to-[#5b21b6] hover:from-[#6d28d9] hover:to-[#4c1d95] shadow-[0_4px_16px_rgba(124,58,237,0.3)]'
-              }`}
+              className="hidden lg:flex h-9 px-6 rounded-full items-center gap-2 text-white bg-black hover:bg-[#7c3aed] transition-all duration-300 shadow-sm cursor-pointer font-bold text-xs md:text-sm tracking-wide transform hover:-translate-y-0.5"
             >
               <User className="w-3.5 h-3.5" />
-              <span className="text-xs md:text-sm font-bold tracking-wide">{t('Sign In', 'تسجيل الدخول')}</span>
+              <span>{t('Sign In', 'تسجيل الدخول')}</span>
             </button>
             
             {/* Mobile Hamburger Menu */}
@@ -177,21 +173,19 @@ export default function BrandHeader({ onNavigate, currentView }) {
               </button>
               <div className="h-px bg-gray-100 my-2" />
               
-              {/* Language Toggle for Mobile */}
-              <div 
+              {/* SDI-style Language Selector for Mobile */}
+              <button 
                 onClick={() => { 
                   setPendingLanguage(!isArabic);
                   setIsMobileMenuOpen(false);
                 }}
-                className="p-4 rounded-xl flex items-center justify-between text-slate-600 font-bold hover:bg-slate-50 transition-colors cursor-pointer"
+                className="p-4 rounded-xl flex items-center justify-between text-slate-600 font-bold hover:bg-slate-50 transition-colors cursor-pointer w-full text-start"
               >
-                <span>{t('Language (English/Arabic)', 'اللغة (العربية/English)')}</span>
-                <div className="flex items-center bg-slate-200 p-1 rounded-full w-14 relative">
-                  <div className={`absolute start-1 top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${isArabic ? 'translate-x-[24px] rtl:-translate-x-[24px]' : 'translate-x-0'}`}></div>
-                  <div className="w-6 h-5 flex items-center justify-center text-[9px] z-10 text-dge-reliable">EN</div>
-                  <div className="w-6 h-5 flex items-center justify-center text-[11px] z-10 text-dge-reliable">ع</div>
-                </div>
-              </div>
+                <span>{t('Language', 'اللغة')}</span>
+                <span className="text-sm font-semibold text-[#7c3aed]">
+                  {isArabic ? 'English' : 'عربي'}
+                </span>
+              </button>
               
               {/* Theme Toggle for Mobile */}
               <div 

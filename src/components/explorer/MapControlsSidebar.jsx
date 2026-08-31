@@ -70,7 +70,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
   const { t } = useLanguage();
   const { isDarkMode } = useTheme();
 
-  const hasActiveDrawings = explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle;
+  const hasActiveDrawings = (explorerState?.drawings && explorerState.drawings.length > 0) || explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle;
 
   return (
     <div className="absolute start-4 md:start-6 top-4 flex flex-col gap-2.5 pointer-events-auto z-30 items-center">
@@ -117,7 +117,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
         {/* Clear Active Drawing Button */}
         {hasActiveDrawings && (
           <button 
-            onClick={() => setExplorerState(prev => ({ ...prev, drawnPolygon: null, drawnCircle: null, drawnRectangle: null, activeResults: [] }))}
+            onClick={() => setExplorerState(prev => ({ ...prev, drawings: [], drawnPolygon: null, drawnCircle: null, drawnRectangle: null, activeResults: [] }))}
             title={t('Clear Drawings', 'مسح الرسم')}
             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
               isDarkMode ? 'bg-rose-950/50 hover:bg-rose-900/80 text-rose-400' : 'bg-rose-50 hover:bg-rose-100 text-rose-600'

@@ -98,27 +98,34 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
   };
 
   return (
-    <div className={`w-full h-full flex flex-col overflow-hidden pointer-events-auto transition-colors duration-300 ${
-      isDarkMode ? 'bg-[#060a12] text-slate-100' : 'bg-white text-slate-800'
+    <div className={`w-full h-full flex flex-col overflow-hidden pointer-events-auto transition-colors duration-300 relative ${
+      isDarkMode ? 'bg-[#0c1427] text-slate-100' : 'bg-white text-slate-800'
     }`}>
+      {/* Subtle Spatial Dot Grid Background Overlay */}
+      <div className={`absolute inset-0 z-0 pointer-events-none ${
+        isDarkMode 
+          ? 'bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.07]' 
+          : 'bg-[radial-gradient(#215A9E_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.03]'
+      }`} />
+
       <div 
         ref={containerRef}
         onMouseMove={handleMouseMove}
-        className="relative flex-1 flex flex-col h-full overflow-hidden"
+        className="relative flex-1 flex flex-col h-full overflow-hidden z-10"
       >
-        {/* Subtle Interactive Glow */}
+        {/* Ambient Interactive Dual-Mesh Glow */}
         <motion.div
-          className="pointer-events-none absolute inset-0 z-0"
+          className="pointer-events-none absolute inset-0 z-0 opacity-80"
           style={{ background: glowBackground }}
         />
 
         {/* Panel Header */}
-        <div className={`flex items-center justify-between px-4 py-3 border-b relative z-20 shrink-0 ${
-          isDarkMode ? 'bg-[#0a0f1d] border-slate-800/80' : 'bg-white border-slate-200'
+        <div className={`flex items-center justify-between px-4 py-3 border-b relative z-20 shrink-0 backdrop-blur-md transition-colors duration-300 ${
+          isDarkMode ? 'bg-[#0f1932]/95 border-slate-800/90' : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center gap-2.5">
             <div className={`w-8 h-8 rounded-full border flex items-center justify-center shadow-xs ${
-              isDarkMode ? 'bg-[#0d1424] border border-slate-800 text-[#c084fc]' : 'bg-gradient-to-br from-blue-50 to-[#eef3ff] border-blue-100/60 text-[#3D52A0]'
+              isDarkMode ? 'bg-[#182645] border-slate-700/80 text-[#c084fc]' : 'bg-gradient-to-br from-blue-50 to-[#eef3ff] border-blue-100/60 text-[#215A9E]'
             }`}>
               <Sparkles className="w-4 h-4" />
             </div>
@@ -127,7 +134,7 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
                 {t('AI Map Assistant', 'مساعد الخرائط الذكي')}
               </h2>
               <p className={`text-[10px] font-medium tracking-tight flex items-center gap-1.5 mt-0.5 ${
-                isDarkMode ? 'text-slate-400' : 'text-[#3D52A0]/80'
+                isDarkMode ? 'text-slate-400' : 'text-slate-500'
               }`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 {t('Ready to explore', 'جاهز للاستكشاف')}
@@ -138,10 +145,10 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
           {/* New Chat Button */}
           <button
             onClick={handleNewChat}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all shadow-2xs cursor-pointer group shrink-0 ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all duration-200 shadow-2xs cursor-pointer group shrink-0 ${
               isDarkMode 
-                ? 'bg-[#131b2e] text-white border-slate-700/80 hover:bg-[#1e2a44]' 
-                : 'bg-[#eef3ff] text-[#3D52A0] border-[#3D52A0]/20 hover:bg-[#3D52A0] hover:text-white'
+                ? 'bg-[#182645] text-white border-slate-700/80 hover:bg-[#7c3aed] hover:border-[#7c3aed]' 
+                : 'bg-black text-white border-black hover:bg-[#7c3aed]'
             }`}
             title={t("Start New Conversation", "بدء محادثة جديدة")}
           >

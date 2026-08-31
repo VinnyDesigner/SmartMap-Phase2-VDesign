@@ -118,6 +118,121 @@ export const aiOrchestrator = {
     }
 
     // ==========================================
+    // DRAWN AOI / BOUNDARY / BUFFER SPATIAL ANALYTICS INTENT
+    // ==========================================
+    const isDrawnQuery = ['drawn', 'aoi', 'boundary', 'buffer', 'zone', 'polygon', 'circle', 'rectangle'].some(w => q.includes(w));
+    if (isDrawnQuery) {
+      executionLogs.push({ step: 'Drawn AOI Spatial Query Detected', status: 'success' });
+
+      // Determine active drawn shape or center
+      const drawnCircle = currentState?.drawnCircle || currentState?.drawings?.find(d => d.type === 'circle');
+      const drawnPolygon = currentState?.drawnPolygon || currentState?.drawings?.find(d => d.type === 'polygon')?.poly;
+      const drawnRectangle = currentState?.drawnRectangle || currentState?.drawings?.find(d => d.type === 'rectangle')?.bounds;
+
+      let targetCenter = drawnCircle ? { lat: drawnCircle.center[0], lng: drawnCircle.center[1] } : { lat: 24.466, lng: 54.363 };
+      let radiusKm = (drawnCircle?.radius || 1000) / 1000;
+      if (q.includes('2 km') || q.includes('2km')) radiusKm = 2.0;
+
+      // Filter category if specified in query (e.g. hospital, school, park)
+      let requestedType = null;
+      if (q.includes('hospital') || q.includes('hospitals') || q.includes('health') || q.includes('clinic')) requestedType = 'HOSPITAL';
+      else if (q.includes('school') || q.includes('schools') || q.includes('education') || q.includes('university')) requestedType = 'EDUCATION';
+      else if (q.includes('park') || q.includes('parks') || q.includes('green')) requestedType = 'PARK';
+      else if (q.includes('transport') || q.includes('bus') || q.includes('transit')) requestedType = 'TRANSPORT';
+
+      // Find matching facilities within drawn shape / radius / buffer
+      let matchingFacilities = ALL_FACILITIES.filter(f => {
+        let inside = false;
+        if (drawnCircle) {
+          const dist = calculateHaversineDistanceKm(targetCenter.lat, targetCenter.lng, f.lat, f.lng);
+          inside = dist <= radiusKm;
+        } else if (drawnRectangle) {
+          const [[swLat, swLng], [neLat, neLng]] = drawnRectangle;
+          inside = f.lat >= swLat && f.lat <= neLat && f.lng >= swLng && f.lng <= neLng;
+        } else if (drawnPolygon) {
+          inside = isPointInGeoJsonPolygon(f.lat, f.lng, drawnPolygon);
+        } else {
+          // Default radius around center
+          const dist = calculateHaversineDistanceKm(targetCenter.lat, targetCenter.lng, f.lat, f.lng);
+          inside = dist <= (radiusKm > 2 ? radiusKm : 5.0);
+        }
+
+        if (requestedType) {
+          return inside && f.facilityType === requestedType;
+        }
+        return inside;
+      });
+
+      // If no facilities found in narrow drawn area, fall back to nearest facilities
+      if (matchingFacilities.length === 0) {
+        matchingFacilities = ALL_FACILITIES
+          .filter(f => !requestedType || f.facilityType === requestedType)
+          .map(f => ({
+            ...f,
+            distanceKm: calculateHaversineDistanceKm(targetCenter.lat, targetCenter.lng, f.lat, f.lng)
+          }))
+          .sort((a, b) => a.distanceKm - b.distanceKm)
+          .slice(0, 4);
+      }
+
+      const topLoc = matchingFacilities[0] || ALL_FACILITIES[0];
+
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { aoi: true }, matchingResults: matchingFacilities } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 14 } }
+      );
+
+      const typeLabel = requestedType ? requestedType.toLowerCase() : 'GIS spatial';
+
+      blocks = [
+        {
+          type: 'TEXT',
+          content: isArabic
+            ? `**تحليل المنطقة المحددة (${radiusKm.toFixed(1)} كم)**:\nتم تحليل النطاق المكاني وحساب المرافق المتواجدة عند الإحداثيات (${targetCenter.lat.toFixed(3)}°N, ${targetCenter.lng.toFixed(3)}°E). تم العثور على **${matchingFacilities.length} منشآت** داخل المنطقة الرسم.`
+            : `**Drawn AOI Spatial Analytics (${radiusKm.toFixed(1)} km Buffer)**:\nAnalyzed spatial boundary around ${targetCenter.lat.toFixed(3)}°N, ${targetCenter.lng.toFixed(3)}°E. Identified **${matchingFacilities.length} ${typeLabel} features** inside the active boundary.`
+        },
+        {
+          type: 'KPI_GRID',
+          metrics: [
+            { label: 'Facilities Found', value: `${matchingFacilities.length}`, iconType: 'facilities' },
+            { label: 'Buffer Radius', value: `${radiusKm.toFixed(1)} km`, iconType: 'activity' },
+            { label: 'Primary Sector', value: requestedType || 'Mixed Infrastructure', iconType: 'risk' },
+            { label: 'Spatial CRS', value: 'WGS84 EPSG:4326', iconType: 'alerts' }
+          ]
+        },
+        {
+          type: 'LOCATION_LIST',
+          locations: matchingFacilities
+        },
+        {
+          type: 'CHART',
+          data: {
+            title: isArabic ? 'توزيع المنشآت في المنطقة المحددة' : 'Drawn Zone Infrastructure Distribution',
+            type: 'doughnut',
+            data: [
+              { label: isArabic ? 'مستشفيات' : 'Healthcare', value: matchingFacilities.filter(f => f.facilityType === 'HOSPITAL').length || 1, color: '#f093fb' },
+              { label: isArabic ? 'تعليم' : 'Education', value: matchingFacilities.filter(f => f.facilityType === 'EDUCATION').length || 1, color: '#4facfe' },
+              { label: isArabic ? 'حدائق' : 'Parks', value: matchingFacilities.filter(f => f.facilityType === 'PARK').length || 1, color: '#43e97b' },
+              { label: isArabic ? 'نقل' : 'Transport', value: matchingFacilities.filter(f => f.facilityType === 'TRANSPORT').length || 1, color: '#fa709a' }
+            ]
+          }
+        },
+        {
+          type: 'ACTION_SUGGESTIONS',
+          actionCards: [
+            { label: 'Show only hospitals in this drawn AOI', label_ar: 'عرض المستشفيات فقط في هذه المنطقة', actionType: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL' } } },
+            { label: 'Create 2 km buffer around drawn zone', label_ar: 'إنشاء بافر 2 كم حول المنطقة', actionType: ACTION_TYPES.MAP_FLY_TO, params: { lat: targetCenter.lat, lng: targetCenter.lng, zoom: 13 } }
+          ],
+          suggestions: isArabic 
+            ? ["عرض المدارس داخل النطاق", "إنشاء بافر 2 كم حول المنطقة", "تصدير تقرير PDF"] 
+            : ["Show schools inside drawn boundary", "Create 2 km buffer around drawn zone", "Export report to PDF"]
+        }
+      ];
+
+      return { reply: blocks[0].content, blocks, actions, results: matchingFacilities, executionLogs };
+    }
+
+    // ==========================================
     // CATEGORY LIST QUERY: PARKS & GREEN SPACES
     // ==========================================
     if (q.includes('park') || q.includes('parks') || q.includes('green') || q.includes('recreation')) {

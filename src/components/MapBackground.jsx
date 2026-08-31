@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents, Polygon, Circle, Rectangle } from 'react-leaflet';
+import { MapContainer, Marker, useMap, useMapEvents, Polygon, Circle, Rectangle } from 'react-leaflet';
 import L from 'leaflet';
 import { motion, useTransform, useSpring } from 'framer-motion';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -136,7 +136,19 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
   }, [explorerState?.drawingTool, map]);
 
   const finishDrawing = (type, bounds, center, radius, poly) => {
-    // Generate mock results for the drawn area
+    const newDrawing = {
+      id: Date.now(),
+      type,
+      bounds: bounds ? [
+        [bounds.getSouthWest().lat, bounds.getSouthWest().lng],
+        [bounds.getNorthEast().lat, bounds.getNorthEast().lng]
+      ] : null,
+      center: center ? [center.lat, center.lng] : null,
+      radius,
+      poly
+    };
+
+    // Generate results for the drawn area
     const mockResults = [
       { id: Date.now() + 1, name: isArabic ? 'حرم جامعة زايد' : 'Zayed University Campus', type: 'EDUCATION', location: isArabic ? 'منطقة مخصصة' : 'Custom Area', lat: center.lat + 0.002, lng: center.lng + 0.002 },
       { id: Date.now() + 2, name: isArabic ? 'مستشفى المنطقة العام' : 'Area General Hospital', type: 'HOSPITAL', location: isArabic ? 'منطقة مخصصة' : 'Custom Area', lat: center.lat - 0.001, lng: center.lng + 0.003 },
@@ -159,46 +171,52 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
     if (bounds) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
     else map.setView(center, 16);
 
-    setExplorerState(prev => ({
-      ...prev,
-      drawnPolygon: type === 'polygon' ? poly : null,
-      drawnCircle: type === 'circle' ? { center: [center.lat, center.lng], radius } : null,
-      drawnRectangle: type === 'rectangle' ? [
-        [bounds.getSouthWest().lat, bounds.getSouthWest().lng],
-        [bounds.getNorthEast().lat, bounds.getNorthEast().lng]
-      ] : null,
-      drawingTool: null,
-      isDrawingMode: false,
-      isDockerMinimized: false,
-      aiPanelState: 'expanded', // Auto-expand the AI panel to show results
-      activeResults: mockResults,
-      chatHistory: [
-        ...(prev.chatHistory || []),
-        { 
-          id: Date.now(), 
-          role: 'user', 
-          content: isArabic ? `تم تحديد منطقة مخصصة على الخريطة.` : `Selected a custom area on the map.` 
-        },
-        { 
-          id: Date.now() + 1, 
-          role: 'assistant', 
-          content: isArabic ? `لقد قمت بتحليل المنطقة المخصصة التي رسمتها. إليك توزيع البنية التحتية داخل هذه المنطقة:\n\n**إجمالي المرافق:** ${mockResults.length}\n**الاستخدام الرئيسي للأراضي:** الحدائق والبيئة\n\nلقد قمت بتثبيت المرافق المحددة على الخريطة من أجلك.` : `I have analyzed the custom area you drew. Here is the infrastructure distribution within this zone:\n\n**Total Facilities Found:** ${mockResults.length}\n**Primary Land Use:** Parks & Environment\n\nI have pinned the specific facilities to the map for you.`,
-          results: mockResults,
-          suggestions: isArabic ? [
-            "عرض البيانات الديموغرافية لهذه المنطقة",
-            "ما هو متوسط قيمة العقار هنا؟",
-            "هل هناك مشاريع بناء قادمة؟",
-            "تصدير تقرير هذه المنطقة إلى PDF"
-          ] : [
-            "Show demographic data for this area",
-            "What is the average property value here?",
-            "Are there upcoming construction projects?",
-            "Export this area report to PDF"
-          ],
-          chartData: chartData
-        }
-      ]
-    }));
+    setExplorerState(prev => {
+      const existingDrawings = prev.drawings || [];
+      const updatedDrawings = [...existingDrawings, newDrawing];
+
+      return {
+        ...prev,
+        drawings: updatedDrawings,
+        drawnPolygon: type === 'polygon' ? poly : prev.drawnPolygon,
+        drawnCircle: type === 'circle' ? { center: [center.lat, center.lng], radius } : prev.drawnCircle,
+        drawnRectangle: type === 'rectangle' ? [
+          [bounds.getSouthWest().lat, bounds.getSouthWest().lng],
+          [bounds.getNorthEast().lat, bounds.getNorthEast().lng]
+        ] : prev.drawnRectangle,
+        drawingTool: null,
+        isDrawingMode: false,
+        isDockerMinimized: false,
+        aiPanelState: 'expanded',
+        activeResults: mockResults,
+        chatHistory: [
+          ...(prev.chatHistory || []),
+          { 
+            id: Date.now(), 
+            role: 'user', 
+            content: isArabic ? `تم تحديد منطقة مخصصة على الخريطة.` : `Selected a custom area on the map.` 
+          },
+          { 
+            id: Date.now() + 1, 
+            role: 'assistant', 
+            content: isArabic ? `لقد قمت بتحليل المنطقة المخصصة التي رسمتها. إليك توزيع البنية التحتية داخل هذه المنطقة:\n\n**إجمالي المرافق:** ${mockResults.length}\n**الاستخدام الرئيسي للأراضي:** الحدائق والبيئة\n\nلقد قمت بتثبيت المرافق المحددة على الخريطة من أجلك.` : `I have analyzed the custom area you drew. Here is the infrastructure distribution within this zone:\n\n**Total Facilities Found:** ${mockResults.length}\n**Primary Land Use:** Parks & Environment\n\nI have pinned the specific facilities to the map for you.`,
+            results: mockResults,
+            suggestions: isArabic ? [
+              "Show only hospitals in this drawn AOI",
+              "Show schools inside drawn boundary",
+              "Create 2 km buffer around drawn zone",
+              "Analyze drawn Circle Buffer (1.0 km radius)"
+            ] : [
+              "Show only hospitals in this drawn AOI",
+              "Show schools inside drawn boundary",
+              "Create 2 km buffer around drawn zone",
+              "Analyze drawn Circle Buffer (1.0 km radius)"
+            ],
+            chartData: chartData
+          }
+        ]
+      };
+    });
     
     setStartPoint(null);
     setCurrentPoint(null);
@@ -377,18 +395,28 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           ))
         }
 
-        {/* Draw Polygon visualization */}
-        {explorerState?.drawnPolygon && (
+        {/* Render All Active Drawn Shapes */}
+        {(explorerState?.drawings || []).map((shape) => {
+          if (shape.type === 'polygon' && shape.poly) {
+            return <Polygon key={shape.id} positions={shape.poly} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />;
+          }
+          if (shape.type === 'rectangle' && shape.bounds) {
+            return <Rectangle key={shape.id} bounds={shape.bounds} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />;
+          }
+          if (shape.type === 'circle' && shape.center) {
+            return <Circle key={shape.id} center={shape.center} radius={shape.radius} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />;
+          }
+          return null;
+        })}
+
+        {/* Draw Single Shape Visualizations Fallback */}
+        {(!explorerState?.drawings || explorerState.drawings.length === 0) && explorerState?.drawnPolygon && (
           <Polygon positions={explorerState.drawnPolygon} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />
         )}
-
-        {/* Draw Rectangle visualization */}
-        {explorerState?.drawnRectangle && (
+        {(!explorerState?.drawings || explorerState.drawings.length === 0) && explorerState?.drawnRectangle && (
           <Rectangle bounds={explorerState.drawnRectangle} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />
         )}
-
-        {/* Draw Circle visualization */}
-        {explorerState?.drawnCircle && (
+        {(!explorerState?.drawings || explorerState.drawings.length === 0) && explorerState?.drawnCircle && (
           <Circle center={explorerState.drawnCircle.center} radius={explorerState.drawnCircle.radius} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />
         )}
 
@@ -409,16 +437,16 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
       </MapContainer>
 
       {/* Floating Clear Shape Button */}
-      {(explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle) && (
+      {((explorerState?.drawings && explorerState.drawings.length > 0) || explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle) && (
         <motion.button
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
-          onClick={() => setExplorerState(prev => ({ ...prev, drawnPolygon: null, drawnCircle: null, drawnRectangle: null, activeResults: [] }))}
+          onClick={() => setExplorerState(prev => ({ ...prev, drawings: [], drawnPolygon: null, drawnCircle: null, drawnRectangle: null, activeResults: [] }))}
           className="absolute top-[88px] left-1/2 -translate-x-1/2 z-[400] bg-white/90 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-slate-200 px-5 py-2.5 rounded-full flex items-center gap-2 text-slate-600 hover:text-red-600 hover:bg-white transition-all font-bold tracking-tight text-[13px]"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          Clear Shape
+          Clear Shape {explorerState?.drawings?.length > 1 ? `(${explorerState.drawings.length})` : ''}
         </motion.button>
       )}
       

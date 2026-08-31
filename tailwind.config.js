@@ -8,6 +8,13 @@ export default {
   theme: {
     extend: {
       colors: {
+        sdi: {
+          navy: '#063360',
+          blue: '#215A9E',
+          light: '#7DA1C4',
+          purple: '#7c3aed',
+          black: '#000000',
+        },
         dge: {
           tech: '#215A9E',
           light: '#7DA1C4',

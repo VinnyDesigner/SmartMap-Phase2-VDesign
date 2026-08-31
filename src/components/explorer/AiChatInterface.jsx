@@ -297,18 +297,18 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
   return (
     <div className={`flex flex-col h-full w-full overflow-hidden relative transition-colors duration-300 ${
-      isDarkMode ? 'bg-[#060a12] text-slate-100' : 'bg-white text-slate-800'
+      isDarkMode ? 'bg-transparent text-slate-100' : 'bg-white text-slate-800'
     }`}>
       {/* Tab Selector Header */}
-      <div className={`flex items-center justify-around border-b shrink-0 px-2 py-2 z-20 ${
-        isDarkMode ? 'bg-[#0a0f1d] border-slate-800/80' : 'bg-white border-slate-200'
+      <div className={`flex items-center justify-around border-b shrink-0 px-2 py-2 z-20 backdrop-blur-md transition-colors duration-300 ${
+        isDarkMode ? 'bg-[#0f1932]/95 border-slate-800/90' : 'bg-white border-slate-200'
       }`}>
         <button 
           onClick={() => setActiveTab('chat')} 
           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
             activeTab === 'chat' 
-              ? (isDarkMode ? 'bg-[#131b2e] text-white border border-slate-700/80 shadow-xs' : 'bg-[#eef3ff] text-[#3D52A0]') 
-              : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+              ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-xs' : 'bg-[#eef3ff] text-[#215A9E]') 
+              : (isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800')
           }`}
         >
           <MessageSquare className="w-3.5 h-3.5" />
@@ -319,14 +319,14 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
           onClick={() => setActiveTab('saved')} 
           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
             activeTab === 'saved' 
-              ? (isDarkMode ? 'bg-[#131b2e] text-white border border-slate-700/80 shadow-xs' : 'bg-[#eef3ff] text-[#3D52A0]') 
-              : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+              ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-xs' : 'bg-[#eef3ff] text-[#215A9E]') 
+              : (isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800')
           }`}
         >
           <Bookmark className="w-3.5 h-3.5" />
           <span>{t('Saved', 'المحفوظات')}</span>
           {savedLocations.length > 0 && (
-            <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#0d1424] text-[#c084fc] border border-slate-800' : 'bg-[#3D52A0] text-white'}`}>
+            <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-[#c084fc] border border-slate-700' : 'bg-[#215A9E] text-white'}`}>
               {savedLocations.length}
             </span>
           )}
@@ -336,14 +336,14 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
           onClick={() => setActiveTab('history')} 
           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
             activeTab === 'history' 
-              ? (isDarkMode ? 'bg-[#131b2e] text-white border border-slate-700/80 shadow-xs' : 'bg-[#eef3ff] text-[#3D52A0]') 
-              : (isDarkMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-500 hover:text-slate-800')
+              ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-xs' : 'bg-[#eef3ff] text-[#215A9E]') 
+              : (isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800')
           }`}
         >
           <History className="w-3.5 h-3.5" />
           <span>{t('History', 'السجل')}</span>
           {historySessions.length > 0 && (
-            <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
+            <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
               {historySessions.length}
             </span>
           )}
@@ -353,12 +353,12 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       {/* 1. CHAT TAB CONTENT */}
       {activeTab === 'chat' && (
         <>
-          <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-[#060a12]' : 'bg-white'}`}>
+          <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-transparent' : 'bg-white'}`}>
             {messages.map((msg) => (
               <div key={msg.id} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
                   <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${
-                    isDarkMode ? 'bg-[#0d1424] border border-slate-800 text-[#c084fc]' : 'bg-gradient-to-br from-[#3D52A0] to-[#1e2749]'
+                    isDarkMode ? 'bg-[#182645] border border-slate-700/80 text-[#c084fc]' : 'bg-gradient-to-br from-[#063360] to-[#215A9E]'
                   }`}>
                     <Bot className="w-4 h-4" />
                   </div>
@@ -367,11 +367,11 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                 <div className={`max-w-[92%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-2xs relative ${
                   msg.role === 'user' 
                     ? (isDarkMode 
-                        ? 'bg-[#131b2e] text-white rounded-br-none font-medium border border-slate-700/80 shadow-xs' 
-                        : 'bg-[#3D52A0] text-white rounded-br-none font-medium')
+                        ? 'bg-gradient-to-r from-[#7c3aed] to-[#5b21b6] text-white rounded-br-none font-medium shadow-sm' 
+                        : 'bg-black text-white rounded-br-none font-medium shadow-sm')
                     : (isDarkMode 
-                        ? 'bg-[#0d1424] border border-slate-800/80 text-slate-100 rounded-bl-none shadow-[0_4px_20px_rgba(0,0,0,0.3)]' 
-                        : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-none')
+                        ? 'bg-[#131d35]/95 border border-slate-700/70 text-slate-100 rounded-bl-none shadow-md backdrop-blur-md' 
+                        : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-none shadow-xs')
                 }`}>
                   {msg.role === 'assistant' ? (
                     <AiResponseRenderer 
@@ -386,7 +386,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                 </div>
 
                 {msg.role === 'user' && (
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${isDarkMode ? 'bg-[#182645] text-white border border-slate-700' : 'bg-slate-200 text-slate-700'}`}>
                     <User className="w-4 h-4" />
                   </div>
                 )}
@@ -395,13 +395,13 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
             {isTyping && (
               <div className="flex gap-2.5 justify-start items-center">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 animate-pulse ${isDarkMode ? 'bg-[#0d1424] text-[#c084fc] border border-slate-800' : 'bg-[#3D52A0] text-white'}`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 animate-pulse ${isDarkMode ? 'bg-[#182645] text-[#c084fc] border border-slate-700' : 'bg-[#215A9E] text-white'}`}>
                   <Bot className="w-4 h-4" />
                 </div>
                 <div className={`border rounded-2xl px-3.5 py-2 text-xs font-semibold flex items-center gap-2 ${
-                  isDarkMode ? 'bg-[#0d1424] border-slate-800 text-slate-300' : 'bg-slate-50 border-slate-200/80 text-[#3D52A0]'
+                  isDarkMode ? 'bg-[#131d35] border-slate-700/70 text-slate-300' : 'bg-slate-50 border-slate-200/80 text-[#215A9E]'
                 }`}>
-                  <span className={`w-2 h-2 rounded-full animate-ping ${isDarkMode ? 'bg-[#c084fc]' : 'bg-[#3D52A0]'}`} />
+                  <span className={`w-2 h-2 rounded-full animate-ping ${isDarkMode ? 'bg-[#c084fc]' : 'bg-[#215A9E]'}`} />
                   <span>{activeStepText || t("AI Agent is reasoning...", "جاري معالجة الاستعلام المكاني...")}</span>
                 </div>
               </div>
@@ -409,7 +409,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
           </div>
 
           {/* Bottom Chat Input Form */}
-          <div className={`p-3 border-t shrink-0 relative z-20 ${isDarkMode ? 'bg-[#0a0f1d] border-slate-800/80' : 'bg-white border-slate-200'}`}>
+          <div className={`p-3 border-t shrink-0 relative z-20 backdrop-blur-md transition-colors duration-300 ${isDarkMode ? 'bg-[#0f1932]/95 border-slate-800/90' : 'bg-white border-slate-200'}`}>
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
               <input
                 type="text"
@@ -418,8 +418,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                 placeholder={placeholderText}
                 className={`flex-1 text-xs font-medium rounded-full px-4 py-2.5 border outline-none transition-all ${
                   isDarkMode 
-                    ? 'bg-[#0d1527] text-white placeholder-slate-400 border-slate-800 focus:border-slate-600' 
-                    : 'bg-slate-100/90 hover:bg-slate-100 focus:bg-white text-slate-800 placeholder-slate-400 border-transparent focus:border-[#3D52A0]/50'
+                    ? 'bg-[#15213c] text-white placeholder-slate-400 border-slate-700/80 focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed]/30' 
+                    : 'bg-slate-100/90 hover:bg-slate-100 focus:bg-white text-slate-800 placeholder-slate-400 border-slate-200 focus:border-[#7c3aed]'
                 }`}
               />
               <button
@@ -427,8 +427,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                 disabled={!inputValue.trim() || isTyping}
                 className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
                   inputValue.trim() && !isTyping
-                    ? (isDarkMode ? 'bg-[#131b2e] hover:bg-[#1e2a44] text-white border border-slate-700/80 shadow-xs' : 'bg-[#3D52A0] text-white shadow-sm hover:bg-[#2d3e7d]')
-                    : (isDarkMode ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed')
+                    ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-sm hover:bg-[#6d28d9]' : 'bg-black text-white hover:bg-[#7c3aed]')
+                    : (isDarkMode ? 'bg-slate-800/80 text-slate-600 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed')
                 }`}
               >
                 <Send className="w-4 h-4 rtl:-scale-x-100" />
@@ -440,10 +440,10 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
       {/* 2. SAVED TAB CONTENT */}
       {activeTab === 'saved' && (
-        <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-[#060a12]' : 'bg-slate-50/50'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-transparent' : 'bg-slate-50/50'}`}>
           <div className={`flex items-center justify-between pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2">
-              <Bookmark className={`w-4 h-4 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <Bookmark className={`w-4 h-4 ${isDarkMode ? 'text-[#7c3aed]' : 'text-[#215A9E]'}`} />
               <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
                 {t('SAVED LOCATIONS', 'المواقع المحفوظة')} ({savedLocations.length})
               </h3>
@@ -465,8 +465,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                   key={item.id}
                   className={`border rounded-2xl p-3.5 transition-all flex items-center justify-between group ${
                     isDarkMode 
-                      ? 'bg-[#0d1527] border-slate-800/90 text-white hover:border-[#00e5ff]/50' 
-                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-[#3D52A0]/40 shadow-2xs'
+                      ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-[#7c3aed]/60 shadow-xs' 
+                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-black/30 shadow-2xs'
                   }`}
                 >
                   <div 
@@ -475,7 +475,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                   >
                     <div className="flex items-center gap-2">
                       <h4 className={`font-bold text-xs truncate transition-colors ${
-                        isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#3D52A0]'
+                        isDarkMode ? 'text-white group-hover:text-[#c084fc]' : 'text-[#1e2749] group-hover:text-[#215A9E]'
                       }`}>
                         {isArabic && item.name_ar ? item.name_ar : item.name}
                       </h4>
@@ -507,7 +507,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
-              <Bookmark className={`w-10 h-10 mb-3 opacity-30 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <Bookmark className={`w-10 h-10 mb-3 opacity-30 ${isDarkMode ? 'text-[#7c3aed]' : 'text-[#215A9E]'}`} />
               <p className={`font-bold text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t('No saved locations yet', 'لا توجد مواقع محفوظة حتى الآن')}</p>
             </div>
           )}
@@ -516,10 +516,10 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
       {/* 3. HISTORY TAB CONTENT */}
       {activeTab === 'history' && (
-        <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-[#060a12]' : 'bg-slate-50/50'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-transparent' : 'bg-slate-50/50'}`}>
           <div className={`flex items-center justify-between pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2">
-              <History className={`w-4 h-4 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <History className={`w-4 h-4 ${isDarkMode ? 'text-[#7c3aed]' : 'text-[#215A9E]'}`} />
               <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
                 {t('PAST CHAT SESSIONS', 'سجل المحادثات')} ({historySessions.length})
               </h3>
@@ -541,8 +541,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                   key={session.id}
                   className={`border rounded-2xl p-3.5 transition-all flex items-center justify-between group ${
                     isDarkMode 
-                      ? 'bg-[#0d1527] border-slate-800/90 text-white hover:border-[#00e5ff]/50' 
-                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-[#3D52A0]/40 shadow-2xs'
+                      ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-[#7c3aed]/60 shadow-xs' 
+                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-black/30 shadow-2xs'
                   }`}
                 >
                   <div 
@@ -554,13 +554,13 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         {session.timestamp || 'Today'}
                       </span>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                        isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-600'
+                        isDarkMode ? 'bg-[#182645] text-slate-300 border border-slate-700/60' : 'bg-slate-100 text-slate-600'
                       }`}>
                         {session.messages?.length || session.messageCount || 3} {t('msgs', 'رسائل')}
                       </span>
                     </div>
                     <h4 className={`font-bold text-xs truncate transition-colors ${
-                      isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#3D52A0]'
+                      isDarkMode ? 'text-white group-hover:text-[#c084fc]' : 'text-[#1e2749] group-hover:text-[#215A9E]'
                     }`}>
                       {session.preview || session.title || 'Abu Dhabi GeoAI Conversation'}
                     </h4>
@@ -571,8 +571,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                       onClick={() => handleRestoreHistorySession(session)}
                       className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 cursor-pointer ${
                         isDarkMode 
-                          ? 'bg-[#111c34] text-[#00e5ff] hover:bg-[#00e5ff] hover:text-slate-950' 
-                          : 'bg-[#eef3ff] text-[#3D52A0] hover:bg-[#3D52A0] hover:text-white'
+                          ? 'bg-[#182645] text-[#c084fc] hover:bg-[#7c3aed] hover:text-white border border-slate-700/60' 
+                          : 'bg-[#eef3ff] text-[#215A9E] hover:bg-[#215A9E] hover:text-white'
                       }`}
                       title={t('Restore session', 'استعادة المحادثة')}
                     >
@@ -594,7 +594,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
-              <History className={`w-10 h-10 mb-3 opacity-30 ${isDarkMode ? 'text-[#00e5ff]' : 'text-[#3D52A0]'}`} />
+              <History className={`w-10 h-10 mb-3 opacity-30 ${isDarkMode ? 'text-[#7c3aed]' : 'text-[#215A9E]'}`} />
               <p className={`font-bold text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t('No chat history yet', 'لا يوجد سجل محادثات حتى الآن')}</p>
             </div>
           )}

@@ -156,7 +156,7 @@ export default function DataExplorerLayout({
       {/* Resizable Right Pane: Solid 2nd Division Chat Panel */}
       <div 
         className={`h-full relative flex flex-col z-30 border-s pointer-events-auto shrink-0 transition-colors duration-300 ${
-          isDarkMode ? 'bg-[#060a12] border-slate-800/80 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
+          isDarkMode ? 'bg-[#0c1427] border-slate-800/80 text-slate-100' : 'bg-white border-slate-200 text-slate-800'
         }`}
         style={{ width: `${chatWidth}px` }}
       >
