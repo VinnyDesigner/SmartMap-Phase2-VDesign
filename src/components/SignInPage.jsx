@@ -1,18 +1,24 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, ArrowLeft, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Eye, EyeOff, ShieldCheck, User } from 'lucide-react';
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import LanguageSelector from './common/LanguageSelector';
 
-export default function SignInPage({ onNavigate }) {
+export default function SignInPage({ onNavigate, onSignIn }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { t } = useLanguage();
+  const { t, isArabic } = useLanguage();
   const { isDarkMode } = useTheme();
+
+  const handlePerformSignIn = (e) => {
+    if (e) e.preventDefault();
+    if (onSignIn) onSignIn();
+    if (onNavigate) onNavigate('explorer');
+  };
 
   return (
     <div className={`min-h-[100dvh] w-full flex flex-col lg:flex-row transition-colors duration-300 overflow-hidden relative ${isDarkMode ? 'bg-[#060a12] text-white' : 'bg-[#F8FAFC] text-slate-900'}`}>
@@ -86,12 +92,27 @@ export default function SignInPage({ onNavigate }) {
             <img src={dgeLogo} alt="DGE" className={`h-9 object-contain mx-auto ${isDarkMode ? 'brightness-0 invert' : ''}`} />
           </div>
 
-          <div className="mb-8 text-center lg:text-start">
-            <h2 className={`text-3xl font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{t("Welcome Back", "مرحباً بعودتك")}</h2>
+          <div className="mb-6 text-center lg:text-start">
+            <h2 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{t("Welcome Back", "مرحباً بعودتك")}</h2>
             <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>{t("Sign in to access your GeoVision workspace.", "قم بتسجيل الدخول للوصول إلى مساحة عمل جيوفيجين الخاصة بك.")}</p>
           </div>
 
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+          {/* Primary UAE PASS Identity Provider Button */}
+          <button
+            onClick={handlePerformSignIn}
+            className="w-full mb-6 py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] hover:opacity-95 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
+          >
+            <ShieldCheck className="w-5 h-5 text-emerald-400" />
+            <span>{t("Sign In with UAE PASS", "تسجيل الدخول باستخدام الهوية الرقمية (UAE PASS)")}</span>
+          </button>
+
+          <div className="relative flex py-2 items-center mb-6">
+            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+            <span className="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">{t("Or DGE Account", "أو حساب التمكين")}</span>
+            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
+          </div>
+
+          <form className="space-y-5" onSubmit={handlePerformSignIn}>
             <div className="space-y-4">
               {/* Email Input */}
               <div className="relative group">
@@ -102,11 +123,10 @@ export default function SignInPage({ onNavigate }) {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className={`block w-full ps-11 pe-4 py-3.5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/20 focus:border-[#7c3aed] transition-all shadow-xs text-start ${
+                  className={`block w-full ps-11 pe-4 py-3 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/20 focus:border-[#7c3aed] transition-all shadow-xs text-start text-xs font-medium ${
                     isDarkMode ? 'bg-[#0f172a] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
                   }`}
-                  placeholder="name@government.ae"
-                  required
+                  placeholder="ahmed.almansoori@dge.gov.ae"
                 />
               </div>
 
@@ -119,11 +139,10 @@ export default function SignInPage({ onNavigate }) {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`block w-full ps-11 pe-12 py-3.5 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/20 focus:border-[#7c3aed] transition-all shadow-xs text-start ${
+                  className={`block w-full ps-11 pe-12 py-3 border rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]/20 focus:border-[#7c3aed] transition-all shadow-xs text-start text-xs font-medium ${
                     isDarkMode ? 'bg-[#0f172a] border-slate-800 text-white' : 'bg-white border-slate-200 text-slate-900'
                   }`}
-                  placeholder={t("Enter your password", "أدخل كلمة المرور")}
-                  required
+                  placeholder="••••••••••••"
                 />
                 <button
                   type="button"
@@ -135,9 +154,9 @@ export default function SignInPage({ onNavigate }) {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-between text-xs">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-[#7c3aed] focus:ring-[#7c3aed]/20" />
+                <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-slate-300 text-[#7c3aed] focus:ring-[#7c3aed]/20" />
                 <span className={isDarkMode ? 'text-slate-300 font-medium' : 'text-slate-600 font-medium'}>{t("Remember me", "تذكرني")}</span>
               </label>
               <a href="#" className="font-semibold text-[#7c3aed] hover:text-[#5b21b6] transition-colors">
@@ -147,19 +166,30 @@ export default function SignInPage({ onNavigate }) {
 
             <button
               type="submit"
-              onClick={() => onNavigate('explorer')}
-              className="w-full flex justify-center items-center py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-black hover:bg-[#7c3aed] transition-all duration-300 shadow-sm transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#7c3aed] cursor-pointer"
+              onClick={handlePerformSignIn}
+              className="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs font-bold text-white bg-black hover:bg-[#7c3aed] transition-all duration-300 shadow-sm cursor-pointer"
             >
               {t("Sign In", "تسجيل الدخول")}
             </button>
           </form>
 
-          <p className="mt-10 text-center text-sm text-slate-500">
-            {t("Don't have an account?", "ليس لديك حساب؟")}{' '}
-            <a href="#" className="font-bold text-[#7c3aed] hover:text-[#5b21b6] transition-colors">
-              {t("Request Access", "طلب وصول")}
-            </a>
-          </p>
+          {/* Guest User Access Button & Flow */}
+          <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => {
+                if (onNavigate) onNavigate('explorer');
+              }}
+              className="w-full py-3 px-4 rounded-xl text-xs font-bold border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+            >
+              <User className="w-4 h-4 text-[#215A9E] dark:text-[#00e5ff]" />
+              <span>{t("Continue as Guest User", "الاستمرار كزائر (بدون تسجيل الدخول)")}</span>
+            </button>
+
+            <p className="text-center text-[11px] text-slate-500 font-medium">
+              {t("Access open GIS maps, spatial queries, and dataset layers freely.", "الوصول إلى الخرائط والاستعلامات المكانية العامة مجاناً.")}
+            </p>
+          </div>
         </motion.div>
       </div>
     </div>

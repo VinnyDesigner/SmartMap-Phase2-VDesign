@@ -27,6 +27,25 @@ export default function AiResponseRenderer({ response, onEntityClick, onActionCl
         {response.insightData && <AiInsightCard insightData={response.insightData} />}
         {response.whyThisResult && <AiWhyThisResult data={response.whyThisResult} />}
         {response.executionLogs && <AiExecutionTrace logs={response.executionLogs} />}
+        {/* Datasets Used & Provenance Lineage Badge */}
+        {(response.datasetsUsed || response.datasets) && (
+          <div className="mt-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-2 text-[10px] text-slate-500 dark:text-slate-400 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-bold text-[#3D52A0] dark:text-[#00e5ff]">
+                {isArabic ? "المصادر المكانية:" : "Datasets Used:"}
+              </span>
+              {(response.datasetsUsed || response.datasets).map((ds, i) => (
+                <span key={i} className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-[9.5px]">
+                  {ds}
+                </span>
+              ))}
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 shrink-0">
+              {isArabic ? "بيانات مكانيّة موثقة" : "Authoritative SDI Data"}
+            </span>
+          </div>
+        )}
+
         {(response.actionCards || response.suggestions) && (
           <AiActionSuggestions 
             actionCards={response.actionCards} 

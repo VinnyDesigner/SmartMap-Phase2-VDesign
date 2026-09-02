@@ -7,6 +7,8 @@ import BottomDataPanel from './BottomDataPanel';
 
 import { useTheme } from '../../contexts/ThemeContext';
 
+import DemoScenarioSwitcher from '../common/DemoScenarioSwitcher';
+
 export default function DataExplorerLayout({ 
   onNavigate, 
   explorerState, 
@@ -18,6 +20,14 @@ export default function DataExplorerLayout({
 }) {
   const { isDarkMode } = useTheme();
   const containerRef = useRef(null);
+
+  const handleLaunchScenario = (queryText) => {
+    setExplorerState(prev => ({
+      ...prev,
+      pendingQuery: queryText
+    }));
+  };
+
   const [chatWidth, setChatWidth] = useState(() => {
     if (typeof window !== 'undefined') {
       return Math.max(300, Math.round(window.innerWidth * 0.20));
@@ -166,6 +176,9 @@ export default function DataExplorerLayout({
           onNavigate={onNavigate}
         />
       </div>
+
+      {/* Stakeholder Demo Journey Switcher */}
+      <DemoScenarioSwitcher onLaunchScenario={handleLaunchScenario} />
     </motion.div>
   );
 }

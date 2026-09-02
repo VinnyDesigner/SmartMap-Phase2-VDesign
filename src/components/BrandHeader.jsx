@@ -9,11 +9,14 @@ import LanguageSelector from './common/LanguageSelector';
 
 
 
-export default function BrandHeader({ onNavigate, currentView }) {
+export default function BrandHeader({ onNavigate, currentView, userAuth, onSignOut, onSignIn }) {
   const { isArabic, setIsArabic, t } = useLanguage();
   const { isDarkMode, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState(null);
+
+  const isLoggedIn = userAuth?.isLoggedIn;
+
   return (
     <>
       {/* Top SDI Brand Line */}
@@ -36,7 +39,6 @@ export default function BrandHeader({ onNavigate, currentView }) {
             className={`h-7 md:h-8 object-contain drop-shadow-sm cursor-pointer transition-all ${isDarkMode ? 'brightness-0 invert' : ''}`} 
             onClick={() => onNavigate?.('landing')} 
           />
-
         </div>
 
         {/* Center: SDI-Style Navigation */}
@@ -60,8 +62,8 @@ export default function BrandHeader({ onNavigate, currentView }) {
                 {t(item.en, item.ar)}
                 {isActive && (
                   <motion.div 
-                    layoutId="sdiNavUnderline"
-                    className="absolute bottom-[-4px] left-0 right-0 h-[3px] bg-[#7c3aed] rounded-full"
+                    layoutId="activeHeaderNav"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#215A9E] to-[#7c3aed] rounded-full"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -70,20 +72,18 @@ export default function BrandHeader({ onNavigate, currentView }) {
           })}
         </nav>
 
-        {/* Right: Actions & Logo */}
-        <div className="flex items-center gap-3 md:gap-4 pointer-events-auto h-full">
-          <img 
-            src={sdiLogo} 
-            alt="Abu Dhabi Spatial Data" 
-            className={`h-7 md:h-8 object-contain drop-shadow-sm hidden md:block opacity-90 hover:opacity-100 transition-all ${isDarkMode ? 'brightness-0 invert' : ''}`} 
-          />
+        {/* Right: Actions */}
+        <div className="flex items-center gap-3">
+          {/* SDI Header Brand Logo */}
+          <div className="hidden xl:flex items-center me-2">
+            <img src={sdiLogo} alt="Abu Dhabi Spatial Data Infrastructure" className="h-6 md:h-7 w-auto object-contain" />
+          </div>
           
           <div className="flex items-center gap-2 md:gap-3">
             {/* SDI-style Text-Only Language Selector */}
             <div className="hidden md:flex items-center">
               <LanguageSelector isDarkMode={isDarkMode} />
             </div>
-
             
             {/* Dark/Light Theme Toggle */}
             <button 
@@ -102,14 +102,44 @@ export default function BrandHeader({ onNavigate, currentView }) {
               <HelpCircle className={`w-4 h-4 ${isDarkMode ? 'fill-white text-[#0f172a]' : 'fill-[#7c3aed] text-white'}`} />
             </button>
             
-            {/* Sign In Button - SDI Default Black, Hover Purple */}
-            <button 
-              onClick={() => onNavigate?.('login')}
-              className="hidden lg:flex h-9 px-6 rounded-full items-center gap-2 text-white bg-black hover:bg-[#7c3aed] transition-all duration-300 shadow-sm cursor-pointer font-bold text-xs md:text-sm tracking-wide transform hover:-translate-y-0.5"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>{t('Sign In', 'تسجيل الدخول')}</span>
-            </button>
+            {/* Authenticated User Profile Pill vs Guest User Status Pill */}
+            {isLoggedIn ? (
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">
+                  AH
+                </div>
+                <div className="flex flex-col text-start">
+                  <span className="text-[11px] font-bold leading-tight">
+                    {isArabic ? userAuth.userNameAr || userAuth.userName : userAuth.userName}
+                  </span>
+                  <span className="text-[9px] opacity-80 leading-tight">UAE PASS Verified</span>
+                </div>
+                <button
+                  onClick={onSignOut}
+                  className="ms-1 px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer"
+                >
+                  {t('Sign Out', 'خروج')}
+                </button>
+              </div>
+            ) : (
+              <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300/80 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-2xs">
+                <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px] flex items-center justify-center">
+                  <User className="w-3.5 h-3.5" />
+                </div>
+                <div className="flex flex-col text-start">
+                  <span className="text-[11px] font-bold leading-tight">
+                    {t('Guest User', 'مستخدم زائر')}
+                  </span>
+                  <span className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">{t('Open Data Access', 'بيانات عامة')}</span>
+                </div>
+                <button 
+                  onClick={() => onNavigate?.('login')}
+                  className="ms-1.5 h-7 px-3 rounded-full text-white bg-black hover:bg-[#7c3aed] transition-all duration-200 font-bold text-[10.5px] cursor-pointer shadow-2xs transform hover:-translate-y-0.5"
+                >
+                  {t('Sign In', 'دخول')}
+                </button>
+              </div>
+            )}
             
             {/* Mobile Hamburger Menu */}
             <button 

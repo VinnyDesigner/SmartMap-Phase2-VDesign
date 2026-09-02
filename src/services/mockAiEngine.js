@@ -428,8 +428,306 @@ export const mockAiEngine = {
     }
 
     // =========================================================
-    // 3. MAP OVERLAY LAYERS CONTROL
+    // 3.1 GUEST / AUTHENTICATED USER JOURNEYS & MULTI-TURN INTENTS
     // =========================================================
+
+    // Multi-turn context extraction from previous state
+    const prevContext = currentState?.activeContext || {};
+
+    // A) USE CASE 1: NEARBY FACILITY DISCOVERY ("Show hospitals within 5 km of my location")
+    if (['within 5 km', '5 km of my location', 'hospitals within 5 km', 'near me within 5', '5 km'].some(w => q.includes(w))) {
+      const userLat = currentState?.userLocation?.lat || 24.4839;
+      const userLng = currentState?.userLocation?.lng || 54.3773;
+
+      // Filter hospitals within 5 km
+      results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL').map(h => {
+        const d = Math.sqrt(Math.pow(h.lat - userLat, 2) + Math.pow(h.lng - userLng, 2)) * 111; // Approx km
+        return { ...h, distanceKm: parseFloat(d.toFixed(1)) };
+      }).sort((a, b) => a.distanceKm - b.distanceKm);
+
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL', radius: '5 km' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: userLat, lng: userLng, zoom: 13 } }
+      );
+
+      reply = isArabic
+        ? `تم إجراء تحليل النطاق المكاني (5 كم). تم العثور على **${results.length} مستشفيات بالقرب من موقعك الحالي**:\n\n1. **${results[0].name_ar || results[0].name}** (${results[0].distanceKm} كم)\n2. **${results[1].name_ar || results[1].name}** (${results[1].distanceKm} كم)\n3. **${results[2].name_ar || results[2].name}** (${results[2].distanceKm} كم)`
+        : `Executed 5 km spatial radius analysis. Found **${results.length} healthcare facilities within 5 km of your location**:\n\n1. **${results[0].name}** (${results[0].distanceKm} km)\n2. **${results[1].name}** (${results[1].distanceKm} km)\n3. **${results[2].name}** (${results[2].distanceKm} km)`;
+
+      const datasetsUsed = ['DGE Spatial SDI 2026', 'DoH Healthcare Layer v2.1'];
+      const activeContextTags = [
+        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
+        { id: 'location', label: isArabic ? 'موقعي الحالي' : 'My Location', icon: '📍' },
+        { id: 'radius', label: isArabic ? 'نطاق 5 كم' : '5 km Radius', icon: '📏' }
+      ];
+      const newContext = { category: 'HOSPITAL', radius: '5 km', center: [userLat, userLng] };
+
+      suggestions = isArabic 
+        ? ["حفظ هذا البحث", "أيها الأقرب لي؟", "عرض المدارس القريبة"] 
+        : ["Save this search", "Which one is nearest?", "Show schools nearby"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: newContext };
+    }
+
+    // B) USE CASE 2: CROSS-LAYER SPATIAL QUERY ("Show schools within 2 km of bus stations in Khalifa City")
+    if (['bus stations in khalifa city', 'schools within 2 km of bus stations', 'schools near bus station'].some(w => q.includes(w))) {
+      results = LOCATIONS_DB.filter(l => l.type === 'EDUCATION' && (l.location === 'Khalifa City' || l.tags.includes('khalifa city')));
+      if (results.length === 0) results = LOCATIONS_DB.filter(l => l.type === 'EDUCATION').slice(0, 3);
+
+      const topSchool = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'EDUCATION', district: 'Khalifa City', crossLayer: 'Bus Stations (2 km)' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: 24.4136, lng: 54.5683, zoom: 14 } }
+      );
+
+      reply = isArabic
+        ? `تم إجراء الاستعلام المكاني عابر الطبقات (**التعليم + محطات الحافلات**). تم العثور على **${results.length} مدارس تقع ضمن نطاق 2 كم من محطات الحافلات في مدينة خليفة**:\n\n1. **${results[0].name_ar || results[0].name}** (نطاق 0.6 كم)\n2. **${results[1]?.name_ar || results[1]?.name || 'مدرسة برايت رايدرز'}** (نطاق 1.4 كم)`
+        : `Executed cross-layer GIS buffer query (**Education Layer ✕ Transit Layer**). Found **${results.length} schools within a 2 km buffer of bus stations in Khalifa City**:\n\n1. **${results[0].name}** (0.6 km from transit hub)\n2. **${results[1]?.name || 'Bright Riders School'}** (1.4 km from transit hub)`;
+
+      const datasetsUsed = ['ADEK Schools Registry 2026', 'DoT Transport Bus Layer v1.8'];
+      const activeContextTags = [
+        { id: 'category', label: isArabic ? 'مدارس' : 'Schools', icon: '🎓' },
+        { id: 'layer', label: isArabic ? 'محطات الحافلات' : 'Bus Stations', icon: '🚌' },
+        { id: 'district', label: isArabic ? 'مدينة خليفة' : 'Khalifa City', icon: '📍' },
+        { id: 'radius', label: isArabic ? 'نطاق 2 كم' : '2 km Buffer', icon: '📏' }
+      ];
+      const newContext = { category: 'EDUCATION', crossLayer: 'TRANSPORT', district: 'Khalifa City', radius: '2 km' };
+
+      suggestions = isArabic 
+        ? ["عرض المدارس الحكومية فقط", "حفظ هذا البحث إلى المفضلة", "مقارنة السعة"] 
+        : ["Only government schools", "Save this search to Favorites", "Compare capacity"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: newContext };
+    }
+
+    // C) USE CASE 3: ANALYTICAL DISCOVERY ("Which area has the highest number of healthcare facilities?")
+    if (['highest number of healthcare', 'highest number of health', 'highest healthcare', 'which area has the highest', 'most healthcare'].some(w => q.includes(w))) {
+      results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL');
+      const topArea = { name: 'Al Danah & Central Abu Dhabi', count: 5, lat: 24.4891, lng: 54.3644 };
+
+      actions.push(
+        { type: ACTION_TYPES.ANALYTICS_SHOW_CHART },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topArea.lat, lng: topArea.lng, zoom: 13 } }
+      );
+
+      reply = isArabic
+        ? `**نتيجة التحليل المكاني المجمع**:\nمنطقة **وسط أبوظبي / الدانة** تمتلك أكبر تركيز للمنشآت الصحية بـ **5 مستشفيات تخصصية**، تليها جزيرة الماريه (3 مستشفيات) ثم منطقة العين.`
+        : `**Spatial Analytical Result**:\n**Central Abu Dhabi / Al Danah** contains the highest concentration of healthcare facilities in Abu Dhabi (**5 major hospital complexes**), followed by Al Maryah Island & Al Ain.`;
+
+      chartData = {
+        id: 'health_distribution',
+        title: isArabic ? 'توزيع المنشآت الصحية حسب المناطق' : 'Healthcare Facility Concentration by District',
+        type: 'bar',
+        data: [
+          { label: isArabic ? 'وسط أبوظبي' : 'Central Abu Dhabi', name: 'Central Abu Dhabi', value: 5, color: '#3D52A0' },
+          { label: isArabic ? 'جزيرة الماريه' : 'Al Maryah Island', name: 'Al Maryah Island', value: 3, color: '#7c3aed' },
+          { label: isArabic ? 'مدينة العين' : 'Al Ain Region', name: 'Al Ain Region', value: 3, color: '#00e5ff' },
+          { label: isArabic ? 'مدينة خليفة والمفرق' : 'Khalifa City & Mafraq', name: 'Khalifa City & Mafraq', value: 2, color: '#43e97b' }
+        ]
+      };
+
+      const datasetsUsed = ['DGE Spatial Analytics 2026', 'DoH Master Spatial Registry'];
+      const activeContextTags = [
+        { id: 'analysis', label: isArabic ? 'تحليل التوزيع المكاني' : 'Spatial Distribution Analysis', icon: '📊' },
+        { id: 'topArea', label: isArabic ? 'المنطقة الأعلى: وسط أبوظبي' : 'Top Cluster: Central Abu Dhabi', icon: '🏆' }
+      ];
+      const newContext = { analysis: 'HEALTHCARE_DISTRIBUTION', topSector: 'Central Abu Dhabi' };
+
+      suggestions = isArabic 
+        ? ["عرض المستشفيات الحكومية", "مقارنة استهلاك المياه", "تصدير التحليل"] 
+        : ["Show government hospitals", "Compare water consumption", "Export analysis report"];
+
+      return { reply, results, actions, suggestions, chartData, datasetsUsed, activeContextTags, activeContext: newContext };
+    }
+
+    // D) USE CASE 4: MULTI-TURN CONVERSATION REFINEMENT
+    // Turn 1 / Base: "Show hospitals in Khalifa City"
+    if (['hospitals in khalifa city', 'hospitals in khalifa'].some(w => q.includes(w))) {
+      results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL' && (l.location === 'Al Mafraq' || l.location === 'Khalifa City' || l.tags.includes('mafraq') || l.tags.includes('khalifa')));
+      if (results.length === 0) results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL').slice(0, 2);
+
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL', district: 'Khalifa City Sector' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 14 } }
+      );
+
+      reply = isArabic
+        ? `تم التركيز على **مدينة خليفة ومفرق** وتحديد **${results.length} مستشفيات** على الخريطة:\n1. **${results[0].name_ar || results[0].name}** (مستشفى طوارئ رئيسي)\n2. **${results[1]?.name_ar || results[1]?.name || 'مستشفى المفرق'}**`
+        : `Zoomed map to **Khalifa City / Mafraq sector** and identified **${results.length} healthcare facilities**:\n\n1. **${results[0].name}** (SSMC - Major Emergency Hospital)\n2. **${results[1]?.name || 'Al Mafraq Hospital'}**`;
+
+      const datasetsUsed = ['DGE Spatial SDI 2026', 'DoH Healthcare Layer v2.1'];
+      const activeContextTags = [
+        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
+        { id: 'district', label: isArabic ? 'مدينة خليفة' : 'Khalifa City', icon: '📍' }
+      ];
+      const newContext = { category: 'HOSPITAL', district: 'Khalifa City', activeLocations: results };
+
+      suggestions = isArabic 
+        ? ["المستشفيات الحكومية فقط", "أيها الأقرب لي؟", "عرض المدارس ضمن 2 كم من هذه المستشفيات"] 
+        : ["Only government hospitals", "Which one is nearest to me?", "Show schools within 2 km of these hospitals"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: newContext };
+    }
+
+    // Turn 2: "Only government hospitals" (Context inherited from Turn 1)
+    if (['only government hospitals', 'government hospitals', 'government hospitals only', 'government only', 'حكومية فقط'].some(w => q.includes(w))) {
+      // Retain previous district or default to Khalifa City / Mafraq
+      const currentDistrict = prevContext.district || 'Khalifa City';
+      results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL' && l.tags.includes('government'));
+
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL', district: currentDistrict, ownership: 'Government' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 14 } }
+      );
+
+      reply = isArabic
+        ? `تم تصفية النتائج السابقة لـ **${currentDistrict}** لعرض **المستشفيات الحكومية فقط**:\n\n1. **${results[0].name_ar || results[0].name}** (السعة: 741 سرير)\n2. **${results[1]?.name_ar || results[1]?.name || 'مستشفى العين الحكومي'}** (السعة: 412 سرير)`
+        : `Refined existing query context for **${currentDistrict}** to display **Government Hospitals only**:\n\n1. **${results[0].name}** (SSMC - 741 bed capacity)\n2. **${results[1]?.name || 'Al Ain Government Hospital'}** (412 bed capacity)`;
+
+      const datasetsUsed = ['DGE Spatial SDI 2026', 'DoH Government Facility Layer'];
+      const activeContextTags = [
+        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
+        { id: 'district', label: isArabic ? currentDistrict : currentDistrict, icon: '📍' },
+        { id: 'ownership', label: isArabic ? 'حكومي فقط' : 'Government Only', icon: '🏛️' }
+      ];
+      const newContext = { ...prevContext, category: 'HOSPITAL', district: currentDistrict, ownership: 'Government', activeLocations: results };
+
+      suggestions = isArabic 
+        ? ["أيها الأقرب لي؟", "عرض المدارس ضمن 2 كم من هذه المستشفيات", "حفظ هذا البحث"] 
+        : ["Which one is nearest to me?", "Show schools within 2 km of these hospitals", "Save this search"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: newContext };
+    }
+
+    // Turn 3: "Which one is nearest to me?" (Context inherited from Turn 2)
+    if (['nearest to me', 'which one is nearest to me', 'which is nearest', 'closest to me', 'rank by distance', 'أيها الأقرب لي'].some(w => q.includes(w))) {
+      const userLat = currentState?.userLocation?.lat || 24.4839;
+      const userLng = currentState?.userLocation?.lng || 54.3773;
+
+      const baseList = prevContext.activeLocations || LOCATIONS_DB.filter(l => l.type === 'HOSPITAL' && l.tags.includes('government'));
+      results = baseList.map(h => {
+        const d = Math.sqrt(Math.pow(h.lat - userLat, 2) + Math.pow(h.lng - userLng, 2)) * 111;
+        return { ...h, distanceKm: parseFloat(d.toFixed(1)) };
+      }).sort((a, b) => a.distanceKm - b.distanceKm);
+
+      const topLoc = results[0];
+      actions.push(
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 15 } },
+        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: topLoc } }
+      );
+
+      reply = isArabic
+        ? `**ترتيب المستشفيات حسب القرب من موقعك الحالي**:\n\n1. 🥇 **${results[0].name_ar || results[0].name}** — **${results[0].distanceKm} كم** (الأقرب من موقعك)\n2. 🥈 **${results[1]?.name_ar || results[1]?.name || 'مستشفى العين'}** — **${results[1]?.distanceKm || 18.5} كم**`
+        : `**Ranked Government Hospitals by Proximity to your Location**:\n\n1. 🥇 **${results[0].name}** — **${results[0].distanceKm} km away** (Nearest to your location)\n2. 🥈 **${results[1]?.name || 'Al Ain Hospital'}** — **${results[1]?.distanceKm || 18.5} km away**`;
+
+      const datasetsUsed = ['DGE GPS Location Engine', 'DoH Health Network Layer'];
+      const activeContextTags = [
+        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
+        { id: 'ownership', label: isArabic ? 'حكومي' : 'Government', icon: '🏛️' },
+        { id: 'rank', label: isArabic ? 'مرتب حسب المسافة' : 'Ranked by Distance', icon: '📏' }
+      ];
+      const newContext = { ...prevContext, rank: 'DISTANCE', activeLocations: results };
+
+      suggestions = isArabic 
+        ? ["عرض المدارس ضمن 2 كم من هذه المستشفيات", "حفظ هذا البحث", "تصدير التقرير"] 
+        : ["Show schools within 2 km of these hospitals", "Save this search", "Export PDF Report"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: newContext };
+    }
+
+    // Turn 4: "Show schools within 2 km of these hospitals" (Context inherited from Turn 3)
+    if (['schools within 2 km of these hospitals', 'schools near these hospitals', 'schools near these', 'within 2 km of these'].some(w => q.includes(w))) {
+      const sourceHospitals = prevContext.activeLocations || LOCATIONS_DB.filter(l => l.type === 'HOSPITAL');
+      results = LOCATIONS_DB.filter(l => l.type === 'EDUCATION').slice(0, 3);
+
+      const topSchool = results[0];
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'EDUCATION', spatialBuffer: '2 km of Selected Hospitals' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topSchool.lat, lng: topSchool.lng, zoom: 14 } }
+      );
+
+      reply = isArabic
+        ? `تم تنفيذ استعلام التحليل المكاني التجميعي (**مدارس ضمن 2 كم من المستشفيات المحددة سابقتًا**). تم العثور على **${results.length} مدارس**:\n\n1. **${results[0].name_ar || results[0].name}** (يبعد 1.1 كم من SSMC)\n2. **${results[1]?.name_ar || results[1]?.name || 'مدرسة برايت رايدرز'}** (يبعد 1.7 كم من SSMC)`
+        : `Executed Multi-Layer Spatial Buffer Analysis (**Schools within 2 km of previous Government Hospital results**). Found **${results.length} educational institutions**:\n\n1. **${results[0].name}** (1.1 km from SSMC Hospital)\n2. **${results[1]?.name || 'Bright Riders School'}** (1.7 km from SSMC Hospital)`;
+
+      const datasetsUsed = ['ADEK Schools Registry 2026', 'DoH Healthcare Buffer Layer'];
+      const activeContextTags = [
+        { id: 'category', label: isArabic ? 'مدارس' : 'Schools', icon: '🎓' },
+        { id: 'buffer', label: isArabic ? 'نطاق 2 كم حول المستشفيات' : '2 km Buffer around Hospitals', icon: '🔄' }
+      ];
+      const newContext = { ...prevContext, category: 'EDUCATION', bufferOrigin: 'Gov Hospitals', radius: '2 km' };
+
+      suggestions = isArabic 
+        ? ["حفظ هذا البحث إلى المفضلة", "تصدير التقرير", "بدء بحث جديد"] 
+        : ["Save this search to Favorites", "Export Report", "Start new search"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: newContext };
+    }
+
+    // E) USE CASE 5: SAVE SEARCH & FAVORITES PROMPT
+    if (['save this search', 'save to favorites', 'add to favorites', 'save search', 'حفظ هذا البحث'].some(w => q.includes(w))) {
+      const isLoggedIn = currentState?.userAuth?.isLoggedIn;
+
+      if (!isLoggedIn) {
+        actions.push({ type: 'PROMPT_AUTH', params: { feature: isArabic ? 'حفظ البحث والمفضلة' : 'Save Search & Favorites' } });
+        reply = isArabic
+          ? "🔒 **يتطلب هذا الإجراء تسجيل الدخول**:\nيرجى تسجيل الدخول عبر **الهوية الرقمية UAE PASS** أو **حساب دائر التمكين الحكومي** لحفظ عمليات البحث والوصول إلى المفضلة في مساحة عملك المخصصة."
+          : "🔒 **Authentication Required**:\nPlease sign in with **UAE PASS** or your **DGE Account** to save custom queries and access your personalized Favorites workspace.";
+
+        return { reply, actions, promptAuth: true };
+      }
+
+      reply = isArabic
+        ? `✅ **تم حفظ البحث بنجاح**:\nتم حفظ استعلامك المكاني **"${prevContext.category || 'البحث المكاني'}"** إلى قائمة **المفضلة والمستندات المحفوظة**.`
+        : `✅ **Query Saved to Favorites**:\nYour spatial query **"${prevContext.category || 'Custom Spatial Search'}"** has been saved to your personalized Favorites workspace.`;
+
+      return { reply, results: prevContext.activeLocations || [] };
+    }
+
+    // F) NO RESULT STATE (e.g. "Show hospitals within 500 meters of this location")
+    if (['within 500 meters', '500 meters', '500m', 'within 500m'].some(w => q.includes(w))) {
+      reply = isArabic
+        ? `⚠️ **لم يتم العثور على أي مستشفيات ضمن نطاق 500 متر** من هذا الموقع.\n\nتتوفر مستشفيات عند زيادة نطاق البحث إلى **2 كم** أو **5 كم**.`
+        : `⚠️ **No hospitals were found within 500 meters** of this location.\n\nSeveral healthcare facilities are available if you expand the spatial search radius to **2 km** or **5 km**.`;
+
+      const datasetsUsed = ['DGE Spatial SDI 2026', 'DoH Healthcare Layer v2.1'];
+      suggestions = isArabic
+        ? ["توسيع نطاق البحث إلى 2 كم", "توسيع نطاق البحث إلى 5 كم", "تغيير الموقع الحالي"]
+        : ["Expand search area to 2 km", "Expand search area to 5 km", "Change location"];
+
+      return { reply, results: [], suggestions, datasetsUsed };
+    }
+
+    // G) AMBIGUOUS REQUEST STATE (e.g. "Show good hospitals")
+    if (['good hospitals', 'show good hospitals', 'best hospitals', 'good health'].some(w => q.includes(w))) {
+      reply = isArabic
+        ? `❓ **كيف تود تعريف "المستشفيات الممتازة"؟**\nيرجى تحديد المعيار المطلوب لتصفية البيانات المكانية بشكل دقيق:`
+        : `❓ **How would you like to define "good hospitals"?**\nPlease select your preferred criterion for spatial filtering:`;
+
+      suggestions = isArabic
+        ? ["الأقرب من موقعي", "المستشفيات الحكومية فقط", "الأعلى تقييماً", "الأكبر سعة"]
+        : ["Nearest to me", "Only government hospitals", "Highest rated", "Most capacity"];
+
+      return { reply, suggestions };
+    }
+
+    // H) LOCATION UNAVAILABLE STATE (e.g. "Show hospitals near me" when location not enabled)
+    if (['hospitals near me', 'near me'].some(w => q.includes(w)) && !q.includes('5 km')) {
+      reply = isArabic
+        ? `📍 **نحتاج لتعيين موقعك لتحديد المستشفيات القريبة**.\nيرجى السماح بتحديد الموقع أو اختيار إحدى المناطق التالية:`
+        : `📍 **We need your location to find nearby hospitals**.\nPlease allow location permissions or select a district:`;
+
+      suggestions = isArabic
+        ? ["استخدام موقعي الحالي", "اختيار مدينة خليفة", "اختيار جزيرة الريم"]
+        : ["Use my location", "Choose Khalifa City", "Choose Al Reem Island"];
+
+      return { reply, suggestions };
+    }
+
+
     if (['hide all other layers', 'hide all layers', 'hide other layers', 'turn off all layers', 'hide layers', 'turn off emissions', 'hide irrelevant layers', 'hide everything except'].some(w => q.includes(w))) {
       actions.push({ type: ACTION_TYPES.LAYER_DISABLE_ALL });
       reply = isArabic ? "تم إخفاء جميع طبقات الخريطة الإضافية لعرض خريطة واضحة." : "Hidden all overlay layers. Displaying clean basemap view with active facility markers.";

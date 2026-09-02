@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, Bot, User, MapPin, GraduationCap, PlusSquare, TreePine, Bus, 
-  Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight 
+  Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight, Lock 
 } from 'lucide-react';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine } from '../../services/mockAiEngine';
@@ -40,23 +40,41 @@ const SEED_SAVED_LOCATIONS = [
 const SEED_HISTORY_SESSIONS = [
   {
     id: 'hist-ad-01',
-    timestamp: '04:15 PM',
-    preview: 'Show high-risk manufacturing facilities in Abu Dhabi',
-    messageCount: 4,
+    timestamp: 'Today, 02:15 PM',
+    title: 'Healthcare facilities in Khalifa City',
+    preview: 'Healthcare facilities in Khalifa City',
+    messageCount: 3,
+    activeContext: { category: 'HOSPITAL', district: 'Khalifa City' },
+    activeContextTags: [
+      { id: 'category', label: 'Hospitals', icon: '🏥' },
+      { id: 'district', label: 'Khalifa City', icon: '📍' }
+    ],
     messages: [
-      { id: 1, role: 'assistant', content: 'Hello! Welcome to Abu Dhabi GeoAI Workspace.' },
-      { id: 2, role: 'user', content: 'Show high-risk manufacturing facilities in Abu Dhabi' },
-      { id: 3, role: 'assistant', content: 'Selected Mussafah Industrial Manufacturing Hub (#1 Risk candidate).' }
+      { id: 1, role: 'user', content: 'Show hospitals in Khalifa City' },
+      { 
+        id: 2, 
+        role: 'assistant', 
+        content: 'Zoomed map to Khalifa City / Mafraq sector and identified 3 healthcare facilities: Sheikh Shakhbout Medical City (SSMC), Al Mafraq Hospital, and NMC Royal Hospital.',
+        datasetsUsed: ['DGE Spatial SDI 2026', 'DoH Healthcare Layer v2.1'],
+        suggestions: ['Only government hospitals', 'Which one is nearest to me?', 'Show schools within 2 km of these hospitals']
+      }
     ]
   },
   {
     id: 'hist-ad-02',
-    timestamp: '02:30 PM',
-    preview: 'Compare emissions between Mussafah and KIZAD',
-    messageCount: 3,
+    timestamp: 'Yesterday, 04:30 PM',
+    title: 'Schools near bus stations in Khalifa City',
+    preview: 'Schools within 2 km of bus stations in Khalifa City',
+    messageCount: 4,
+    activeContext: { category: 'EDUCATION', crossLayer: 'TRANSPORT', district: 'Khalifa City' },
+    activeContextTags: [
+      { id: 'category', label: 'Schools', icon: '🎓' },
+      { id: 'district', label: 'Khalifa City', icon: '📍' },
+      { id: 'radius', label: '2 km Buffer', icon: '📏' }
+    ],
     messages: [
-      { id: 1, role: 'user', content: 'Compare emissions between Mussafah and KIZAD' },
-      { id: 2, role: 'assistant', content: 'Mussafah emissions (98,000 tCO2e) exceed KIZAD by 17%.' }
+      { id: 1, role: 'user', content: 'Show schools within 2 km of bus stations in Khalifa City' },
+      { id: 2, role: 'assistant', content: 'Found 3 schools within a 2 km buffer of bus stations in Khalifa City.' }
     ]
   }
 ];
@@ -76,12 +94,77 @@ const USER_MSG_TRANSLATION_MAP = {
   'Compare Water Consumption': 'مقارنة استهلاك المياه'
 };
 
+import AuthPromptModal from '../common/AuthPromptModal';
+
 export default function AiChatInterface({ explorerState, setExplorerState, onNavigate }) {
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [activeStepText, setActiveStepText] = useState(null);
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'saved' | 'history'
+  const [saveSuccessToast, setSaveSuccessToast] = useState(null);
+  const [authModalState, setAuthModalState] = useState({ isOpen: false, featureName: '' });
   const scrollContainerRef = useRef(null);
+
+  const isLoggedIn = explorerState?.userAuth?.isLoggedIn;
+
+  const handleSaveSearchClick = (queryText) => {
+    if (!isLoggedIn) {
+      setAuthModalState({
+        isOpen: true,
+        featureName: isArabic ? 'حفظ الاستعلام والمفضلة' : 'Save Search & Favorites'
+      });
+      return;
+    }
+
+    const newSavedItem = {
+      id: 'saved-' + Date.now(),
+      name: queryText || (isArabic ? 'استعلام مكاني مخصص' : 'Custom Spatial Search'),
+      district: explorerState?.activeContext?.district || 'Abu Dhabi Sector',
+      facilityType: explorerState?.activeContext?.category || 'ALL',
+      savedAt: 'Just now'
+    };
+
+    setExplorerState(prev => ({
+      ...prev,
+      savedLocations: [newSavedItem, ...(prev.savedLocations || SEED_SAVED_LOCATIONS)]
+    }));
+
+    setSaveSuccessToast(isArabic ? "تم حفظ البحث في المفضلة 🔖" : "Search saved to Favorites! 🔖");
+    setTimeout(() => setSaveSuccessToast(null), 3000);
+  };
+
+  const handleSaveHistoryClick = () => {
+    if (!isLoggedIn) {
+      setAuthModalState({
+        isOpen: true,
+        featureName: isArabic ? 'حفظ المحادثة في السجل' : 'Save Conversation History'
+      });
+      return;
+    }
+
+    const messagesToSave = explorerState?.chatHistory || [];
+    const lastMsg = messagesToSave[messagesToSave.length - 1];
+
+    const newSession = {
+      id: 'hist-' + Date.now(),
+      timestamp: 'Just now',
+      title: lastMsg?.content || 'Abu Dhabi GeoAI Conversation',
+      preview: lastMsg?.content || 'Abu Dhabi GeoAI Conversation',
+      messageCount: messagesToSave.length,
+      messages: [...messagesToSave],
+      activeContext: explorerState?.activeContext,
+      activeContextTags: explorerState?.activeContextTags
+    };
+
+    setExplorerState(prev => ({
+      ...prev,
+      savedChatHistory: [newSession, ...(prev.savedChatHistory || SEED_HISTORY_SESSIONS)]
+    }));
+
+    setSaveSuccessToast(isArabic ? "تم حفظ المحادثة في السجل 💾" : "Conversation saved to History! 💾");
+    setTimeout(() => setSaveSuccessToast(null), 3000);
+  };
+
 
   // Auto-submit from compact input state
   useEffect(() => {
@@ -165,16 +248,27 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     setActiveTab('chat'); // Switch to chat view when submitting a query
 
     // 1. Add User Message
-    const userMsg = { id: Date.now(), role: 'user', content: queryToProcess };
+    const userMsgId = `msg-user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const userMsg = { id: userMsgId, role: 'user', content: queryToProcess };
     
     setExplorerState(prev => ({
       ...prev,
       chatHistory: [...(prev.chatHistory || []), userMsg]
     }));
 
-    // 2. Set Thinking / Processing State
+    // 2. Set Thinking / Processing State with Realistic 4-Step GIS Reasoning Sequence
     setIsTyping(true);
-    setActiveStepText(isArabic ? "جاري تحليل البيانات المكانية..." : "Analyzing spatial predicates...");
+    setActiveStepText(isArabic ? "1/4 فهم الطلب وإحداثيات الموقع..." : "1/4 Understanding request & location...");
+    await new Promise(r => setTimeout(r, 400));
+    
+    setActiveStepText(isArabic ? "2/4 تحديد طبقات البيانات المكانية الرسمية..." : "2/4 Selecting authoritative SDI datasets...");
+    await new Promise(r => setTimeout(r, 400));
+    
+    setActiveStepText(isArabic ? "3/4 تنفيذ الاستعلام المكاني وحساب النطاقات..." : "3/4 Running spatial analysis & buffer query...");
+    await new Promise(r => setTimeout(r, 350));
+    
+    setActiveStepText(isArabic ? "4/4 تحديث الخريطة وعرض النتائج..." : "4/4 Updating map extent & spatial results...");
+    await new Promise(r => setTimeout(r, 250));
 
     try {
       // 3. Process via AI Orchestrator / Natural Language Engine
@@ -187,9 +281,9 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         }
       }
 
-      // 5. Append Assistant Message
+      // 5. Append Assistant Message with Guaranteed Unique ID
       const assistantMsg = {
-        id: Date.now() + 1,
+        id: `msg-ast-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         role: 'assistant',
         content: aiResponse.reply,
         blocks: aiResponse.blocks,
@@ -200,7 +294,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         whyThisResult: aiResponse.whyThisResult,
         executionLogs: aiResponse.executionLogs,
         actionCards: aiResponse.actionCards,
-        suggestions: aiResponse.suggestions
+        suggestions: aiResponse.suggestions,
+        datasetsUsed: aiResponse.datasetsUsed
       };
 
       setExplorerState(prev => ({
@@ -216,7 +311,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         chatHistory: [
           ...(prev.chatHistory || []),
           { 
-            id: Date.now() + 1, 
+            id: `msg-err-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, 
             role: 'assistant', 
             content: "I encountered an error executing this request. Please try again.", 
           }
@@ -276,7 +371,12 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   const handleRestoreHistorySession = (session) => {
     setExplorerState(prev => ({
       ...prev,
-      chatHistory: session.messages || []
+      chatHistory: session.messages || [],
+      activeContext: session.activeContext || { category: 'HOSPITAL', district: 'Khalifa City' },
+      activeContextTags: session.activeContextTags || [
+        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
+        { id: 'district', label: isArabic ? 'مدينة خليفة' : 'Khalifa City', icon: '📍' }
+      ]
     }));
     setActiveTab('chat');
   };
@@ -316,7 +416,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         </button>
 
         <button 
-          onClick={() => setActiveTab('saved')} 
+          onClick={() => handleTabClick('saved')} 
           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
             activeTab === 'saved' 
               ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-xs' : 'bg-[#eef3ff] text-[#215A9E]') 
@@ -325,7 +425,10 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         >
           <Bookmark className="w-3.5 h-3.5" />
           <span>{t('Saved', 'المحفوظات')}</span>
-          {savedLocations.length > 0 && (
+          {!isLoggedIn && (
+            <Lock className="w-3 h-3 text-amber-500 ms-0.5" />
+          )}
+          {savedLocations.length > 0 && isLoggedIn && (
             <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-[#c084fc] border border-slate-700' : 'bg-[#215A9E] text-white'}`}>
               {savedLocations.length}
             </span>
@@ -333,7 +436,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         </button>
 
         <button 
-          onClick={() => setActiveTab('history')} 
+          onClick={() => handleTabClick('history')} 
           className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer relative ${
             activeTab === 'history' 
               ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-xs' : 'bg-[#eef3ff] text-[#215A9E]') 
@@ -342,7 +445,10 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         >
           <History className="w-3.5 h-3.5" />
           <span>{t('History', 'السجل')}</span>
-          {historySessions.length > 0 && (
+          {!isLoggedIn && (
+            <Lock className="w-3 h-3 text-amber-500 ms-0.5" />
+          )}
+          {historySessions.length > 0 && isLoggedIn && (
             <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
               {historySessions.length}
             </span>
@@ -350,12 +456,52 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         </button>
       </div>
 
+      {/* Save Action Success Toast Banner */}
+      {saveSuccessToast && (
+        <div className="bg-emerald-600 text-white text-xs font-bold px-4 py-2 flex items-center justify-between shrink-0 shadow-md animate-fade-in z-30">
+          <span>{saveSuccessToast}</span>
+          <button onClick={() => setSaveSuccessToast(null)} className="ms-2 hover:opacity-80 font-bold cursor-pointer">✕</button>
+        </div>
+      )}
+
+      {/* Active Context Chips Bar */}
+      {explorerState?.activeContextTags?.length > 0 && (
+        <div className={`px-3 py-1.5 border-b flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 ${
+          isDarkMode ? 'bg-[#0a1226] border-slate-800' : 'bg-slate-50 border-slate-200'
+        }`}>
+          <span className="font-bold opacity-75 shrink-0 me-1">{t("Active Context:", "السياق النشط:")}</span>
+          {explorerState.activeContextTags.map((tag) => (
+            <span 
+              key={tag.id}
+              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold shrink-0 transition-all ${
+                isDarkMode ? 'bg-[#182645] border-slate-700 text-[#00e5ff]' : 'bg-white border-slate-300 text-[#215A9E]'
+              }`}
+            >
+              <span>{tag.icon}</span>
+              <span>{tag.label}</span>
+              <button
+                onClick={() => {
+                  setExplorerState(prev => ({
+                    ...prev,
+                    activeContextTags: (prev.activeContextTags || []).filter(t => t.id !== tag.id)
+                  }));
+                }}
+                className="ms-1 hover:text-rose-500 font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+
       {/* 1. CHAT TAB CONTENT */}
       {activeTab === 'chat' && (
         <>
           <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-transparent' : 'bg-white'}`}>
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {messages.map((msg, idx) => (
+              <div key={msg.id ? `${msg.id}-${idx}` : `msg-${idx}`} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
                   <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${
                     isDarkMode ? 'bg-[#182645] border border-slate-700/80 text-[#c084fc]' : 'bg-gradient-to-br from-[#063360] to-[#215A9E]'
@@ -374,12 +520,47 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         : 'bg-white border border-slate-200/90 text-slate-800 rounded-bl-none shadow-xs')
                 }`}>
                   {msg.role === 'assistant' ? (
-                    <AiResponseRenderer 
-                      response={msg} 
-                      onEntityClick={handleEntityClick}
-                      onActionClick={handleActionCardClick}
-                      onSuggestionClick={(sug) => handleSubmit(null, sug)}
-                    />
+                    <>
+                      <AiResponseRenderer 
+                        response={msg} 
+                        onEntityClick={handleEntityClick}
+                        onActionClick={handleActionCardClick}
+                        onSuggestionClick={(sug) => handleSubmit(null, sug)}
+                      />
+
+                      {/* Explicit Save Search & Save History Icon Bar */}
+                      {msg.id !== 1 && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2 text-[10px]">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <button
+                              onClick={() => handleSaveSearchClick(msg.content)}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                                isDarkMode 
+                                  ? 'bg-[#182645] text-[#00e5ff] hover:bg-[#7c3aed] hover:text-white border border-slate-700/60' 
+                                  : 'bg-[#eef3ff] text-[#215A9E] hover:bg-[#215A9E] hover:text-white border border-[#215A9E]/20'
+                              }`}
+                              title={t("Save this search to Favorites", "حفظ هذا البحث في المفضلة")}
+                            >
+                              <Bookmark className="w-3 h-3 fill-current text-amber-500" />
+                              <span>{t("Save Search", "حفظ البحث")}</span>
+                            </button>
+
+                            <button
+                              onClick={() => handleSaveHistoryClick()}
+                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                                isDarkMode 
+                                  ? 'bg-[#182645] text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-700/60' 
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 border border-slate-200/80'
+                              }`}
+                              title={t("Save conversation to History", "حفظ المحادثة في السجل")}
+                            >
+                              <History className="w-3 h-3 text-[#7c3aed]" />
+                              <span>{t("Save History", "حفظ السجل")}</span>
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <p>{isArabic ? (USER_MSG_TRANSLATION_MAP[msg.content] || msg.content_ar || msg.content) : msg.content}</p>
                   )}
@@ -443,19 +624,29 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-transparent' : 'bg-slate-50/50'}`}>
           <div className={`flex items-center justify-between pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2">
-              <Bookmark className={`w-4 h-4 ${isDarkMode ? 'text-[#7c3aed]' : 'text-[#215A9E]'}`} />
+              <Bookmark className={`w-4 h-4 ${isDarkMode ? 'text-[#c084fc]' : 'text-[#215A9E]'}`} />
               <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
-                {t('SAVED LOCATIONS', 'المواقع المحفوظة')} ({savedLocations.length})
+                {t('SAVED SEARCHES', 'المواقع والمستندات المحفوظة')} ({savedLocations.length})
               </h3>
             </div>
-            {savedLocations.length > 0 && (
-              <button 
-                onClick={handleClearAllSaved}
-                className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleSaveSearchClick(explorerState?.chatHistory?.[explorerState?.chatHistory?.length - 1]?.content)}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                  isDarkMode ? 'bg-[#182645] text-[#00e5ff] border-slate-700/60 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white'
+                }`}
               >
-                {t('Clear All', 'مسح الكل')}
+                + {t('Save Search', 'حفظ البحث')}
               </button>
-            )}
+              {savedLocations.length > 0 && (
+                <button 
+                  onClick={handleClearAllSaved}
+                  className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  {t('Clear', 'مسح')}
+                </button>
+              )}
+            </div>
           </div>
 
           {savedLocations.length > 0 ? (
@@ -524,14 +715,24 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                 {t('PAST CHAT SESSIONS', 'سجل المحادثات')} ({historySessions.length})
               </h3>
             </div>
-            {historySessions.length > 0 && (
-              <button 
-                onClick={handleClearAllHistory}
-                className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveHistoryClick}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                  isDarkMode ? 'bg-[#182645] text-[#00e5ff] border-slate-700/60 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white'
+                }`}
               >
-                {t('Clear History', 'مسح السجل')}
+                + {t('Save Active Session', 'حفظ المحادثة')}
               </button>
-            )}
+              {historySessions.length > 0 && (
+                <button 
+                  onClick={handleClearAllHistory}
+                  className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                >
+                  {t('Clear', 'مسح')}
+                </button>
+              )}
+            </div>
           </div>
 
           {historySessions.length > 0 ? (
@@ -600,6 +801,18 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
           )}
         </div>
       )}
+
+      {/* Auth Prompt Modal for Guest User Features */}
+      <AuthPromptModal
+        isOpen={authModalState.isOpen}
+        onClose={() => setAuthModalState({ isOpen: false, featureName: '' })}
+        onSignIn={() => {
+          setAuthModalState({ isOpen: false, featureName: '' });
+          if (onNavigate) onNavigate('login');
+        }}
+        featureName={authModalState.featureName}
+      />
     </div>
   );
 }
+

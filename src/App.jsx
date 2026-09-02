@@ -48,6 +48,30 @@ const MOCK_DATA = [
   { id: 10, name: 'Sorbonne University Abu Dhabi', name_ar: 'جامعة السوربون أبوظبي', type: 'EDUCATION', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.5028, lng: 54.4056 }
 ];
 
+  const [userAuth, setUserAuth] = useState({
+    isLoggedIn: false,
+    userName: null,
+    userEmail: null
+  });
+
+  const handleSignIn = () => {
+    setUserAuth({
+      isLoggedIn: true,
+      userName: 'H.E. Eng. Ahmed Al-Mansoori',
+      userNameAr: 'سعادة المهندس أحمد المنصوري',
+      userEmail: 'ahmed.almansoori@dge.gov.ae',
+      role: 'Senior Geospatial Officer'
+    });
+  };
+
+  const handleSignOut = () => {
+    setUserAuth({
+      isLoggedIn: false,
+      userName: null,
+      userEmail: null
+    });
+  };
+
   const [explorerState, setExplorerState] = useState({
     mapFocus: null, // { lat, lng, zoom }
     activeResults: MOCK_DATA,
@@ -58,8 +82,17 @@ const MOCK_DATA = [
     isDockerMinimized: true,
     chatHistory: [],
     layerFilters: ['Education', 'Healthcare', 'Transport', 'Environment', 'Tourism', 'Utilities'],
-    typeFilter: 'All Types'
+    typeFilter: 'All Types',
+    userAuth: { isLoggedIn: false }
   });
+
+  useEffect(() => {
+    setExplorerState(prev => ({
+      ...prev,
+      userAuth
+    }));
+  }, [userAuth]);
+
 
   const idleTimer = useRef(null);
   const hideTimer = useRef(null);
@@ -155,12 +188,12 @@ const MOCK_DATA = [
   }, [mouseX, mouseY, currentView, isSearchFocused, selectedLocation]);
 
   if (currentView === 'login') {
-    return <SignInPage onNavigate={handleNavigate} />;
+    return <SignInPage onNavigate={handleNavigate} onSignIn={handleSignIn} />;
   }
 
   return (
     <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] dark:bg-[#060a12] transition-colors duration-300 ${currentView === 'landing' ? 'custom-cursor-active' : ''}`}>
-      <BrandHeader onNavigate={handleNavigate} currentView={currentView} />
+      <BrandHeader onNavigate={handleNavigate} currentView={currentView} userAuth={userAuth} onSignOut={handleSignOut} onSignIn={handleSignIn} />
       
       {currentView === 'landing' && (
         <div className="absolute inset-0 z-0 pointer-events-none">
