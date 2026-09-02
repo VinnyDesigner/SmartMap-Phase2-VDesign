@@ -52,7 +52,8 @@ const MOCK_DATA = [
     mapFocus: null, // { lat, lng, zoom }
     activeResults: MOCK_DATA,
     selectedDetail: null,
-    basemap: 'osm',
+    basemap: 'abu-dhabi-dge',
+    activeBasemap: 'abu-dhabi-dge',
     isDrawingMode: false,
     isDockerMinimized: true,
     chatHistory: [],

@@ -350,6 +350,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
       }}
     >
       <MapContainer 
+        crs={L.CRS.EPSG4326}
         center={position} 
         zoom={13} 
         zoomControl={false}
