@@ -40,9 +40,14 @@ export default function AiResponseRenderer({ response, onEntityClick, onActionCl
                 </span>
               ))}
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 shrink-0">
-              {isArabic ? "بيانات مكانيّة موثقة" : "Authoritative SDI Data"}
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold border border-purple-500/20 text-[9px]">
+                {isArabic ? "تفسير الذكاء الاصطناعي" : "AI Interpretation"}
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20 text-[9px]">
+                {isArabic ? "بيانات مكانيّة موثقة SDI" : "✓ Authoritative SDI Data"}
+              </span>
+            </div>
           </div>
         )}
 

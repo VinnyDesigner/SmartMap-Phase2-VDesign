@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ChevronUp, ChevronDown, Play, User, Lock, History, Bookmark, MapPin } from 'lucide-react';
+import { Sparkles, ChevronUp, ChevronDown, Play, User, Lock, History, Bookmark, MapPin, Filter } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -11,39 +11,67 @@ export default function DemoScenarioSwitcher({ onLaunchScenario }) {
 
   const scenarios = [
     {
-      id: 'nearby_hospitals',
-      title: isArabic ? '1. العثور على المستشفيات (5 كم)' : '1. Guest: Nearby Hospitals (5 km)',
-      subtitle: isArabic ? 'تحليل النطاق المكاني والموقع' : 'Spatial radius & location analysis',
+      id: 'acceptance_journey',
+      title: isArabic ? '⭐ رحلة القبول النهائية (7 خطوات)' : '⭐ Final Acceptance Journey (7-Step)',
+      subtitle: isArabic ? 'مستشفيات ← حكومي ← 5 كم ← الأقرب ← تفاصيلها' : 'Hospitals → Govt → 5km → Closest → Details',
+      query: 'Show hospitals in Abu Dhabi',
+      icon: Sparkles
+    },
+    {
+      id: 'scene_1_nearby',
+      title: isArabic ? '1. استكشاف المستشفيات (5 كم)' : '1. Guest: Nearby Hospitals (5 km)',
+      subtitle: isArabic ? 'نطاق 5 كم والموقع الحالي' : 'Proximity radius & location detection',
       query: 'Show hospitals within 5 km of my location',
       icon: MapPin
     },
     {
-      id: 'schools_transit',
-      title: isArabic ? '2. المدارس + الحافلات (2 كم)' : '2. Guest: Schools + Bus Stations (2 km)',
-      subtitle: isArabic ? 'استعلام عابر للطبقات المكانية' : 'Cross-layer GIS buffer query',
-      query: 'Show schools within 2 km of bus stations in Khalifa City',
+      id: 'scene_2_government',
+      title: isArabic ? '2. التصفية: حكومي فقط' : '2. Refine: Only Government Hospitals',
+      subtitle: isArabic ? 'فلترة حسب نوع الملكية' : 'Context-aware ownership filter',
+      query: 'Only government hospitals',
+      icon: Filter
+    },
+    {
+      id: 'scene_3_nearest',
+      title: isArabic ? '3. تحديد الأقرب من موقعي' : '3. Nearest Facility Identification',
+      subtitle: isArabic ? 'ترتيب النتائج بالمسافة' : 'Distance ranking & focal card zoom',
+      query: 'Which one is nearest to me?',
       icon: Play
     },
     {
-      id: 'healthcare_analysis',
-      title: isArabic ? '3. تحليل المناطق الصحية' : '3. Guest: Healthcare Analysis (Chart)',
-      subtitle: isArabic ? 'تحليل تجميعي ومخطط بياني' : 'Spatial aggregation & chart view',
-      query: 'Which area has the highest number of healthcare facilities?',
+      id: 'scene_4_cross_layer',
+      title: isArabic ? '4. مدارس + مستشفيات (2 كم)' : '4. Multi-Layer: Schools near Hospitals',
+      subtitle: isArabic ? 'تحليل مكاني عابر للطبقات' : 'Cross-layer GIS buffer analysis',
+      query: 'Show schools within 2 km of these hospitals',
       icon: Sparkles
     },
     {
-      id: 'multiturn_context',
-      title: isArabic ? '4. المحادثة المتعددة المراحل' : '4. Multi-Turn Context Flow',
-      subtitle: isArabic ? 'الاحتفاظ بالسياق والفلاتر النشطة' : 'Context memory & active chips',
-      query: 'Show hospitals in Khalifa City',
+      id: 'scene_5_transit_schools',
+      title: isArabic ? '5. مدارس + حافلات (مدينة خليفة)' : '5. Cross-Layer: Schools + Bus Stations',
+      subtitle: isArabic ? 'نطاق 2 كم في مدينة خليفة' : 'Khalifa City 2 km transit buffer',
+      query: 'Show schools within 2 km of bus stations in Khalifa City',
+      icon: Bookmark
+    },
+    {
+      id: 'scene_6_auth_transition',
+      title: isArabic ? '6. تسجيل الدخول وحفظ البحث' : '6. Guest → Login → Save Search',
+      subtitle: isArabic ? 'طلب الهوية الرقمية وتأكيد الحفظ' : 'UAE PASS sign in & auto-save',
+      query: 'Save this search',
+      icon: Lock
+    },
+    {
+      id: 'scene_7_analytics',
+      title: isArabic ? '7. التحليل المكاني التجميعي' : '7. Spatial Aggregation Analytics',
+      subtitle: isArabic ? 'ترتيب القطاعات والرسوم البيانية' : 'District ranking table & bar chart',
+      query: 'Which area has the highest number of healthcare facilities?',
       icon: History
     },
     {
-      id: 'guest_auth_save',
-      title: isArabic ? '5. حفظ البحث وتأكيد الهوية' : '5. Guest → Login → Save Search',
-      subtitle: isArabic ? 'طلب تسجيل الدخول وتجربة UAE PASS' : 'Sign in prompt & UAE PASS flow',
-      query: 'Save this search',
-      icon: Lock
+      id: 'scene_8_arabic',
+      title: isArabic ? '8. الاستعلام باللغة العربية' : '8. Arabic Natural Language Query',
+      subtitle: isArabic ? 'استعلام عربي وتنسيق RTL' : 'Arabic NLP reasoning & RTL layout',
+      query: 'اعرض المستشفيات الموجودة في مدينة خليفة.',
+      icon: User
     }
   ];
 

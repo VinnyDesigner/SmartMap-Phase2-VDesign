@@ -9,6 +9,7 @@ import { executeAppAction } from '../../services/actionRegistry';
 import AiResponseRenderer from '../ai/AiResponseRenderer';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import CurrentContextBar from './CurrentContextBar';
 
 // Default seed saved locations for Abu Dhabi
 const SEED_SAVED_LOCATIONS = [
@@ -97,6 +98,8 @@ const USER_MSG_TRANSLATION_MAP = {
 import AuthPromptModal from '../common/AuthPromptModal';
 
 export default function AiChatInterface({ explorerState, setExplorerState, onNavigate }) {
+  const { t, isArabic, setIsArabic } = useLanguage();
+  const { isDarkMode } = useTheme();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [activeStepText, setActiveStepText] = useState(null);
@@ -175,8 +178,42 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }
   }, [explorerState?.pendingQuery]);
 
-  const { t, isArabic, setIsArabic } = useLanguage();
-  const { isDarkMode } = useTheme();
+  // Auth save toast watcher
+  useEffect(() => {
+    if (explorerState?.showAuthSaveToast) {
+      setSaveSuccessToast(isArabic ? "تم حفظ البحث في المفضلة 🔖" : "Search saved to Favorites! 🔖");
+      setExplorerState(prev => ({ ...prev, showAuthSaveToast: false }));
+      setTimeout(() => setSaveSuccessToast(null), 4000);
+    }
+  }, [explorerState?.showAuthSaveToast, isArabic]);
+
+  const handleTabClick = (tabName) => {
+    if (!isLoggedIn && (tabName === 'saved' || tabName === 'history')) {
+      setAuthModalState({
+        isOpen: true,
+        featureName: tabName === 'saved'
+          ? (isArabic ? 'المفضلة والمواقع المحفوظة' : 'Saved Searches & Favorites')
+          : (isArabic ? 'سجل المحادثات والتحليلات' : 'Conversation History')
+      });
+      return;
+    }
+    setActiveTab(tabName);
+  };
+
+  const handleRemoveContextTag = (tagId) => {
+    setExplorerState(prev => ({
+      ...prev,
+      activeContextTags: (prev.activeContextTags || []).filter(t => t.id !== tagId)
+    }));
+  };
+
+  const handleClearAllContext = () => {
+    setExplorerState(prev => ({
+      ...prev,
+      activeContextTags: [],
+      activeContext: {}
+    }));
+  };
 
   const placeholderText = useTypewriterPlaceholder(
     isArabic ? [
@@ -465,35 +502,11 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       )}
 
       {/* Active Context Chips Bar */}
-      {explorerState?.activeContextTags?.length > 0 && (
-        <div className={`px-3 py-1.5 border-b flex items-center gap-1.5 overflow-x-auto text-[11px] shrink-0 ${
-          isDarkMode ? 'bg-[#0a1226] border-slate-800' : 'bg-slate-50 border-slate-200'
-        }`}>
-          <span className="font-bold opacity-75 shrink-0 me-1">{t("Active Context:", "السياق النشط:")}</span>
-          {explorerState.activeContextTags.map((tag) => (
-            <span 
-              key={tag.id}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold shrink-0 transition-all ${
-                isDarkMode ? 'bg-[#182645] border-slate-700 text-[#00e5ff]' : 'bg-white border-slate-300 text-[#215A9E]'
-              }`}
-            >
-              <span>{tag.icon}</span>
-              <span>{tag.label}</span>
-              <button
-                onClick={() => {
-                  setExplorerState(prev => ({
-                    ...prev,
-                    activeContextTags: (prev.activeContextTags || []).filter(t => t.id !== tag.id)
-                  }));
-                }}
-                className="ms-1 hover:text-rose-500 font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
+      <CurrentContextBar 
+        activeContextTags={explorerState?.activeContextTags} 
+        onRemoveTag={handleRemoveContextTag} 
+        onClearAllContext={handleClearAllContext} 
+      />
 
 
       {/* 1. CHAT TAB CONTENT */}

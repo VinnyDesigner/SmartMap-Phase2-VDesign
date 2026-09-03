@@ -55,13 +55,41 @@ const MOCK_DATA = [
   });
 
   const handleSignIn = () => {
-    setUserAuth({
+    const authState = {
       isLoggedIn: true,
       userName: 'H.E. Eng. Ahmed Al-Mansoori',
       userNameAr: 'سعادة المهندس أحمد المنصوري',
       userEmail: 'ahmed.almansoori@dge.gov.ae',
       role: 'Senior Geospatial Officer'
+    };
+
+    setUserAuth(authState);
+
+    setExplorerState(prev => {
+      const pending = prev.pendingAuthAction;
+      let newSavedLocations = prev.savedLocations || [];
+
+      if (pending) {
+        const savedItem = {
+          id: 'saved-' + Date.now(),
+          name: pending.queryText || 'Schools near bus stations — Khalifa City',
+          district: pending.context?.district || 'Khalifa City',
+          facilityType: pending.context?.category || 'EDUCATION',
+          savedAt: 'Just now'
+        };
+        newSavedLocations = [savedItem, ...newSavedLocations];
+      }
+
+      return {
+        ...prev,
+        userAuth: authState,
+        savedLocations: newSavedLocations,
+        showAuthSaveToast: pending ? true : prev.showAuthSaveToast,
+        pendingAuthAction: null
+      };
     });
+
+    setCurrentView('explorer');
   };
 
   const handleSignOut = () => {

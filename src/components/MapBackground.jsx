@@ -420,6 +420,24 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           <Circle center={explorerState.drawnCircle.center} radius={explorerState.drawnCircle.radius} pathOptions={{ color: '#4370f0', weight: 2, fillColor: '#4370f0', fillOpacity: 0.2 }} />
         )}
 
+        {/* Proximity 5 km Circle Overlay */}
+        {(explorerState?.activeContext?.radius === '5 km' || explorerState?.activeContextTags?.some(t => t.id === 'radius' && t.label?.includes('5 km'))) && (
+          <Circle 
+            center={[24.4839, 54.3773]} 
+            radius={5000} 
+            pathOptions={{ color: '#7c3aed', weight: 2.5, fillColor: '#7c3aed', fillOpacity: 0.15, dashArray: '6, 6' }} 
+          />
+        )}
+
+        {/* Cross-Layer 2 km Spatial Buffer Circle Overlay */}
+        {(explorerState?.activeContext?.radius === '2 km' || explorerState?.activeContextTags?.some(t => t.id === 'radius' && t.label?.includes('2 km'))) && (
+          <Circle 
+            center={[24.4136, 54.5683]} 
+            radius={2000} 
+            pathOptions={{ color: '#00e5ff', weight: 2.5, fillColor: '#00e5ff', fillOpacity: 0.18, dashArray: '4, 4' }} 
+          />
+        )}
+
         {/* Event Handler */}
         <MapEventHandler onMapClick={onMapClick} />
         
