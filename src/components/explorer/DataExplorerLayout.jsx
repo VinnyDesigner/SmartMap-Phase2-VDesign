@@ -5,6 +5,7 @@ import MapBackground from '../MapBackground';
 import MapControlsSidebar from './MapControlsSidebar';
 import BottomDataPanel from './BottomDataPanel';
 import MapLegendPanel from './MapLegendPanel';
+import DetailSlidePanel from './DetailSlidePanel';
 
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -186,6 +187,9 @@ export default function DataExplorerLayout({
           onNavigate={onNavigate}
         />
       </div>
+
+      {/* Detail Slide-out Panel */}
+      <DetailSlidePanel explorerState={explorerState} setExplorerState={setExplorerState} />
 
       {/* Stakeholder Demo Journey Switcher */}
       <DemoScenarioSwitcher onLaunchScenario={handleLaunchScenario} />

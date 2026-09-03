@@ -1,13 +1,15 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, MapPin, ExternalLink, Mail, Phone, Bookmark, Activity, BookOpen, TreePine, Bus, ShieldAlert, Droplets, Wind, Sparkles, Navigation, Download } from 'lucide-react';
+import { ArrowLeft, ArrowRight, X, MapPin, ExternalLink, Mail, Phone, Bookmark, Activity, BookOpen, TreePine, Bus, ShieldAlert, Droplets, Wind, Sparkles, Navigation, Download } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export default function DetailSlidePanel({ explorerState, setExplorerState }) {
-  const detail = explorerState?.selectedDetail || explorerState?.selectedLocation;
+  const detail = explorerState?.selectedDetail;
   const { t, isArabic } = useLanguage();
   const { isDarkMode } = useTheme();
+
+  const isLoggedIn = Boolean(explorerState?.userAuth?.isLoggedIn || explorerState?.isLoggedIn);
 
   const handleClose = () => {
     setExplorerState(prev => ({ ...prev, selectedDetail: null, selectedLocation: null }));
@@ -30,6 +32,8 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
     }));
   };
 
+  if (!isLoggedIn) return null;
+
   return (
     <AnimatePresence>
       {detail && (
@@ -38,7 +42,7 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
           animate={{ x: 0 }}
           exit={{ x: isArabic ? '-100%' : '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-          className={`absolute inset-0 backdrop-blur-2xl border-s shadow-2xl pointer-events-auto z-50 overflow-hidden flex flex-col transition-colors duration-300 ${
+          className={`fixed top-16 bottom-0 ${isArabic ? 'left-0 border-e' : 'right-0 border-s'} w-full sm:w-[420px] backdrop-blur-2xl shadow-2xl pointer-events-auto z-50 overflow-y-auto flex flex-col transition-colors duration-300 ${
             isDarkMode ? 'bg-[#0b132b]/95 border-slate-800 text-slate-100' : 'bg-white/95 border-slate-200/80 text-slate-800'
           }`}
         >
@@ -46,34 +50,35 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
           <div className={`flex items-center justify-between px-5 py-4 border-b sticky top-0 z-10 shrink-0 ${
             isDarkMode ? 'bg-[#0a1128]/90 border-slate-800' : 'bg-white/90 border-slate-200/60'
           }`}>
-            <button onClick={handleClose} className={`flex items-center gap-2 transition-colors text-xs font-semibold ${
-              isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-500 hover:text-slate-800'
-            }`}>
-              <ArrowLeft className="w-4 h-4 rtl:-scale-x-100" />
-              <span>{t('Back to map', 'العودة للخريطة')}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                {t('Spatial Profile', 'الملف المكاني')}
+              </span>
+            </div>
 
             <div className="flex items-center gap-2">
-              <button 
-                onClick={() => {
-                  setExplorerState(prev => {
-                    const current = prev.savedLocations || [];
-                    const exists = current.some(item => item.id === detail?.id);
-                    const updated = exists 
-                      ? current.filter(item => item.id !== detail?.id)
-                      : [...current, detail];
-                    return { ...prev, savedLocations: updated };
-                  });
-                }}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
-                  (explorerState?.savedLocations || []).some(item => item.id === detail?.id)
-                    ? (isDarkMode ? 'bg-[#00e5ff] text-slate-950' : 'bg-[#3D52A0] text-white')
-                    : (isDarkMode ? 'text-slate-400 hover:text-[#00e5ff] hover:bg-slate-800' : 'text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100')
-                }`}
-                title={t('Save Location', 'حفظ الموقع')}
-              >
-                <Bookmark className="w-4 h-4" />
-              </button>
+              {isLoggedIn && (
+                <button 
+                  onClick={() => {
+                    setExplorerState(prev => {
+                      const current = prev.savedLocations || [];
+                      const exists = current.some(item => item.id === detail?.id);
+                      const updated = exists 
+                        ? current.filter(item => item.id !== detail?.id)
+                        : [...current, detail];
+                      return { ...prev, savedLocations: updated };
+                    });
+                  }}
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors cursor-pointer ${
+                    (explorerState?.savedLocations || []).some(item => item.id === detail?.id)
+                      ? (isDarkMode ? 'bg-[#00e5ff] text-slate-950' : 'bg-[#3D52A0] text-white')
+                      : (isDarkMode ? 'text-slate-400 hover:text-[#00e5ff] hover:bg-slate-800' : 'text-slate-400 hover:text-[#3D52A0] hover:bg-slate-100')
+                  }`}
+                  title={t('Save Location', 'حفظ الموقع')}
+                >
+                  <Bookmark className="w-4 h-4" />
+                </button>
+              )}
               <button onClick={handleClose} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
                 isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
               }`}>
@@ -204,6 +209,36 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
               </div>
             )}
 
+            {/* Suggested Follow-up AI Query */}
+            <div className={`p-3.5 rounded-xl border space-y-2 ${
+              isDarkMode ? 'bg-[#121c35] border-purple-500/30' : 'bg-purple-50/70 border-purple-200/80'
+            }`}>
+              <div className="text-xs font-bold text-purple-600 dark:text-purple-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{t('Suggested Follow-up AI Query', 'استعلام المتابعة المقترح')}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const followQuery = isArabic 
+                    ? `اعرض المدارس القريبة من ${detail.name_ar || detail.name}` 
+                    : `Show schools within 2 km of ${detail.name}`;
+                  setExplorerState(prev => ({
+                    ...prev,
+                    pendingQuery: followQuery
+                  }));
+                }}
+                className={`w-full p-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-between gap-2 text-start cursor-pointer border shadow-2xs group ${
+                  isDarkMode 
+                    ? 'bg-[#182645] text-[#00e5ff] border-slate-700/80 hover:bg-[#7c3aed] hover:text-white' 
+                    : 'bg-white text-[#215A9E] border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white'
+                }`}
+              >
+                <span>{isArabic ? `اعرض المدارس القريبة من ${detail.name_ar || detail.name}` : `Show schools within 2 km of ${detail.name}`}</span>
+                <ArrowRight className="w-3.5 h-3.5 shrink-0 group-hover:translate-x-0.5 transition-transform rtl:-scale-x-100" />
+              </button>
+            </div>
+
             {/* Quick Contact & Action Buttons */}
             <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
               <button 
@@ -217,9 +252,11 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
                 {t('Zoom to location', 'التركيز على الخريطة')}
               </button>
 
-              <button className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center transition-colors shrink-0">
-                <Bookmark className="w-4 h-4" />
-              </button>
+              {isLoggedIn && (
+                <button className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center transition-colors shrink-0">
+                  <Bookmark className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

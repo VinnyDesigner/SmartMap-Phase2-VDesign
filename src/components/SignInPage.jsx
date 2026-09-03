@@ -97,20 +97,7 @@ export default function SignInPage({ onNavigate, onSignIn }) {
             <p className={isDarkMode ? 'text-slate-400' : 'text-slate-500'}>{t("Sign in to access your GeoVision workspace.", "قم بتسجيل الدخول للوصول إلى مساحة عمل جيوفيجين الخاصة بك.")}</p>
           </div>
 
-          {/* Primary UAE PASS Identity Provider Button */}
-          <button
-            onClick={handlePerformSignIn}
-            className="w-full mb-6 py-3.5 px-4 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] hover:opacity-95 shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer"
-          >
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <span>{t("Sign In with UAE PASS", "تسجيل الدخول باستخدام الهوية الرقمية (UAE PASS)")}</span>
-          </button>
 
-          <div className="relative flex py-2 items-center mb-6">
-            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-            <span className="flex-shrink mx-4 text-xs font-bold text-slate-400 uppercase tracking-widest">{t("Or DGE Account", "أو حساب التمكين")}</span>
-            <div className="flex-grow border-t border-slate-200 dark:border-slate-800"></div>
-          </div>
 
           <form className="space-y-5" onSubmit={handlePerformSignIn}>
             <div className="space-y-4">

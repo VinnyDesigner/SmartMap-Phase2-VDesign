@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, ArrowRight, GraduationCap, PlusSquare, TreePine, Bus } from 'lucide-react';
+import { MapPin, GraduationCap, PlusSquare, TreePine, Bus } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
@@ -58,29 +58,29 @@ export default function AiLocationListBlock({ locations = [], onEntityClick }) {
             <div 
               key={item.id} 
               onClick={() => onEntityClick && onEntityClick(item)}
-              className={`border rounded-xl p-3 flex items-center justify-between transition-all cursor-pointer group shadow-2xs ${
+              className={`border rounded-xl p-2 sm:p-2.5 flex items-center justify-between transition-all cursor-pointer group shadow-2xs gap-2 ${
                 isDarkMode 
                   ? 'bg-[#0d1527] border-slate-800 text-slate-100 hover:border-slate-700 hover:bg-[#111c34]' 
                   : 'bg-slate-50 border-slate-200/80 text-slate-800 hover:border-[#3D52A0]/50 hover:bg-white'
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 ${
                   isCritical 
                     ? (isDarkMode ? 'bg-rose-950/80 text-rose-300' : 'bg-rose-100 text-rose-700') 
                     : isHigh 
                     ? (isDarkMode ? 'bg-amber-950/80 text-amber-300' : 'bg-amber-100 text-amber-700') 
                     : (isDarkMode ? 'bg-[#063360] border border-[#215A9E]/60 text-[#7DA1C4]' : 'bg-[#eef3ff] text-[#3D52A0]')
                 }`}>
-                  <CategoryIcon className="w-4 h-4" />
+                  <CategoryIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 </div>
-                <div className="min-w-0">
-                  <h4 className={`font-bold text-xs truncate transition-colors ${
+                <div className="min-w-0 flex-1">
+                  <h4 className={`font-bold text-xs leading-tight transition-colors ${
                     isDarkMode ? 'text-white group-hover:text-[#7DA1C4]' : 'text-[#1e2749] group-hover:text-[#3D52A0]'
                   }`}>{displayName}</h4>
-                  <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                    <span className="font-medium truncate max-w-[100px]">{displayLocation}</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-500" />
+                  <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5 flex-wrap">
+                    <span className="font-medium">{displayLocation}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-400 shrink-0" />
                     <span className={`font-bold ${isCritical ? 'text-rose-400' : isHigh ? 'text-amber-400' : 'text-emerald-400'}`}>
                       {riskLabel} {t('Risk', 'خطورة')} ({item.riskScore || 25})
                     </span>
@@ -88,13 +88,15 @@ export default function AiLocationListBlock({ locations = [], onEntityClick }) {
                 </div>
               </div>
 
-              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-bold transition-all shrink-0 border ${
-                isDarkMode 
-                  ? 'bg-[#182645] text-[#00e5ff] border-slate-700/80 group-hover:bg-[#7c3aed] group-hover:text-white' 
-                  : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 group-hover:bg-[#215A9E] group-hover:text-white'
-              }`}>
-                <span>{t('View on Map', 'عرض على الخريطة')}</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform rtl:-scale-x-100" />
+              <div 
+                title={t('View on Map', 'عرض على الخريطة')}
+                className={`w-7.5 h-7.5 rounded-lg flex items-center justify-center transition-all shrink-0 border ${
+                  isDarkMode 
+                    ? 'bg-[#182645] text-[#00e5ff] border-slate-700/80 group-hover:bg-[#7c3aed] group-hover:text-white' 
+                    : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 group-hover:bg-[#215A9E] group-hover:text-white'
+                }`}
+              >
+                <MapPin className="w-4 h-4 group-hover:scale-110 transition-transform" />
               </div>
             </div>
           );

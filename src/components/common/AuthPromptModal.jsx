@@ -44,7 +44,7 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
             </div>
             <div>
               <span className="text-[10px] font-bold tracking-widest uppercase text-[#3D52A0] dark:text-[#00e5ff]">
-                {t("Authenticated Feature", "خاصية مخصصة")}
+                {t("Registered User Feature", "خاصية للمستخدم المسجل")}
               </span>
               <h3 className="text-xl font-bold tracking-tight leading-snug">
                 {featureName || t("Sign In Required", "يتطلب تسجيل الدخول")}
@@ -55,8 +55,8 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
           {/* Body Text */}
           <p className={`text-sm leading-relaxed mb-6 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
             {isArabic 
-              ? `للحصول على التخصيص الكامل، وحفظ استعلامات البحث والمفضلة والسجل، يرجى تسجيل الدخول باستخدام الهوية الرقمية (UAE PASS) أو حساب التمكين الحكومي.`
-              : `To access personalized workspace capabilities including Saved Searches, Favorites, and Conversation History, please sign in with UAE PASS or your DGE Account.`}
+              ? `للحصول على التخصيص الكامل وحفظ الاستعلامات وتنزيل التقارير المكانية، يرجى تسجيل الدخول كـ "مستخدم مسجل".`
+              : `To access advanced analytics, download executive spatial reports, and save custom locations, please sign in as a Registered User.`}
           </p>
 
           {/* Features Preview List */}
@@ -65,7 +65,7 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
           }`}>
             <div className="flex items-center gap-2.5 text-xs font-semibold">
               <Bookmark className="w-4 h-4 text-[#3D52A0] dark:text-[#00e5ff]" />
-              <span>{t("Saved Searches & Custom Spatial Filters", "استعلامات البحث المحفوظة والفلاتر")}</span>
+              <span>{t("Saved Searches & Custom Spatial Filters", "حفظ الاستعلامات والفلاتر المكانية")}</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs font-semibold">
               <History className="w-4 h-4 text-[#7c3aed]" />
@@ -73,7 +73,7 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
             </div>
             <div className="flex items-center gap-2.5 text-xs font-semibold">
               <ShieldCheck className="w-4 h-4 text-emerald-500" />
-              <span>{t("Verified Access via UAE PASS", "دخول آمن عبر الهوية الرقمية UAE PASS")}</span>
+              <span>{t("Verified Registered User Access", "دخول موثق كـ مستخدم مسجل")}</span>
             </div>
           </div>
 
@@ -86,7 +86,7 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
               }}
               className="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] text-white font-bold text-sm shadow-md hover:shadow-lg hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>{t("Sign In with UAE PASS / DGE", "تسجيل الدخول عبر الهوية الرقمية / دائر التمكين")}</span>
+              <span>{t("Sign In", "تسجيل الدخول")}</span>
               <ArrowRight className="w-4 h-4 rtl:rotate-180" />
             </button>
 

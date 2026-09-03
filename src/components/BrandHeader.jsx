@@ -120,7 +120,7 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
                   <span className="text-[11px] font-bold leading-tight">
                     {isArabic ? userAuth.userNameAr || userAuth.userName : userAuth.userName}
                   </span>
-                  <span className="text-[9px] opacity-80 leading-tight">UAE PASS Verified</span>
+                  <span className="text-[9px] opacity-80 leading-tight">{t("Registered User", "مستخدم مسجل")}</span>
                 </div>
                 <button
                   onClick={onSignOut}

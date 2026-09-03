@@ -47,6 +47,11 @@ const RESTRICTED_GUEST_KEYWORDS = [
   'مقارنة', 'منشآت', 'مسار', 'محاكاة', 'سيناريو', 'فيضان', 'تقرير', 'تحميل', 'تصدير', 'استهلاك', 'انبعاثات', 'تحليلات'
 ];
 
+const isSaveOrFavoriteItem = (itemText = '') => {
+  const text = (itemText || '').toLowerCase();
+  return ['save', 'favorite', 'حفظ', 'مفضلة'].some(k => text.includes(k));
+};
+
 const isRestrictedGuestItem = (itemText = '') => {
   const text = (itemText || '').toLowerCase();
   return RESTRICTED_GUEST_KEYWORDS.some(k => text.includes(k));
@@ -54,22 +59,27 @@ const isRestrictedGuestItem = (itemText = '') => {
 
 export default function AiActionSuggestions({ actionCards = [], suggestions = [], onActionClick, onSuggestionClick, isLoggedIn = false }) {
   const { isDarkMode } = useTheme();
-  const { t, isArabic } = useLanguage();
-  const hasActions = actionCards && actionCards.length > 0;
-  const hasSuggestions = suggestions && suggestions.length > 0;
+  const { isArabic } = useLanguage();
+
+  // Filter out any save/favorite actions or suggestions when user is not logged in
+  const filteredActionCards = (actionCards || []).filter(c => isLoggedIn || !isSaveOrFavoriteItem(c.label || c.title));
+  const filteredSuggestions = (suggestions || []).filter(sug => isLoggedIn || !isSaveOrFavoriteItem(sug));
+
+  const hasActions = filteredActionCards.length > 0;
+  const hasSuggestions = filteredSuggestions.length > 0;
 
   if (!hasActions && !hasSuggestions) return null;
 
   return (
     <div className={`space-y-2.5 pt-2.5 border-t my-2.5 ${isDarkMode ? 'border-slate-800/80' : 'border-slate-100'}`}>
       {/* 1. Interactive Choice Cards / Radio Options (e.g. Ambiguous Search: Yas Island, Bani Yas) */}
-      {hasActions && actionCards.some(c => c.isOption) && (
+      {hasActions && filteredActionCards.some(c => c.isOption) && (
         <div className="space-y-1.5 my-2">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ms-1">
             {isArabic ? "اختيار المنطقة المقصودة:" : "Select your intended area:"}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {actionCards.filter(c => c.isOption).map((card, idx) => {
+            {filteredActionCards.filter(c => c.isOption).map((card, idx) => {
               const labelText = isArabic ? (card.label_ar || card.title) : (card.label || card.title);
               const cleanLabel = labelText.replace(/^○\s*/, '');
               
@@ -101,9 +111,9 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
       )}
 
       {/* 2. Interactive Action Cards (e.g. Compare Water Consumption, Export Report, Simulate Flood) */}
-      {hasActions && actionCards.some(c => !c.isOption) && (
-        <div className="flex flex-wrap gap-1.5">
-          {actionCards.filter(c => !c.isOption).map((card, idx) => {
+      {hasActions && filteredActionCards.some(c => !c.isOption) && (
+        <div className="flex flex-col gap-1.5 my-1">
+          {filteredActionCards.filter(c => !c.isOption).map((card, idx) => {
             const cardLabel = isArabic ? (card.label_ar || card.title_ar || ACTION_LABEL_MAP[card.label] || card.label || card.title) : (card.label || card.title);
             const isRestricted = isRestrictedGuestItem(card.label || card.title);
             const isLocked = isRestricted && !isLoggedIn;
@@ -113,34 +123,43 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
                 key={idx}
                 type="button"
                 onClick={() => onActionClick && onActionClick(card)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all shadow-2xs group cursor-pointer ${
+                className={`w-full px-3 py-1.5 rounded-xl text-[11.5px] font-bold border transition-all cursor-pointer shadow-2xs flex items-center justify-between gap-2 group text-start ${
                   isLocked 
-                    ? (isDarkMode ? 'bg-[#182035] text-amber-300 border-amber-500/40 hover:bg-amber-500/20' : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100')
-                    : (isDarkMode ? 'bg-[#131b2e] text-white border-slate-700/80 hover:bg-[#7c3aed] hover:border-[#7c3aed]' : 'bg-[#eef3ff] text-[#3D52A0] border-[#3D52A0]/20 hover:bg-[#215A9E] hover:text-white')
+                    ? (isDarkMode 
+                        ? 'bg-[#182035] text-amber-300 border-amber-500/40 hover:bg-amber-500/20' 
+                        : 'bg-amber-50/90 text-amber-900 border-amber-300/80 hover:bg-amber-100/80')
+                    : (isDarkMode 
+                        ? 'bg-[#131b2e] text-white border-slate-700/80 hover:bg-[#7c3aed] hover:border-[#7c3aed]' 
+                        : 'bg-[#eef3ff] text-[#3D52A0] border-[#3D52A0]/20 hover:bg-[#215A9E] hover:text-white')
                 }`}
               >
-                {isLocked ? (
-                  <Lock className="w-3 h-3 text-amber-500 shrink-0" />
-                ) : (
-                  <Zap className="w-3 h-3 group-hover:scale-110 transition-transform text-amber-400 shrink-0" />
-                )}
-                <span>{cardLabel}</span>
-                {isLocked && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold ms-0.5">
-                    {isArabic ? "تسجيل الدخول" : "Sign In"}
-                  </span>
-                )}
-                <ArrowRight className="w-3 h-3 opacity-60 group-hover:translate-x-0.5 transition-transform rtl:-scale-x-100" />
+                <div className="flex items-center gap-2 min-w-0 flex-1 text-start">
+                  {isLocked ? (
+                    <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  ) : (
+                    <Zap className="w-3.5 h-3.5 group-hover:scale-110 transition-transform text-amber-400 shrink-0" />
+                  )}
+                  <span className="leading-snug text-start">{cardLabel}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isLocked && (
+                    <span className="text-[9.5px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold">
+                      {isArabic ? "تسجيل الدخول" : "Sign In"}
+                    </span>
+                  )}
+                  <ArrowRight className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all rtl:-scale-x-100" />
+                </div>
               </button>
             );
           })}
         </div>
       )}
 
-      {/* 3. Interactive Suggestion Pills */}
+      {/* 3. Interactive Suggestion Options */}
       {hasSuggestions && (
-        <div className="flex flex-wrap gap-1.5">
-          {suggestions.map((sug, idx) => {
+        <div className="flex flex-col gap-1.5 my-1">
+          {filteredSuggestions.map((sug, idx) => {
             const sugLabel = isArabic ? (ACTION_LABEL_MAP[sug] || sug) : sug;
             const isRestricted = isRestrictedGuestItem(sug);
             const isLocked = isRestricted && !isLoggedIn;
@@ -150,20 +169,29 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
                 key={idx}
                 type="button"
                 onClick={() => onSuggestionClick && onSuggestionClick(sug)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all cursor-pointer shadow-2xs flex items-center gap-1 group ${
+                className={`w-full px-3 py-1.5 rounded-xl text-[11.5px] font-bold border transition-all cursor-pointer shadow-2xs flex items-center justify-between gap-2 group text-start ${
                   isLocked 
-                    ? (isDarkMode ? 'bg-[#161d30] text-amber-300 border-amber-500/40 hover:bg-amber-500/20' : 'bg-amber-50/90 text-amber-800 border-amber-300 hover:bg-amber-100')
-                    : (isDarkMode ? 'bg-[#0b1328] text-slate-200 border-slate-700/80 hover:bg-[#7c3aed] hover:text-white hover:border-[#7c3aed]' : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-[#eef3ff] hover:text-[#215A9E] hover:border-[#215A9E]/40')
+                    ? (isDarkMode 
+                        ? 'bg-[#161d30] text-amber-300 border-amber-500/40 hover:bg-amber-500/20' 
+                        : 'bg-amber-50/90 text-amber-900 border-amber-300/80 hover:bg-amber-100/80')
+                    : (isDarkMode 
+                        ? 'bg-[#0b1328] text-slate-200 border-slate-700/80 hover:bg-[#7c3aed] hover:text-white hover:border-[#7c3aed]' 
+                        : 'bg-slate-100/90 text-slate-700 border-slate-200/90 hover:bg-[#eef3ff] hover:text-[#215A9E] hover:border-[#215A9E]/40')
                 }`}
               >
-                {isLocked && <Lock className="w-3 h-3 text-amber-500 shrink-0" />}
-                <span>{sugLabel}</span>
-                {isLocked && (
-                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold ms-0.5">
-                    {isArabic ? "تسجيل الدخول" : "Sign In"}
-                  </span>
-                )}
-                <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -ms-1 group-hover:ms-0 transition-all rtl:-scale-x-100" />
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  {isLocked && <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
+                  <span className="leading-snug">{sugLabel}</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isLocked && (
+                    <span className="text-[9.5px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold">
+                      {isArabic ? "تسجيل الدخول" : "Sign In"}
+                    </span>
+                  )}
+                  <ArrowRight className="w-3.5 h-3.5 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all rtl:-scale-x-100" />
+                </div>
               </button>
             );
           })}

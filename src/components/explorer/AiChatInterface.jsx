@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Bot, User, MapPin, GraduationCap, PlusSquare, TreePine, Bus, 
-  Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight, Lock 
+  Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight 
 } from 'lucide-react';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine } from '../../services/mockAiEngine';
@@ -200,16 +200,18 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }
   }, [explorerState?.showAuthSaveToast, isArabic]);
 
-  const handleTabClick = (tabName) => {
-    if (!isLoggedIn && (tabName === 'saved' || tabName === 'history')) {
+  // Auth prompt modal watcher from map actions
+  useEffect(() => {
+    if (explorerState?.showAuthPrompt) {
       setAuthModalState({
         isOpen: true,
-        featureName: tabName === 'saved'
-          ? (isArabic ? 'المفضلة والمواقع المحفوظة' : 'Saved Searches & Favorites')
-          : (isArabic ? 'سجل المحادثات والتحليلات' : 'Conversation History')
+        featureName: explorerState.pendingAuthFeature || (isArabic ? 'الملف المكاني الكامل' : 'Full Spatial Profile')
       });
-      return;
+      setExplorerState(prev => ({ ...prev, showAuthPrompt: false, pendingAuthFeature: null }));
     }
+  }, [explorerState?.showAuthPrompt, explorerState?.pendingAuthFeature, isArabic]);
+
+  const handleTabClick = (tabName) => {
     setActiveTab(tabName);
   };
 
@@ -264,9 +266,13 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       const welcomeContent = isArabic 
         ? "مرحباً! أنا منصة القرار الذكي للمعلومات المكانية أبوظبي GeoAI. أجمع بين التحليل الجغرافي، المؤشرات التفاعلية، والرسوم البيانية للمساعدة في اتخاذ القرارات." 
         : "Hello! I'm your Abu Dhabi Conversational GeoAI Decision Intelligence Workspace. I perform WGS84 spatial analytics, compound risk modeling, and rich interactive visualization across Abu Dhabi.";
-      const welcomeSuggestions = isArabic 
-        ? ["عرض منشآت التصنيع عالية الخطورة في أبوظبي", "مقارنة الانبعاثات بين مصفح وكيزاد", "لماذا هذه المنشأة عالية الخطورة؟"] 
-        : ["Show high-risk manufacturing facilities in Abu Dhabi", "Compare emissions between Mussafah and KIZAD", "Why is this facility high risk?"];
+      const welcomeSuggestions = isLoggedIn
+        ? (isArabic 
+            ? ["عرض منشآت التصنيع عالية الخطورة في أبوظبي", "مقارنة الانبعاثات بين مصفح وكيزاد", "لماذا هذه المنشأة عالية الخطورة؟"] 
+            : ["Show high-risk manufacturing facilities in Abu Dhabi", "Compare emissions between Mussafah and KIZAD", "Why is this facility high risk?"])
+        : (isArabic 
+            ? ["اعرض المستشفيات في أبوظبي", "اعرض الحدائق بالقرب من ياس", "اعرض المدارس في مدينة خليفة"] 
+            : ["Show hospitals in Abu Dhabi", "Show parks near Yas Island", "Show schools in Khalifa City"]);
 
       if (currentHistory.length === 0) {
         return {
@@ -287,7 +293,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
       return prev;
     });
-  }, [isArabic]);
+  }, [isArabic, isLoggedIn]);
 
   const handleSubmit = async (e, forcedQuery = null) => {
     if (e) e.preventDefault();
@@ -509,16 +515,16 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
       setExplorerState(prev => ({
         ...prev,
         selectedLocation: facility,
-        activeSlidePanel: 'detail',
+        selectedDetail: null,
         mapFocus: { lat: facility.lat, lng: facility.lng, zoom: 16 }
       }));
     }
   };
 
   // Saved Items Management
-  const savedLocations = explorerState?.savedLocations?.length > 0 
-    ? explorerState.savedLocations 
-    : SEED_SAVED_LOCATIONS;
+  const savedLocations = isLoggedIn 
+    ? (explorerState?.savedLocations?.length > 0 ? explorerState.savedLocations : SEED_SAVED_LOCATIONS) 
+    : [];
 
   const handleRemoveSavedLocation = (id) => {
     setExplorerState(prev => ({
@@ -535,9 +541,9 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
   };
 
   // History Management
-  const historySessions = explorerState?.savedChatHistory?.length > 0 
-    ? explorerState.savedChatHistory 
-    : SEED_HISTORY_SESSIONS;
+  const historySessions = isLoggedIn 
+    ? (explorerState?.savedChatHistory?.length > 0 ? explorerState.savedChatHistory : SEED_HISTORY_SESSIONS) 
+    : [];
 
   const handleRestoreHistorySession = (session) => {
     setExplorerState(prev => ({
@@ -596,9 +602,6 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
         >
           <Bookmark className="w-3.5 h-3.5" />
           <span>{t('Saved', 'المحفوظات')}</span>
-          {!isLoggedIn && (
-            <Lock className="w-3 h-3 text-amber-500 ms-0.5" />
-          )}
           {savedLocations.length > 0 && isLoggedIn && (
             <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-[#c084fc] border border-slate-700' : 'bg-[#215A9E] text-white'}`}>
               {savedLocations.length}
@@ -616,9 +619,6 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
         >
           <History className="w-3.5 h-3.5" />
           <span>{t('History', 'السجل')}</span>
-          {!isLoggedIn && (
-            <Lock className="w-3 h-3 text-amber-500 ms-0.5" />
-          )}
           {historySessions.length > 0 && isLoggedIn && (
             <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-slate-300' : 'bg-slate-200 text-slate-700'}`}>
               {historySessions.length}
@@ -676,8 +676,8 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
                         isLoggedIn={isLoggedIn}
                       />
 
-                      {/* Explicit Save Search & Save History Icon Bar (rendered on all query response bubbles after initial welcome message) */}
-                      {idx > 0 && msg.role === 'assistant' && (
+                      {/* Explicit Save Search & Save History Icon Bar (rendered on all query response bubbles for Registered Users ONLY) */}
+                      {idx > 0 && msg.role === 'assistant' && isLoggedIn && (
                         <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2 text-[10px]">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <button
@@ -778,15 +778,17 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
               </h3>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleSaveSearchClick(explorerState?.chatHistory?.[explorerState?.chatHistory?.length - 1]?.content)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
-                  isDarkMode ? 'bg-[#182645] text-[#00e5ff] border-slate-700/60 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white'
-                }`}
-              >
-                + {t('Save Search', 'حفظ البحث')}
-              </button>
-              {savedLocations.length > 0 && (
+              {isLoggedIn && (
+                <button
+                  onClick={() => handleSaveSearchClick(explorerState?.chatHistory?.[explorerState?.chatHistory?.length - 1]?.content)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                    isDarkMode ? 'bg-[#182645] text-[#00e5ff] border-slate-700/60 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white'
+                  }`}
+                >
+                  + {t('Save Search', 'حفظ البحث')}
+                </button>
+              )}
+              {savedLocations.length > 0 && isLoggedIn && (
                 <button 
                   onClick={handleClearAllSaved}
                   className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
@@ -864,15 +866,17 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
               </h3>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleSaveHistoryClick}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
-                  isDarkMode ? 'bg-[#182645] text-[#00e5ff] border-slate-700/60 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white'
-                }`}
-              >
-                + {t('Save Active Session', 'حفظ المحادثة')}
-              </button>
-              {historySessions.length > 0 && (
+              {isLoggedIn && (
+                <button
+                  onClick={handleSaveHistoryClick}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                    isDarkMode ? 'bg-[#182645] text-[#00e5ff] border-slate-700/60 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white'
+                  }`}
+                >
+                  + {t('Save Active Session', 'حفظ المحادثة')}
+                </button>
+              )}
+              {historySessions.length > 0 && isLoggedIn && (
                 <button 
                   onClick={handleClearAllHistory}
                   className="text-[10px] font-bold text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"

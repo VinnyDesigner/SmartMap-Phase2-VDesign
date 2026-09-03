@@ -765,8 +765,8 @@ export const mockAiEngine = {
       if (!isLoggedIn) {
         actions.push({ type: 'PROMPT_AUTH', params: { feature: isArabic ? 'حفظ البحث والمفضلة' : 'Save Search & Favorites' } });
         reply = isArabic
-          ? "🔒 **يتطلب هذا الإجراء تسجيل الدخول**:\nيرجى تسجيل الدخول عبر **الهوية الرقمية UAE PASS** أو **حساب دائر التمكين الحكومي** لحفظ عمليات البحث والوصول إلى المفضلة في مساحة عملك المخصصة."
-          : "🔒 **Authentication Required**:\nPlease sign in with **UAE PASS** or your **DGE Account** to save custom queries and access your personalized Favorites workspace.";
+          ? "🔒 **يتطلب هذا الإجراء تسجيل الدخول**:\nيرجى تسجيل الدخول كـ **مستخدم مسجل** لحفظ عمليات البحث والوصول إلى المفضلة في مساحة عملك المخصصة."
+          : "🔒 **Authentication Required**:\nPlease sign in as a **Registered User** to save custom queries and access your personalized Favorites workspace.";
 
         return { reply, actions, promptAuth: true };
       }

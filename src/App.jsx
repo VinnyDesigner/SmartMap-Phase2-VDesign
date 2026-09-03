@@ -33,6 +33,12 @@ function App() {
   const [idlePos, setIdlePos] = useState(null);
 
   const handleNavigate = (view) => {
+    if (!userAuth.isLoggedIn) {
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: [] // Resets chat for Guest user when browsing away so it starts fresh from start
+      }));
+    }
     setCurrentView(view);
   };
   
@@ -99,6 +105,12 @@ const MOCK_DATA = [
       userName: null,
       userEmail: null
     });
+    setExplorerState(prev => ({
+      ...prev,
+      chatHistory: [],
+      savedLocations: [],
+      savedChatHistory: []
+    }));
   };
 
   const [explorerState, setExplorerState] = useState({

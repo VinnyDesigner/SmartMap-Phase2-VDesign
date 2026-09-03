@@ -37,7 +37,7 @@ export default function AiResponseRenderer({ response, onEntityClick, onActionCl
   if (blocks.length === 0) {
     return (
       <div className="space-y-2">
-        {response.content && <AiTextBlock content={isArabic ? (response.content_ar || response.content) : response.content} />}
+        {response.content && <AiTextBlock content={isArabic ? (response.content_ar || response.content) : response.content} onEntityClick={onEntityClick} />}
         {response.kpiGrid && <AiKpiGrid metrics={response.kpiGrid} />}
         {response.chartData && <AiChartBlock chartData={response.chartData} onEntityClick={onEntityClick} />}
         {response.riskDecomposition && <AiRiskBreakdown riskData={response.riskDecomposition} />}
@@ -127,7 +127,7 @@ export default function AiResponseRenderer({ response, onEntityClick, onActionCl
       {blocks.map((block, idx) => {
         switch (block.type) {
           case 'TEXT':
-            return <AiTextBlock key={idx} content={isArabic ? (block.content_ar || block.content) : block.content} />;
+            return <AiTextBlock key={idx} content={isArabic ? (block.content_ar || block.content) : block.content} onEntityClick={onEntityClick} />;
           case 'KPI_GRID':
             return <AiKpiGrid key={idx} metrics={block.metrics} />;
           case 'LOCATION_LIST':
