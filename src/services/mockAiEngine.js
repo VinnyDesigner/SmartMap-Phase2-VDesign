@@ -1,9 +1,10 @@
 // Universal AI Application Controller & Natural Language Agent for GeoVision / SmartMap
 import { ACTION_TYPES } from './actionRegistry';
 import { aiOrchestrator } from './ai/aiOrchestrator';
+import { matchKnowledgeBaseQuery } from './ai/aiKnowledgeBase';
 
 // Rich Abu Dhabi Dataset with Multi-Dimensional Quantitative Metrics
-const LOCATIONS_DB = [
+export const LOCATIONS_DB = [
   // HOSPITALS & HEALTHCARE
   { 
     id: 1, 
@@ -374,7 +375,13 @@ const fmt = num => num.toLocaleString();
 
 export const mockAiEngine = {
   async processQuery(queryText, currentState = null, isArabic = false) {
-    // Delegate to modular GeoAI Orchestrator first
+    // 1. Check authoritative AI Knowledge Base dictionary first
+    const kbMatch = matchKnowledgeBaseQuery(queryText, currentState, isArabic);
+    if (kbMatch) {
+      return kbMatch;
+    }
+
+    // 2. Delegate to modular GeoAI Orchestrator for open-ended queries
     const orchestratorResult = await aiOrchestrator.processUserQuery(queryText, currentState, isArabic, LOCATIONS_DB);
     if (orchestratorResult) return orchestratorResult;
 
@@ -458,22 +465,86 @@ export const mockAiEngine = {
     // ---------------------------------------------------------
     // 2. AMBIGUOUS LOCATION RESOLUTION ("Show parks near Yas")
     // ---------------------------------------------------------
-    if (q.includes('near yas') || q.includes('in yas') || q.includes('قريب من ياس') || q.includes('في ياس')) {
+    // Disambiguation prompt when term "Yas" is used without specific area
+    if ((q.includes('yas') || q.includes('ياس')) && !q.includes('bani yas') && !q.includes('yas island') && !q.includes('yasat') && !q.includes('بني ياس') && !q.includes('جزيرة ياس')) {
       reply = isArabic
-        ? "🔍 **تم العثور على عدة مناطق تطابق اسم 'ياس'**:\nأي من المناطق التالية تقصد لبحث الحدائق والمحميات؟"
-        : "🔍 **Ambiguous Location Detected**:\nI found several areas matching **'Yas'**. Which location do you mean?";
+        ? "🔍 **تم العثور على عدة مناطق تطابق اسم 'ياس'**:\nأي من المناطق التالية تود استخدامها لتحديد موقع الحدائق والمحميات؟"
+        : "🔍 **Ambiguous Location Detected**:\nI found several locations matching **'Yas'**. Which one would you like to use?";
 
       suggestions = isArabic
-        ? ["جزيرة ياس", "بني ياس", "جزيرة الياسات الغربية"]
-        : ["Yas Island", "Bani Yas", "Yasat West Island"];
+        ? ["جزيرة ياس", "بني ياس", "جزيرة الياسات الغربية", "جزيرة الياسات"]
+        : ["Yas Island", "Bani Yas", "Yasat West Island", "Al Yasat Island"];
 
       const actionCards = [
-        { title: isArabic ? "جزيرة ياس" : "Yas Island", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Yas Island" } },
-        { title: isArabic ? "بني ياس" : "Bani Yas", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Bani Yas" } },
-        { title: isArabic ? "جزيرة الياسات" : "Yasat West Island", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Yasat West Island" } }
+        { title: "Yas Island", label: "○ Yas Island", label_ar: "○ جزيرة ياس", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Yas Island" }, isOption: true },
+        { title: "Bani Yas", label: "○ Bani Yas", label_ar: "○ بني ياس", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Bani Yas" }, isOption: true },
+        { title: "Yasat West Island", label: "○ Yasat West Island", label_ar: "○ جزيرة الياسات الغربية", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Yasat West Island" }, isOption: true },
+        { title: "Al Yasat Island", label: "○ Al Yasat Island", label_ar: "○ جزيرة الياسات", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Al Yasat Island" }, isOption: true }
       ];
 
       return { reply, suggestions, actionCards, datasetsUsed: ['DGE Administrative Boundaries'] };
+    }
+
+    // Resolution A: Bani Yas
+    if (q.includes('bani yas') || q.includes('بني ياس')) {
+      results = LOCATIONS_DB.filter(l => l.type === 'PARK' || l.type === 'ATTRACTION').map(p => ({
+        ...p,
+        location: 'Bani Yas',
+        location_ar: 'بني ياس'
+      }));
+
+      const baniYasCenter = { lat: 24.3120, lng: 54.6320 };
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'PARK', district: 'Bani Yas' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: baniYasCenter.lat, lng: baniYasCenter.lng, zoom: 14 } }
+      );
+
+      reply = isArabic
+        ? `✅ تم تحديد موقع **بني ياس** وعرض **${results.length} حدائق ومحميات طبيعية**:\n\n1. 🌲 **حديقة بني ياس العامة**\n2. 🌲 **حديقة الوثبة المجتمعية**\n3. 🌲 **منتزه بني ياس العائلي**`
+        : `✅ Resolved location to **Bani Yas** and identified **${results.length} public parks & green reserves**:\n\n1. 🌲 **Bani Yas Public Park**\n2. 🌲 **Al Wathba Community Park**\n3. 🌲 **Bani Yas Family Park**`;
+
+      const datasetsUsed = ['DGE Administrative Boundaries', 'DGE Parks & Greenery Layer v1.4'];
+      const activeContextTags = [
+        { id: 'district', label: isArabic ? 'بني ياس' : 'Bani Yas', icon: '📍' },
+        { id: 'category', label: isArabic ? 'حدائق' : 'Parks', icon: '🌲' }
+      ];
+
+      suggestions = isArabic
+        ? ["عرض المنشآت الصحية في بني ياس", "حفظ هذا البحث", "عرض المدارس القريبة"]
+        : ["Show healthcare in Bani Yas", "Save this search", "Show schools nearby"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: { category: 'PARK', district: 'Bani Yas', activeLocations: results } };
+    }
+
+    // Resolution B: Yas Island
+    if (q.includes('yas island') || q.includes('جزيرة ياس')) {
+      results = LOCATIONS_DB.filter(l => l.type === 'PARK' || l.type === 'ATTRACTION').map(p => ({
+        ...p,
+        location: 'Yas Island',
+        location_ar: 'جزيرة ياس'
+      }));
+
+      const yasCenter = { lat: 24.4880, lng: 54.6080 };
+      actions.push(
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'PARK', district: 'Yas Island' }, matchingResults: results } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: yasCenter.lat, lng: yasCenter.lng, zoom: 14 } }
+      );
+
+      reply = isArabic
+        ? `✅ تم تحديد موقع **جزيرة ياس** وعرض **${results.length} حدائق ومراكز ترفيهية**:\n\n1. 🌲 **حديقة ياس جيتواي**\n2. 🌲 **منتزه جزيرة ياس الجغرافي**`
+        : `✅ Resolved location to **Yas Island** and identified **${results.length} parks & recreational areas**:\n\n1. 🌲 **Yas Gateway Park**\n2. 🌲 **Yas Island Waterfront Park**`;
+
+      const datasetsUsed = ['DGE Administrative Boundaries', 'DGE Parks Layer v1.4'];
+      const activeContextTags = [
+        { id: 'district', label: isArabic ? 'جزيرة ياس' : 'Yas Island', icon: '📍' },
+        { id: 'category', label: isArabic ? 'حدائق' : 'Parks', icon: '🌲' }
+      ];
+
+      suggestions = isArabic
+        ? ["حفظ هذا البحث", "عرض المستشفيات القريبة", "عرض الفنادق"]
+        : ["Save this search", "Show nearby hospitals", "Show hotels"];
+
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: { category: 'PARK', district: 'Yas Island', activeLocations: results } };
     }
 
     // ---------------------------------------------------------

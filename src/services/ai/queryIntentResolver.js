@@ -10,6 +10,7 @@ export const INTENT_TYPES = {
   REFERENCE_RESOLUTION: 'REFERENCE_RESOLUTION',
   VALIDATION_REQUIRED: 'VALIDATION_REQUIRED',
   AMBIGUOUS_LOCATION: 'AMBIGUOUS_LOCATION',
+  LOCATION_PERMISSION: 'LOCATION_PERMISSION',
   TEMPORAL_FILTER: 'TEMPORAL_FILTER',
   UNSUPPORTED_DATASET: 'UNSUPPORTED_DATASET',
   RECOMMENDATION: 'RECOMMENDATION',
@@ -34,7 +35,7 @@ export function resolveQueryIntent(queryText, currentState = null, isArabic = fa
   const q = (queryText || '').toLowerCase().trim();
   const activeContext = currentState?.activeContext || {};
 
-  // 1. FEATURE DETAIL RESOLUTION ("Show its details", "Tell me more about it", "Show details of the closest one")
+  // 1. FEATURE DETAIL RESOLUTION ("Show its details", "Tell me more about it")
   if (
     ['its details', 'show details', 'details of the closest', 'tell me more', 'تفاصيلها', 'عرض التفاصيل', 'أظهر التفاصيل'].some(w => q.includes(w))
   ) {
@@ -47,18 +48,17 @@ export function resolveQueryIntent(queryText, currentState = null, isArabic = fa
     };
   }
 
-  // 2. QUERY VALIDATION: MISSING LOCATION ("Show hospitals within 5 km" without reference location or user location)
+  // 2. LOCATION PERMISSION REQUIRED ("vehicle inspection centers near me", "centers near me")
   if (
-    ['within 5 km', '5 km'].some(w => q.includes(w)) &&
-    ['hospitals', 'hospital', 'المستشفيات'].some(w => q.includes(w)) &&
-    !q.includes('my location') && !q.includes('me') && !q.includes('zayed') && !q.includes('khalifa') && !q.includes('موقعي') && !q.includes('زايد') && !q.includes('خليفة')
+    ['vehicle inspection', 'inspection centers', 'near me', 'مراكز فحص الفني', 'قريب مني'].some(w => q.includes(w)) &&
+    !currentState?.userLocationEnabled
   ) {
     return {
-      intentType: INTENT_TYPES.VALIDATION_REQUIRED,
-      missingField: 'location',
+      intentType: INTENT_TYPES.LOCATION_PERMISSION,
+      missingField: 'user_gps_permission',
       resultVisualization: VISUALIZATION_TYPES.CLARIFICATION,
-      explanation_en: 'Missing location parameter for 5 km proximity search.',
-      explanation_ar: 'يتطلب الاستعلام تحديد الموقع المرجعي لنطاق 5 كم.'
+      explanation_en: 'Location permission required to determine user proximity.',
+      explanation_ar: 'يتطلب الاستعلام تفعيل تحديد الموقع الجغرافي لربط المسافات.'
     };
   }
 
@@ -70,7 +70,7 @@ export function resolveQueryIntent(queryText, currentState = null, isArabic = fa
     return {
       intentType: INTENT_TYPES.AMBIGUOUS_LOCATION,
       searchTerm: 'Yas',
-      ambiguousMatches: ['Yas Island', 'Bani Yas', 'Yasat West Island'],
+      ambiguousMatches: ['Yas Island', 'Bani Yas', 'Yasat West Island', 'Al Yasat Island'],
       resultVisualization: VISUALIZATION_TYPES.CLARIFICATION,
       explanation_en: 'Ambiguous location "Yas" detected. Requesting user choice.',
       explanation_ar: 'تم رصد موقع غير محدد "ياس". يرجى توضيح المنطقة المقصودة.'
@@ -97,14 +97,14 @@ export function resolveQueryIntent(queryText, currentState = null, isArabic = fa
   ) {
     return {
       intentType: INTENT_TYPES.UNSUPPORTED_DATASET,
-      requestedTopic: 'Socioeconomic Wealth Index',
+      requestedTopic: 'Socioeconomic Household Income Index',
       resultVisualization: VISUALIZATION_TYPES.NO_RESULTS,
       explanation_en: 'Requested topic is outside loaded GeoVision SDI datasets.',
       explanation_ar: 'الموضوع المطلوب غير متوفر ضمن طبقات البيانات المكانية الحالية.'
     };
   }
 
-  // 6. NEAREST NEIGHBOR INTENT ("Which is nearest to me?", "Which one is closest?")
+  // 6. NEAREST NEIGHBOR INTENT ("Which one is closest?", "Which is nearest to me?")
   if (
     ['nearest', 'closest', 'near me', 'الأقرب', 'أقرب واحد', 'أيها أقرب', 'أيها الأقرب'].some(w => q.includes(w)) &&
     !q.includes('within')
@@ -133,7 +133,7 @@ export function resolveQueryIntent(queryText, currentState = null, isArabic = fa
     };
   }
 
-  // 8. CROSS-LAYER PROXIMITY INTENT ("Show schools within 2 km of these hospitals")
+  // 8. CROSS-LAYER PROXIMITY INTENT ("Show schools within 2 km of bus stations in Khalifa City")
   if (
     (['schools', 'school', 'المدارس', 'مدرسة'].some(w => q.includes(w)) &&
      ['bus', 'transit', 'hospitals', 'hospital', 'these hospitals', 'الحافلات', 'المستشفيات', 'هذه المستشفيات'].some(w => q.includes(w)) &&

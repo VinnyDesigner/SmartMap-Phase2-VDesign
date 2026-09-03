@@ -25,12 +25,14 @@ export default function CurrentContextBar({ activeContextTags, onRemoveTag, onCl
           <span 
             key={tag.id}
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full border text-[11px] font-semibold shrink-0 transition-all shadow-2xs group ${
-              isDarkMode 
-                ? 'bg-[#182645] border-slate-700/80 text-[#00e5ff] hover:bg-rose-950/40 hover:text-rose-300 hover:border-rose-700' 
-                : 'bg-white border-slate-300/90 text-[#215A9E] hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200'
+              tag.id === 'selected' || tag.id === 'closest'
+                ? (isDarkMode ? 'bg-amber-950/70 border-amber-500/80 text-amber-300' : 'bg-amber-50 border-amber-300 text-amber-900')
+                : (isDarkMode 
+                    ? 'bg-[#182645] border-slate-700/80 text-[#00e5ff] hover:bg-rose-950/40 hover:text-rose-300 hover:border-rose-700' 
+                    : 'bg-white border-slate-300/90 text-[#215A9E] hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200')
             }`}
           >
-            <span className="text-xs">{tag.icon}</span>
+            <span className="text-xs">{tag.icon || (tag.id === 'selected' ? '⭐' : '📍')}</span>
             <span>{isArabic && tag.label_ar ? tag.label_ar : tag.label}</span>
             <button
               type="button"

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Bot, User, MapPin, GraduationCap, PlusSquare, TreePine, Bus, 
   Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight, Lock 
 } from 'lucide-react';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine } from '../../services/mockAiEngine';
-import { executeAppAction } from '../../services/actionRegistry';
+import { executeAppAction, ACTION_TYPES } from '../../services/actionRegistry';
 import AiResponseRenderer from '../ai/AiResponseRenderer';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -92,7 +93,19 @@ const USER_MSG_TRANSLATION_MAP = {
   'Compare emissions between Mussafah and KIZAD': 'مقارنة الانبعاثات بين مصفح وكيزاد',
   'Why is this facility high risk?': 'لماذا هذه المنشأة عالية الخطورة؟',
   'Why is SSMC high risk?': 'لماذا مستشفى شخبوط عالي الخطورة؟',
-  'Compare Water Consumption': 'مقارنة استهلاك المياه'
+  'Compare Water Consumption': 'مقارنة استهلاك المياه',
+  'Which one is closest?': 'أيها الأقرب لي؟',
+  'Which one is closest': 'أيها الأقرب لي؟',
+  'Within 5 km of Zayed Sports City': 'ضمن نطاق 5 كم من مدينة زايد الرياضية',
+  'Show its details': 'عرض تفاصيلها',
+  'Show schools within 2 km of these hospitals': 'عرض المدارس ضمن 2 كم من هذه المستشفيات',
+  'Save this search': 'حفظ هذا البحث',
+  'Save this location to Favorites': 'حفظ هذا الموقع إلى المفضلة',
+  'Show schools near it': 'عرض المدارس القريبة منها',
+  'Export facility report': 'تصدير تقرير المنشأة',
+  'Only government hospitals': 'المستشفيات الحكومية فقط',
+  'Show hospitals in abu dhabi': 'اعرض المستشفيات في أبوظبي',
+  'Show parks near yas': 'اعرض الحدائق بالقرب من ياس'
 };
 
 import AuthPromptModal from '../common/AuthPromptModal';
@@ -108,7 +121,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   const [authModalState, setAuthModalState] = useState({ isOpen: false, featureName: '' });
   const scrollContainerRef = useRef(null);
 
-  const isLoggedIn = explorerState?.userAuth?.isLoggedIn;
+  const isLoggedIn = Boolean(explorerState?.userAuth?.isLoggedIn || explorerState?.isLoggedIn || explorerState?.user?.isAuthenticated);
 
   const handleSaveSearchClick = (queryText) => {
     if (!isLoggedIn) {
@@ -284,6 +297,22 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     if (!forcedQuery) setInputValue('');
     setActiveTab('chat'); // Switch to chat view when submitting a query
 
+    // Check if query is a restricted analytics, simulation, or report request for Guest user
+    const RESTRICTED_GUEST_KEYWORDS = [
+      'compare', 'nearby facilities', 'trend', 'line', 'simulate', 'scenario', 'flood', 
+      'report', 'download', 'export', 'water', 'emissions', 'consumption', 'analytics',
+      'مقارنة', 'منشآت', 'مسار', 'محاكاة', 'سيناريو', 'فيضان', 'تقرير', 'تحميل', 'تصدير', 'استهلاك', 'انبعاثات', 'تحليلات'
+    ];
+    const isAnalyticsQuery = RESTRICTED_GUEST_KEYWORDS.some(k => queryToProcess.toLowerCase().includes(k));
+
+    if (isAnalyticsQuery && !isLoggedIn) {
+      setAuthModalState({
+        isOpen: true,
+        featureName: isArabic ? 'تحليلات البيانات المكانية المتقدمة والسجل' : 'Advanced Analytics & Spatial Intelligence'
+      });
+      return;
+    }
+
     // 1. Add User Message
     const userMsgId = `msg-user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const userMsg = { id: userMsgId, role: 'user', content: queryToProcess };
@@ -332,7 +361,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         executionLogs: aiResponse.executionLogs,
         actionCards: aiResponse.actionCards,
         suggestions: aiResponse.suggestions,
-        datasetsUsed: aiResponse.datasetsUsed
+        datasetsUsed: aiResponse.datasetsUsed,
+        results: aiResponse.results
       };
 
       setExplorerState(prev => ({
@@ -360,8 +390,112 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }
   };
 
+  const downloadDummyExecutiveReport = (reportTitle = 'Abu_Dhabi_Spatial_Executive_Report_2026') => {
+    const content = `========================================================================
+ABU DHABI SPATIAL DATA INFRASTRUCTURE (AD-SDI)
+DEPARTMENT OF GOVERNMENT ENABLEMENT (DGE)
+EXECUTIVE SPATIAL INTELLIGENCE REPORT 2026
+========================================================================
+
+Report Title: ${reportTitle}
+Generated For: H.E. Eng. Ahmed Al-Mansoori (UAE PASS Verified)
+Timestamp: ${new Date().toLocaleString()}
+Coordinate Reference System: WGS 84 / UTM Zone 40N (EPSG:32640)
+
+------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY
+------------------------------------------------------------------------
+Spatial analysis indicates Mussafah Industrial Hub carbon emissions exceed 
+KIZAD industrial area by 17% (+14,000 tCO2e/yr). 
+
+Compound risk indexing places Sheikh Shakbout Medical City (SSMC) at High 
+Risk level (78/100) due to 1.5m coastal storm surge buffer proximity.
+
+------------------------------------------------------------------------
+2. KEY SPATIAL METRICS & HAZARDS
+------------------------------------------------------------------------
+- Mussafah Industrial Emissions: 98,000 tCO2e/yr
+- KIZAD Industrial Emissions: 84,000 tCO2e/yr
+- SSMC Risk Index: 78/100 (Critical Coastal Surge Zone)
+- Cleveland Clinic Abu Dhabi Risk Index: 42/100 (Normal Status)
+- Zayed Airport Capacity: 45,000,000 Passengers/yr
+
+------------------------------------------------------------------------
+3. RECOMMENDATIONS & POLICY ACTIONS
+------------------------------------------------------------------------
+- Target solar electrification and carbon capture across Mussafah Sector 3.
+- Expand coastal surge barriers and emergency response buffers near SSMC.
+
+========================================================================
+CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
+========================================================================`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const fileName = (reportTitle || 'Abu_Dhabi_Spatial_Report').toLowerCase().replace(/[^a-z0-9_]/gi, '_') + '_2026.txt';
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleActionCardClick = async (card) => {
     if (!card) return;
+
+    // Check if card is a restricted analytics, simulation, or report action for Guest user
+    const RESTRICTED_GUEST_KEYWORDS = [
+      'compare', 'nearby facilities', 'trend', 'line', 'simulate', 'scenario', 'flood', 
+      'report', 'download', 'export', 'water', 'emissions', 'consumption', 'analytics',
+      'مقارنة', 'منشآت', 'مسار', 'محاكاة', 'سيناريو', 'فيضان', 'تقرير', 'تحميل', 'تصدير', 'استهلاك', 'انبعاثات', 'تحليلات'
+    ];
+    const isAnalyticsAction = card.actionType === ACTION_TYPES.ANALYTICS_SHOW_CHART || 
+                             card.actionType === ACTION_TYPES.REPORTS_GENERATE || 
+                             card.actionType === ACTION_TYPES.RISK_DECOMPOSE ||
+                             RESTRICTED_GUEST_KEYWORDS.some(k => (card.title || card.label || '').toLowerCase().includes(k));
+
+    if (isAnalyticsAction && !isLoggedIn) {
+      setAuthModalState({
+        isOpen: true,
+        featureName: isArabic ? 'تحليلات البيانات المكانية المتقدمة والسجل' : 'Advanced Analytics & Spatial Intelligence'
+      });
+      return;
+    }
+
+    // Check if report download action for Registered User
+    const isReportAction = card.actionType === ACTION_TYPES.REPORT_GENERATE || 
+                           card.actionType === ACTION_TYPES.REPORTS_GENERATE || 
+                           card.actionType === ACTION_TYPES.EXPORT_DATA || 
+                           card.id === 'export' ||
+                           ['report', 'download', 'export', 'تقرير', 'تحميل', 'تصدير'].some(k => (card.title || card.label || '').toLowerCase().includes(k));
+
+    if (isReportAction && isLoggedIn) {
+      downloadDummyExecutiveReport(card.label || card.title || 'Abu_Dhabi_Spatial_Executive_Report');
+      setSaveSuccessToast(isArabic ? "تم تحميل التقرير التنفيذي بنجاح! 📄" : "Executive Spatial Report Downloaded! 📄");
+      setTimeout(() => setSaveSuccessToast(null), 4000);
+      return;
+    }
+
+    if (card.actionType === 'ENABLE_LOCATION') {
+      setExplorerState(prev => ({
+        ...prev,
+        userLocationEnabled: true,
+        userLocation: { lat: 24.4839, lng: 54.3773 }
+      }));
+      setSaveSuccessToast(isArabic ? "تم تفعيل تحديد الموقع الجغرافي GPS 📍" : "GPS Location Access Granted! 📍");
+      setTimeout(() => setSaveSuccessToast(null), 3000);
+      handleSubmit(null, "Show vehicle inspection centers near me");
+      return;
+    }
+
+    if (card.actionType === 'SEARCH_SUBMIT' || card.params?.query || card.query) {
+      const qToSubmit = card.params?.query || card.query || card.title;
+      handleSubmit(null, qToSubmit);
+      return;
+    }
+
     setActiveStepText(isArabic ? "جاري تشغيل الإجراء..." : "Executing action...");
     try {
       await executeAppAction({ type: card.actionType, params: card.params }, explorerState, setExplorerState, onNavigate, { setIsArabic });
@@ -539,10 +673,11 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         onEntityClick={handleEntityClick}
                         onActionClick={handleActionCardClick}
                         onSuggestionClick={(sug) => handleSubmit(null, sug)}
+                        isLoggedIn={isLoggedIn}
                       />
 
-                      {/* Explicit Save Search & Save History Icon Bar */}
-                      {msg.id !== 1 && (
+                      {/* Explicit Save Search & Save History Icon Bar (rendered on all query response bubbles after initial welcome message) */}
+                      {idx > 0 && msg.role === 'assistant' && (
                         <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2 text-[10px]">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <button
@@ -814,6 +949,24 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
           )}
         </div>
       )}
+
+      {/* Toast Notification Banner */}
+      <AnimatePresence>
+        {saveSuccessToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 end-6 z-[999] px-5 py-3.5 rounded-2xl bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] text-white shadow-2xl border border-white/20 flex items-center gap-3 font-extrabold text-xs"
+          >
+            <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-sm">
+              ✓
+            </div>
+            <span>{saveSuccessToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Auth Prompt Modal for Guest User Features */}
       <AuthPromptModal

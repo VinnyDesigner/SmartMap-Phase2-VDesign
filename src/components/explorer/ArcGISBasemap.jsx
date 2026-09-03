@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { TileLayer, useMap } from 'react-leaflet';
-import { dynamicMapLayer, tiledMapLayer } from 'esri-leaflet';
+import { dynamicMapLayer } from 'esri-leaflet';
 
 export const BASEMAPS = {
   ABU_DHABI_DGE: {
@@ -19,13 +19,15 @@ export const BASEMAPS = {
     id: "satellite",
     name: "Esri High-Resolution Satellite",
     type: "TILE_LAYER",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    subUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
   },
   DARK: {
     id: "dark",
     name: "Esri Dark Canvas",
     type: "TILE_LAYER",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    subUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
   },
   TOPO: {
     id: "topo",
@@ -43,8 +45,7 @@ function EsriMapServerLayer({ url, attribution }) {
 
     let layer;
     try {
-      // DGE_Color_Basemap_GCS is a GCS EPSG:4326 MapServer endpoint.
-      // Set updateInterval: 0 for instant trigger & transparent: true for crisp overlay blending
+      // DGE_Color_Basemap_GCS is the official Abu Dhabi DGE MapServer service endpoint
       layer = dynamicMapLayer({
         url,
         attribution,
@@ -76,35 +77,32 @@ export default function ArcGISBasemap({ activeBasemapId = 'abu-dhabi-dge' }) {
 
   if (currentBasemap.type === "ARCGIS_SERVER") {
     return (
-      <>
-        {/* Instant crisp base tile layer ensuring zero blur during pan/zoom */}
-        <TileLayer
-          key="base-crisp-tile-layer"
-          url={BASEMAPS.STREETS.url}
-          maxZoom={19}
-          minZoom={3}
-          opacity={0.4}
-        />
-        <EsriMapServerLayer
-          key={`esri-server-${currentBasemap.id}`}
-          url={currentBasemap.serviceUrl}
-          attribution='&copy; Abu Dhabi Spatial Data Infrastructure (SDI / DGE)'
-        />
-      </>
+      <EsriMapServerLayer
+        key={`esri-server-${currentBasemap.id}`}
+        url={currentBasemap.serviceUrl}
+        attribution='&copy; Abu Dhabi Spatial Data Infrastructure (AD-SDI / DGE)'
+      />
     );
   }
 
   return (
-    <TileLayer
-      key={`basemap-layer-${currentBasemap.id}`}
-      url={currentBasemap.url}
-      maxZoom={19}
-      minZoom={3}
-      attribution='&copy; Esri, ArcGIS Online'
-    />
+    <>
+      <TileLayer
+        key={`basemap-base-${currentBasemap.id}`}
+        url={currentBasemap.url}
+        maxZoom={19}
+        minZoom={3}
+        attribution='&copy; Esri, ArcGIS Online'
+      />
+      {currentBasemap.subUrl && (
+        <TileLayer
+          key={`basemap-sub-${currentBasemap.id}`}
+          url={currentBasemap.subUrl}
+          maxZoom={19}
+          minZoom={3}
+          opacity={0.9}
+        />
+      )}
+    </>
   );
 }
-
-
-
-

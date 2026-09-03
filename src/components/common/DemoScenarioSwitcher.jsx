@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, ChevronUp, ChevronDown, Play, User, Lock, History, Bookmark, MapPin, Filter } from 'lucide-react';
+import { Sparkles, ChevronUp, ChevronDown, Play, User, Lock, History, Bookmark, MapPin, Filter, AlertTriangle, Database, Layers } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -11,66 +11,75 @@ export default function DemoScenarioSwitcher({ onLaunchScenario }) {
 
   const scenarios = [
     {
-      id: 'acceptance_journey',
-      title: isArabic ? '⭐ رحلة القبول النهائية (7 خطوات)' : '⭐ Final Acceptance Journey (7-Step)',
-      subtitle: isArabic ? 'مستشفيات ← حكومي ← 5 كم ← الأقرب ← تفاصيلها' : 'Hospitals → Govt → 5km → Closest → Details',
-      query: 'Show hospitals in Abu Dhabi',
-      icon: Sparkles
-    },
-    {
-      id: 'scene_1_nearby',
-      title: isArabic ? '1. استكشاف المستشفيات (5 كم)' : '1. Guest: Nearby Hospitals (5 km)',
-      subtitle: isArabic ? 'نطاق 5 كم والموقع الحالي' : 'Proximity radius & location detection',
-      query: 'Show hospitals within 5 km of my location',
+      id: 'journey_1',
+      number: '1',
+      title: isArabic ? '1. بحث بسيط (مضيف)' : '1. Simple Search (Guest)',
+      subtitle: isArabic ? 'استعلام بسيط لمستشفيات مدينة خليفة' : 'Basic query for hospitals in Khalifa City',
+      query: 'Show hospitals in Khalifa City',
+      badge: 'Guest',
       icon: MapPin
     },
     {
-      id: 'scene_2_government',
-      title: isArabic ? '2. التصفية: حكومي فقط' : '2. Refine: Only Government Hospitals',
-      subtitle: isArabic ? 'فلترة حسب نوع الملكية' : 'Context-aware ownership filter',
-      query: 'Only government hospitals',
-      icon: Filter
-    },
-    {
-      id: 'scene_3_nearest',
-      title: isArabic ? '3. تحديد الأقرب من موقعي' : '3. Nearest Facility Identification',
-      subtitle: isArabic ? 'ترتيب النتائج بالمسافة' : 'Distance ranking & focal card zoom',
-      query: 'Which one is nearest to me?',
+      id: 'journey_2',
+      number: '2',
+      title: isArabic ? '2. بحث الأماكن القريبة (مضيف)' : '2. Nearby Search (Guest)',
+      subtitle: isArabic ? 'تحليل نطاق 5 كم ودعم GPS' : '5 km radius buffer & location detection',
+      query: 'Show hospitals within 5 km of my location',
+      badge: 'Guest',
       icon: Play
     },
     {
-      id: 'scene_4_cross_layer',
-      title: isArabic ? '4. مدارس + مستشفيات (2 كم)' : '4. Multi-Layer: Schools near Hospitals',
-      subtitle: isArabic ? 'تحليل مكاني عابر للطبقات' : 'Cross-layer GIS buffer analysis',
-      query: 'Show schools within 2 km of these hospitals',
+      id: 'journey_3',
+      number: '3',
+      title: isArabic ? '3. المتابعة التراكمية (5 خطوات)' : '3. Progressive Follow-up (5-Step Journey)',
+      subtitle: isArabic ? 'مستشفيات ← حكومي ← 5 كم ← الأقرب ← تفاصيلها' : 'Abu Dhabi → Govt → 5km → Closest → Details',
+      query: 'Show hospitals in Abu Dhabi',
+      badge: 'Guest',
       icon: Sparkles
     },
     {
-      id: 'scene_5_transit_schools',
-      title: isArabic ? '5. مدارس + حافلات (مدينة خليفة)' : '5. Cross-Layer: Schools + Bus Stations',
-      subtitle: isArabic ? 'نطاق 2 كم في مدينة خليفة' : 'Khalifa City 2 km transit buffer',
+      id: 'journey_4',
+      number: '4',
+      title: isArabic ? '4. الاستعلام عابر الطبقات (مضيف)' : '4. Complex Cross-Layer (Guest)',
+      subtitle: isArabic ? 'مدارس ضمن 2 كم من محطات الحافلات' : 'Schools within 2 km of bus stations',
       query: 'Show schools within 2 km of bus stations in Khalifa City',
-      icon: Bookmark
+      badge: 'Guest',
+      icon: Layers
     },
     {
-      id: 'scene_6_auth_transition',
-      title: isArabic ? '6. تسجيل الدخول وحفظ البحث' : '6. Guest → Login → Save Search',
-      subtitle: isArabic ? 'طلب الهوية الرقمية وتأكيد الحفظ' : 'UAE PASS sign in & auto-save',
-      query: 'Save this search',
-      icon: Lock
+      id: 'journey_5',
+      number: '5',
+      title: isArabic ? '5. البحث الأماكن المبهمة (مضيف)' : '5. Ambiguous Search (Guest)',
+      subtitle: isArabic ? 'توضيح مواقع "ياس" وتعيين بني ياس' : 'Location disambiguation options for "Yas"',
+      query: 'Show parks near Yas',
+      badge: 'Guest',
+      icon: Filter
     },
     {
-      id: 'scene_7_analytics',
-      title: isArabic ? '7. التحليل المكاني التجميعي' : '7. Spatial Aggregation Analytics',
-      subtitle: isArabic ? 'ترتيب القطاعات والرسوم البيانية' : 'District ranking table & bar chart',
+      id: 'journey_6',
+      number: '6',
+      title: isArabic ? '6. التعافي والبيانات المفقودة (مضيف)' : '6. No Results & Unsupported Recovery',
+      subtitle: isArabic ? 'خيارات البدائل عند 0 نتائج والبيانات غير المتوفرة' : 'Query-derived alternatives & topic fallback',
+      query: 'Show rehabilitation centers within 1 km of Zayed City',
+      badge: 'Guest',
+      icon: AlertTriangle
+    },
+    {
+      id: 'journey_7',
+      number: '7',
+      title: isArabic ? '7. التحليل والمفضلة (مسجل)' : '7. Analytics & Personalization (Registered)',
+      subtitle: isArabic ? 'ترتيب المناطق وحفظ الاستعلام للمفضلة' : 'Spatial aggregation table & save search',
       query: 'Which area has the highest number of healthcare facilities?',
+      badge: 'Registered',
       icon: History
     },
     {
-      id: 'scene_8_arabic',
-      title: isArabic ? '8. الاستعلام باللغة العربية' : '8. Arabic Natural Language Query',
-      subtitle: isArabic ? 'استعلام عربي وتنسيق RTL' : 'Arabic NLP reasoning & RTL layout',
+      id: 'journey_8',
+      number: '8',
+      title: isArabic ? '8. التوصيات باللغة العربية (مسجل)' : '8. Recommendation & Arabic NLP (Registered)',
+      subtitle: isArabic ? 'استعلام عربي ومعالجة RTL متكاملة' : 'Arabic natural language & RTL support',
       query: 'اعرض المستشفيات الموجودة في مدينة خليفة.',
+      badge: 'Registered',
       icon: User
     }
   ];
@@ -80,14 +89,14 @@ export default function DemoScenarioSwitcher({ onLaunchScenario }) {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`px-3 py-1.5 rounded-full backdrop-blur-md border shadow-lg flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
+        className={`px-3.5 py-2 rounded-full backdrop-blur-md border shadow-xl flex items-center gap-2 text-xs font-bold transition-all cursor-pointer ${
           isDarkMode 
-            ? 'bg-[#0f172a]/90 border-slate-700/80 text-[#00e5ff] hover:bg-slate-800' 
-            : 'bg-white/90 border-slate-200 text-[#215A9E] hover:bg-slate-50'
+            ? 'bg-[#0f172a]/95 border-slate-700/80 text-[#00e5ff] hover:bg-slate-800' 
+            : 'bg-white/95 border-slate-200 text-[#215A9E] hover:bg-slate-50'
         }`}
       >
-        <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-        <span>{isArabic ? 'سيناريوهات العرض' : 'Demo Journeys'}</span>
+        <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+        <span>{isArabic ? 'سيناريوهات العرض الثمانية (8)' : '8 Demo Journeys'}</span>
         {isOpen ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
       </button>
 
@@ -99,22 +108,22 @@ export default function DemoScenarioSwitcher({ onLaunchScenario }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className={`absolute bottom-10 start-0 w-72 sm:w-80 rounded-2xl p-3 shadow-2xl border mb-2 flex flex-col gap-1.5 backdrop-blur-xl ${
+            className={`absolute bottom-12 start-0 w-80 sm:w-96 rounded-2xl p-3.5 shadow-2xl border mb-2 flex flex-col gap-2 backdrop-blur-xl ${
               isDarkMode 
-                ? 'bg-[#0b132b]/95 border-slate-700/90 text-white' 
-                : 'bg-white/95 border-slate-200 text-slate-900'
+                ? 'bg-[#0b132b]/98 border-slate-700/90 text-white' 
+                : 'bg-white/98 border-slate-200 text-slate-900'
             }`}
           >
             <div className="px-2 py-1 flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800 pb-2">
               <span className="text-[11px] font-bold text-[#3D52A0] dark:text-[#00e5ff] tracking-wide uppercase">
-                {isArabic ? 'عرض أصحاب القرار DGE' : 'DGE Stakeholder Demo Scenarios'}
+                {isArabic ? 'رحلات العرض الثمانية المعرفية DGE' : 'DGE 8 Specified Demo Journeys'}
               </span>
-              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                PROTOTYPE
+              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                CLIENT SPEC
               </span>
             </div>
 
-            <div className="flex flex-col gap-1 mt-1 max-h-72 overflow-y-auto sleek-scrollbar">
+            <div className="flex flex-col gap-1.5 mt-1 max-h-80 overflow-y-auto sleek-scrollbar">
               {scenarios.map((sc) => {
                 const IconComponent = sc.icon;
                 return (
@@ -124,17 +133,26 @@ export default function DemoScenarioSwitcher({ onLaunchScenario }) {
                       setIsOpen(false);
                       onLaunchScenario(sc.query);
                     }}
-                    className={`p-2 rounded-xl text-start border transition-all flex items-start gap-2.5 cursor-pointer ${
+                    className={`p-2.5 rounded-xl text-start border transition-all flex items-start gap-3 cursor-pointer group ${
                       isDarkMode 
                         ? 'bg-[#101a36]/60 border-slate-800/80 hover:bg-[#182645] hover:border-[#7c3aed]/50' 
                         : 'bg-slate-50/80 border-slate-200/80 hover:bg-slate-100 hover:border-[#215A9E]/40'
                     }`}
                   >
-                    <div className="w-7 h-7 rounded-lg bg-[#215A9E]/10 dark:bg-[#00e5ff]/10 text-[#215A9E] dark:text-[#00e5ff] flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded-lg bg-[#215A9E]/10 dark:bg-[#00e5ff]/10 text-[#215A9E] dark:text-[#00e5ff] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-110 transition-transform">
                       <IconComponent className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h5 className="text-xs font-bold truncate leading-tight">{sc.title}</h5>
+                      <div className="flex items-center justify-between gap-1">
+                        <h5 className="text-xs font-bold truncate leading-tight">{sc.title}</h5>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${
+                          sc.badge === 'Guest' 
+                            ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' 
+                            : 'bg-purple-500/10 text-purple-500 border border-purple-500/20'
+                        }`}>
+                          {sc.badge}
+                        </span>
+                      </div>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{sc.subtitle}</p>
                     </div>
                   </button>

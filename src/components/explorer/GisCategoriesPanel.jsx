@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { LOCATIONS_DB } from '../../services/mockAiEngine';
 
 export const GIS_CATEGORIES_DATA = [
   {
@@ -87,43 +88,51 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
 
   const selectedSubcategories = explorerState?.selectedGisSubcategories || [];
 
-  const toggleSubcategory = (subId) => {
-    setExplorerState(prev => {
-      const current = prev.selectedGisSubcategories || [];
-      const exists = current.includes(subId);
-      const updated = exists 
-        ? current.filter(id => id !== subId)
-        : [...current, subId];
+  const filterLocationsBySubcategories = (subIds) => {
+    let filtered = [];
+    const hasHealth = subIds.some(id => ['healthcare', 'hospitals', 'clinics', 'pharmacies'].includes(id));
+    const hasEdu = subIds.some(id => ['education', 'charter_schools', 'public_schools', 'private_schools', 'universities', 'nurseries', 'pod_centers'].includes(id));
+    const hasParks = subIds.some(id => ['parks_recreation', 'public_parks', 'sports_fields', 'beach_access'].includes(id));
+    const hasTransit = subIds.some(id => ['transport', 'bus_stations', 'taxi_hubs', 'public_parking'].includes(id));
+    const hasUtilities = subIds.some(id => ['utilities', 'ev_chargers', 'substations', 'telecom_towers'].includes(id));
 
-      return {
-        ...prev,
-        selectedGisSubcategories: updated
-      };
-    });
+    if (hasHealth) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'HOSPITAL')];
+    if (hasEdu) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'EDUCATION')];
+    if (hasParks) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'PARK' || l.type === 'ATTRACTION')];
+    if (hasTransit) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'TRANSPORT')];
+    if (hasUtilities) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'MANUFACTURING')];
+
+    if (filtered.length === 0 && subIds.length === 0) {
+      filtered = LOCATIONS_DB;
+    }
+
+    const topLoc = filtered[0] || LOCATIONS_DB[0];
+
+    setExplorerState(prev => ({
+      ...prev,
+      selectedGisSubcategories: subIds,
+      activeResults: filtered,
+      mapFocus: topLoc ? { lat: topLoc.lat, lng: topLoc.lng, zoom: 13 } : prev.mapFocus
+    }));
+  };
+
+  const toggleSubcategory = (subId) => {
+    const current = explorerState?.selectedGisSubcategories || [];
+    const exists = current.includes(subId);
+    const updated = exists ? current.filter(id => id !== subId) : [...current, subId];
+    filterLocationsBySubcategories(updated);
   };
 
   const handleSelectAllCategory = (cat) => {
     const subIds = cat.subcategories.map(s => s.id);
-    setExplorerState(prev => {
-      const current = prev.selectedGisSubcategories || [];
-      const allSelected = subIds.every(id => current.includes(id));
-
-      const updated = allSelected
-        ? current.filter(id => !subIds.includes(id))
-        : Array.from(new Set([...current, ...subIds]));
-
-      return {
-        ...prev,
-        selectedGisSubcategories: updated
-      };
-    });
+    const current = explorerState?.selectedGisSubcategories || [];
+    const allSelected = subIds.every(id => current.includes(id));
+    const updated = allSelected ? current.filter(id => !subIds.includes(id)) : Array.from(new Set([...current, ...subIds]));
+    filterLocationsBySubcategories(updated);
   };
 
   const handleClearAll = () => {
-    setExplorerState(prev => ({
-      ...prev,
-      selectedGisSubcategories: []
-    }));
+    filterLocationsBySubcategories([]);
   };
 
   const toggleCategoryCollapse = (catId) => {

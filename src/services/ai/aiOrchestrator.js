@@ -280,8 +280,8 @@ export const aiOrchestrator = {
         {
           type: 'TEXT',
           content: isArabic
-            ? `تم عرض **${hospitals.length} مستشفيات ومراكز طبية** في أبوظبي.`
-            : `Showing **${hospitals.length} specialty hospitals and medical centers** in Abu Dhabi.`
+            ? `تم تحديد **${hospitals.length} مستشفيات ومراكز طبية تخصصية** عبر قطاع أبوظبي:\n\n1. 🏥 **كليفلاند كلينك أبوظبي** (جزيرة الماريه)\n2. 🏥 **مدينة شخبوط الطبية (SSMC)** (المفرق - سعة 741 سرير)\n\nكيف تود تصفية النتائج الحالية؟`
+            : `Identified **${hospitals.length} specialty hospitals and medical centers** across Abu Dhabi:\n\n1. 🏥 **Cleveland Clinic Abu Dhabi** (Al Maryah Island)\n2. 🏥 **Sheikh Shakhbout Medical City (SSMC)** (Al Mafraq - 741 bed capacity)\n\nHow would you like to refine your spatial search?`
         },
         {
           type: 'LOCATION_LIST',
@@ -639,6 +639,21 @@ export const aiOrchestrator = {
       return { reply: blocks[0].content, blocks, actions, results: [matchedFacility], executionLogs };
     }
 
+const USER_MSG_TRANSLATION_MAP = {
+  'Which one is closest?': 'أيها الأقرب لي؟',
+  'Which one is closest': 'أيها الأقرب لي؟',
+  'Within 5 km of Zayed Sports City': 'ضمن نطاق 5 كم من مدينة زايد الرياضية',
+  'Show its details': 'عرض تفاصيلها',
+  'Show schools within 2 km of these hospitals': 'عرض المدارس ضمن 2 كم من هذه المستشفيات',
+  'Save this search': 'حفظ هذا البحث',
+  'Save this location to Favorites': 'حفظ هذا الموقع إلى المفضلة',
+  'Show schools near it': 'عرض المدارس القريبة منها',
+  'Export facility report': 'تصدير تقرير المنشأة',
+  'Only government hospitals': 'المستشفيات الحكومية فقط',
+  'Show hospitals in abu dhabi': 'اعرض المستشفيات في أبوظبي',
+  'Show parks near yas': 'اعرض الحدائق بالقرب من ياس'
+};
+
     // ==========================================
     // DEFAULT GENERAL QUERY: CONCISE DIRECT ANSWER
     // ==========================================
@@ -646,7 +661,7 @@ export const aiOrchestrator = {
       {
         type: 'TEXT',
         content: isArabic
-          ? `تمت معالجة استعلامك حول **"${queryText}"**. تتوفر 8 منشآت ومواقع رئيسية في أبوظبي.`
+          ? `تمت معالجة استعلامك حول **"${USER_MSG_TRANSLATION_MAP[queryText] || queryText}"**. تتوفر 8 منشآت ومواقع رئيسية في أبوظبي.`
           : `Processed your query for **"${queryText}"**. Showing 8 operational assets in Abu Dhabi.`
       },
       {

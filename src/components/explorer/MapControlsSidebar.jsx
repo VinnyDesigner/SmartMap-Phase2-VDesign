@@ -253,7 +253,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                   >
                     <BasemapOption 
                       label={t('Abu Dhabi DGE', 'أبوظبي الرسمية')} 
-                      imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/4/6/10" 
+                      imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/4/6/10" 
                       isActive={!explorerState?.activeBasemap || explorerState?.activeBasemap === 'abu-dhabi-dge'}
                       isOfficial={true}
                       isDarkMode={isDarkMode}

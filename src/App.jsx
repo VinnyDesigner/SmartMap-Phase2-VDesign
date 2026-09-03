@@ -8,6 +8,7 @@ import DataExplorerLayout from './components/explorer/DataExplorerLayout';
 import HoverExplorationPopup from './components/HoverExplorationPopup';
 import DynamicBackground from './components/DynamicBackground';
 import AboutUsPage from './components/AboutUsPage';
+import HelpPage from './components/HelpPage';
 import SignInPage from './components/SignInPage';
 import WebGLFluidReveal from './components/WebGLFluidReveal';
 
@@ -289,6 +290,14 @@ const MOCK_DATA = [
           mouseY={mouseY} 
           isSearchFocused={isSearchFocused} 
           selectedLocation={selectedLocation}
+        />
+      ) : currentView === 'help' ? (
+        <HelpPage 
+          onNavigate={handleNavigate} 
+          explorerState={explorerState}
+          setExplorerState={setExplorerState}
+          userAuth={explorerState.userAuth}
+          setUserAuth={(auth) => setExplorerState(prev => ({ ...prev, userAuth: auth }))}
         />
       ) : (
         <AboutUsPage onNavigate={handleNavigate} />

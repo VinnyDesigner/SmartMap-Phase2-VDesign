@@ -1,5 +1,5 @@
 import React, { useRef, useMemo } from 'react';
-import { Sparkles, PlusCircle, X, Filter } from 'lucide-react';
+import { Sparkles, SquarePen, X, Filter } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import AiChatInterface from './AiChatInterface';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -142,18 +142,18 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
             </div>
           </div>
 
-          {/* New Chat Button */}
+          {/* New Chat Icon Text (No button box) */}
           <button
             onClick={handleNewChat}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all duration-200 shadow-2xs cursor-pointer group shrink-0 ${
+            className={`flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer group shrink-0 px-1 py-0.5 ${
               isDarkMode 
-                ? 'bg-[#182645] text-white border-slate-700/80 hover:bg-[#7c3aed] hover:border-[#7c3aed]' 
-                : 'bg-black text-white border-black hover:bg-[#7c3aed]'
+                ? 'text-slate-200 hover:text-[#00e5ff]' 
+                : 'text-slate-800 hover:text-[#215A9E]'
             }`}
             title={t("Start New Conversation", "بدء محادثة جديدة")}
           >
-            <PlusCircle className="w-3.5 h-3.5 group-hover:rotate-90 transition-transform" />
-            <span>{t('New Chat', 'محادثة جديدة')}</span>
+            <SquarePen className="w-4 h-4 transition-transform group-hover:scale-110" />
+            <span>{t('New chat', 'محادثة جديدة')}</span>
           </button>
         </div>
 

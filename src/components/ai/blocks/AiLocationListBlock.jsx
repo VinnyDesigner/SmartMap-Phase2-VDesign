@@ -11,6 +11,23 @@ const ICON_MAP = {
   MANUFACTURING: MapPin
 };
 
+const LOCATION_ARABIC_MAP = {
+  'Al Maryah Island': 'جزيرة الماريه',
+  'Al Mafraq': 'المفرق',
+  'Mussafah': 'مصفح',
+  'KIZAD / Taweelah': 'كيزاد / الطويلة',
+  'Corniche Road': 'طريق الكورنيش',
+  'Al Mushrif': 'المشرف',
+  'Khalifa City': 'مدينة خليفة',
+  'Al Ain': 'العين',
+  'Electra Street': 'شارع إلكترا',
+  'Airport Road': 'شارع المطار',
+  'Al Reem Island': 'جزيرة الريم',
+  'Mohammed Bin Zayed City': 'مدينة محمد بن زايد',
+  'Zayed Sports City': 'مدينة زايد الرياضية',
+  'Al Jimi': 'الجيمي'
+};
+
 export default function AiLocationListBlock({ locations = [], onEntityClick }) {
   const { isDarkMode } = useTheme();
   const { t, isArabic } = useLanguage();
@@ -28,9 +45,10 @@ export default function AiLocationListBlock({ locations = [], onEntityClick }) {
           const isHigh = item.riskLevel === 'High';
 
           const displayName = isArabic && item.name_ar ? item.name_ar : item.name;
-          const displayLocation = isArabic && item.district_ar 
-            ? item.district_ar 
-            : (isArabic && item.location_ar ? item.location_ar : (item.district || item.location));
+          const rawLoc = item.district || item.location || '';
+          const displayLocation = isArabic 
+            ? (item.district_ar || item.location_ar || LOCATION_ARABIC_MAP[rawLoc] || rawLoc) 
+            : rawLoc;
 
           const riskLabel = isArabic 
             ? (item.riskLevel === 'Critical' ? 'حرج' : item.riskLevel === 'High' ? 'عالي' : 'منخفض') 
@@ -70,11 +88,13 @@ export default function AiLocationListBlock({ locations = [], onEntityClick }) {
                 </div>
               </div>
 
-              <div className={`flex items-center gap-1 text-[11px] font-bold opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0 ${
-                isDarkMode ? 'text-[#7DA1C4]' : 'text-[#3D52A0]'
+              <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-bold transition-all shrink-0 border ${
+                isDarkMode 
+                  ? 'bg-[#182645] text-[#00e5ff] border-slate-700/80 group-hover:bg-[#7c3aed] group-hover:text-white' 
+                  : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20 group-hover:bg-[#215A9E] group-hover:text-white'
               }`}>
-                <span>{t('View', 'عرض')}</span>
-                <ArrowRight className="w-3.5 h-3.5 rtl:-scale-x-100" />
+                <span>{t('View on Map', 'عرض على الخريطة')}</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform rtl:-scale-x-100" />
               </div>
             </div>
           );

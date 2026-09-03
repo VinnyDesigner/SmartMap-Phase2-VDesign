@@ -42,7 +42,7 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
         </div>
 
         {/* Center: SDI-Style Navigation */}
-        <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+        <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-0 bottom-0 -translate-x-1/2 h-full pointer-events-auto">
           {[
             { id: 'Home', en: 'Home', ar: 'الرئيسية', view: 'landing' },
             { id: 'Map View', en: 'Map View', ar: 'عرض الخريطة', view: 'explorer' },
@@ -53,19 +53,26 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               <button 
                 key={item.id} 
                 onClick={() => onNavigate?.(item.view)}
-                className={`relative py-1 text-sm md:text-[15px] font-semibold transition-colors duration-200 cursor-pointer select-none ${
+                className={`relative h-full flex items-center px-1 text-sm md:text-[15px] font-semibold transition-colors duration-200 cursor-pointer select-none group ${
                   isActive 
                     ? isDarkMode ? 'text-white font-bold' : 'text-slate-900 font-bold' 
-                    : isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-[#7c3aed]'
+                    : isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-[#215A9E]'
                 }`}
               >
                 {t(item.en, item.ar)}
+                
+                {/* Active Highlight Line exactly on the bottom edge of the top header bar */}
                 {isActive && (
                   <motion.div 
                     layoutId="activeHeaderNav"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#215A9E] to-[#7c3aed] rounded-full"
+                    className="absolute -bottom-[1px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] rounded-full shadow-[0_-2px_10px_rgba(33,90,158,0.6)] z-10"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
+                )}
+
+                {/* Hover Highlight Line for inactive tabs on the bottom edge */}
+                {!isActive && (
+                  <div className="absolute -bottom-[1px] left-0 right-0 h-[2.5px] bg-gradient-to-r from-[#215A9E]/70 to-[#7c3aed]/70 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 )}
               </button>
             );
@@ -94,10 +101,11 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               {isDarkMode ? <Sun className="w-4 h-4 fill-current" /> : <Moon className="w-4 h-4 fill-current" />}
             </button>
             
-            {/* Help/About Button */}
+            {/* Help & Documentation Button */}
             <button 
-              onClick={() => onNavigate?.('about')}
+              onClick={() => onNavigate?.('help')}
               className={`hidden md:flex w-9 h-9 rounded-full items-center justify-center backdrop-blur-md border shadow-sm transition-all ${isDarkMode ? 'bg-[#0f172a]/90 border-slate-800 text-white hover:bg-slate-800' : 'bg-white/70 border-white/60 text-white hover:bg-white'}`}
+              title={t("Help & Documentation", "المساعدة والتوثيق")}
             >
               <HelpCircle className={`w-4 h-4 ${isDarkMode ? 'fill-white text-[#0f172a]' : 'fill-[#7c3aed] text-white'}`} />
             </button>

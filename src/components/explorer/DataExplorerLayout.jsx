@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronsLeftRight } from 'lucide-react';
 import MapBackground from '../MapBackground';
 import MapControlsSidebar from './MapControlsSidebar';
 import BottomDataPanel from './BottomDataPanel';
+import MapLegendPanel from './MapLegendPanel';
 
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -132,6 +133,15 @@ export default function DataExplorerLayout({
           explorerState={explorerState}
           setExplorerState={setExplorerState}
         />
+        <AnimatePresence>
+          {explorerState?.activeMenu === 'legend' && (
+            <MapLegendPanel 
+              explorerState={explorerState}
+              setExplorerState={setExplorerState}
+              onClose={() => setExplorerState(prev => ({ ...prev, activeMenu: null }))}
+            />
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Sleek Draggable Resizer Handle with Clear Affordance */}
