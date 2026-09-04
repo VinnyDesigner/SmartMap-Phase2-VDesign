@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
-import BrandHeader from './BrandHeader';
+
 
 export default function HelpPage({ onNavigate, explorerState, setExplorerState, userAuth, setUserAuth }) {
   const { t, isArabic } = useLanguage();
@@ -27,10 +27,10 @@ export default function HelpPage({ onNavigate, explorerState, setExplorerState, 
     {
       id: 2,
       category: 'auth',
-      q_en: 'What features require UAE PASS / DGE Authentication?',
-      q_ar: 'ما هي الميزات التي تتطلب تسجيل الدخول عبر الهوية الرقمية UAE PASS؟',
-      a_en: 'Guest users can freely search locations, switch basemaps, filter GIS categories, change languages, and navigate pages. Registered users logged in via UAE PASS gain access to Saved Searches, Favorites, Multi-session History, Executive Report Downloads, and Water/Emissions Analytics Charting.',
-      a_ar: 'يمكن للزوار البحث بحرية عن المواقع، تغيير الخرائط الخلفية، تصفية الفئات المكانية، تغيير اللغة والتنقل بين الصفحات. بينما يحصل المستخدمون المسجلون عبر الهوية الرقمية (UAE PASS) على ميزات حفظ الاستعلامات والمفضلة، سجل المحادثات، تحميل التقارير التنفيذية، وتحليلات استهلاك المياه والانبعاثات.'
+      q_en: 'What features require User Authentication?',
+      q_ar: 'ما هي الميزات التي تتطلب تسجيل الدخول؟',
+      a_en: 'Guest users can freely search locations, switch basemaps, filter GIS categories, view analytics & risk profiles, print executive reports, and navigate pages. Registered users logged in gain access to Saved Searches, Favorites, and Multi-session History.',
+      a_ar: 'يمكن للزوار البحث بحرية عن المواقع، استكشاف الخرائط، تصفية الفئات المكانية، عرض التحليلات ومخاطر البيئة، طباعة التقارير التنفيذية، والتنقل بين الصفحات. بينما يحصل المستخدمون المسجلون على ميزات حفظ الاستعلامات والمفضلة وسجل المحادثات.'
     },
     {
       id: 3,
@@ -60,17 +60,9 @@ export default function HelpPage({ onNavigate, explorerState, setExplorerState, 
   ];
 
   return (
-    <div className={`min-h-screen flex flex-col transition-colors duration-300 ${
+    <div className={`w-full flex-1 overflow-y-auto pt-16 md:pt-20 flex flex-col transition-colors duration-300 ${
       isDarkMode ? 'bg-[#060b19] text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
-      {/* Brand Header Navigation */}
-      <BrandHeader 
-        currentView="help" 
-        onNavigate={onNavigate} 
-        userAuth={userAuth} 
-        onSignOut={() => setUserAuth({ isLoggedIn: false })} 
-      />
-
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-10">
         {/* Page Hero Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
@@ -84,7 +76,7 @@ export default function HelpPage({ onNavigate, explorerState, setExplorerState, 
           <p className={`text-sm sm:text-base leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
             {isArabic 
               ? "تعلم كيفية استخدام منصة التحليل الجغرافي الذكي، طرح الاستعلامات باللغة الطبيعية، والوصول إلى طبقات البيانات المكانية الرسمية." 
-              : "Learn how to query spatial layers using natural language, switch map basemaps, interpret risk analytics, and authenticate via UAE PASS."}
+              : "Learn how to query spatial layers using natural language, switch map basemaps, interpret risk analytics, and save custom workspaces."}
           </p>
         </div>
 
@@ -114,10 +106,10 @@ export default function HelpPage({ onNavigate, explorerState, setExplorerState, 
             },
             {
               icon: Lock,
-              title_en: "UAE PASS Security",
-              title_ar: "الدخول عبر الهوية الرقمية",
-              desc_en: "Sign in with UAE PASS to unlock Saved Searches, History, and Executive Reports.",
-              desc_ar: "سجل الدخول بالهوية الرقمية لفتح الاستعلامات المحفوظة، السجل والتقارير."
+              title_en: "Secure User Access",
+              title_ar: "تسجيل الدخول الآمن",
+              desc_en: "Sign in to unlock Saved Searches, History, and Executive Reports.",
+              desc_ar: "سجل الدخول لفتح الاستعلامات المحفوظة، السجل والتقارير التنفيذية."
             }
           ].map((item, idx) => (
             <div 

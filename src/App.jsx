@@ -11,6 +11,7 @@ import AboutUsPage from './components/AboutUsPage';
 import HelpPage from './components/HelpPage';
 import SignInPage from './components/SignInPage';
 import WebGLFluidReveal from './components/WebGLFluidReveal';
+import LocationPermissionModal from './components/common/LocationPermissionModal';
 
 import { useTheme } from './contexts/ThemeContext';
 
@@ -122,9 +123,36 @@ const MOCK_DATA = [
     isDrawingMode: false,
     isDockerMinimized: true,
     chatHistory: [],
+    savedLocations: [
+      {
+        id: 'FAC-AD-001',
+        name: 'Cleveland Clinic Abu Dhabi',
+        name_ar: 'كليفلاند كلينك أبوظبي',
+        district: 'Al Maryah Island',
+        facilityType: 'HOSPITAL',
+        riskLevel: 'High',
+        riskScore: 88,
+        lat: 24.5011,
+        lng: 54.3942
+      },
+      {
+        id: 'FAC-AD-003',
+        name: 'Mussafah Industrial Manufacturing Hub',
+        name_ar: 'مجمع مصفح الصناعي والتصنيعي',
+        district: 'Mussafah',
+        facilityType: 'MANUFACTURING',
+        riskLevel: 'Critical',
+        riskScore: 92,
+        lat: 24.3540,
+        lng: 54.3540
+      }
+    ],
     layerFilters: ['Education', 'Healthcare', 'Transport', 'Environment', 'Tourism', 'Utilities'],
     typeFilter: 'All Types',
-    userAuth: { isLoggedIn: false }
+    userAuth: { isLoggedIn: false },
+    userLocationEnabled: false,
+    userLocation: null,
+    showLocationModal: true
   });
 
   useEffect(() => {
@@ -133,6 +161,14 @@ const MOCK_DATA = [
       userAuth
     }));
   }, [userAuth]);
+
+  useEffect(() => {
+    // Ensure Location Permission Modal is triggered on initial load when location is not enabled
+    setExplorerState(prev => ({
+      ...prev,
+      showLocationModal: true
+    }));
+  }, []);
 
 
   const idleTimer = useRef(null);
@@ -333,6 +369,30 @@ const MOCK_DATA = [
           />
         </div>
       )}
+
+      {/* Location Permission Enforcement Modal */}
+      <LocationPermissionModal 
+        isOpen={explorerState?.showLocationModal}
+        onClose={() => setExplorerState(prev => ({ ...prev, showLocationModal: false }))}
+        onGrantLocation={(pos) => {
+          setExplorerState(prev => ({
+            ...prev,
+            userLocationEnabled: true,
+            userLocation: { lat: pos.lat, lng: pos.lng },
+            mapFocus: { lat: pos.lat, lng: pos.lng, zoom: 15 },
+            showLocationModal: false
+          }));
+        }}
+        onUseDefaultLocation={() => {
+          setExplorerState(prev => ({
+            ...prev,
+            userLocationEnabled: true,
+            userLocation: { lat: 24.4839, lng: 54.3773 },
+            mapFocus: { lat: 24.4839, lng: 54.3773, zoom: 15 },
+            showLocationModal: false
+          }));
+        }}
+      />
     </div>
   );
 }

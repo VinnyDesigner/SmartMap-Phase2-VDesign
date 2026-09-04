@@ -905,7 +905,7 @@ export const mockAiEngine = {
         { id: 'chart', label: isArabic ? 'رسم بياني لاستهلاك المياه' : 'View Water Chart', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART },
         { id: 'export', label: isArabic ? 'تصدير البيانات' : 'Export Analysis', actionType: ACTION_TYPES.EXPORT_DATA, params: { format: 'csv' } }
       ];
-      suggestions = isArabic ? ["مقارنة بأعلى انبعاثات", "عرض مخاطر الفيضانات", "تراجع"] : ["Compare with highest emissions", "Show flood risk", "Undo"];
+      suggestions = isArabic ? ["مقارنة بأعلى انبعاثات", "عرض مخاطر الفيضانات", "فحص جودة البيانات"] : ["Compare with highest emissions", "Show flood risk", "Check data quality"];
 
       return { reply, results, actions, actionCards, suggestions };
     }
@@ -931,7 +931,7 @@ export const mockAiEngine = {
       results = sortedByEmissions.slice(0, 4);
       actionCards = [
         { id: 'chart', label: isArabic ? 'مخطط الانبعاثات' : 'Emissions Chart', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART },
-        { id: 'undo', label: isArabic ? 'تراجع' : 'Undo', actionType: ACTION_TYPES.UNDO_ACTION }
+        { id: 'print', label: isArabic ? 'طباعة التقرير' : 'Print Report', actionType: ACTION_TYPES.EXPORT_DATA }
       ];
       suggestions = isArabic ? ["عرض استهلاك المياه", "مقارنة بالمنشآت القريبة"] : ["Show water consumption", "Compare nearby"];
       return { reply, results, actions, actionCards, suggestions };
@@ -1134,19 +1134,16 @@ export const mockAiEngine = {
       return { reply, actions };
     }
 
-    // =========================================================
-    // 16. REPORT & EXPORT INTENTS
-    // =========================================================
-    if (['export', 'download', 'csv', 'excel', 'pdf', 'generate report', 'create report', 'management summary', 'executive summary'].some(w => q.includes(w))) {
-      const format = q.includes('csv') ? 'csv' : q.includes('excel') ? 'excel' : 'pdf';
+    if (['export', 'print', 'download', 'csv', 'excel', 'pdf', 'generate report', 'create report', 'management summary', 'executive summary', 'print report'].some(w => q.includes(w))) {
+      const format = 'pdf';
       actions.push({ type: ACTION_TYPES.EXPORT_DATA, params: { format } });
 
       reply = isArabic
-        ? `تم إنشاء تقرير البيانات التقييمي بصيغة **${format.toUpperCase()}** بنجاح.`
-        : `Generated Executive Spatial Risk & Operational Report (**${format.toUpperCase()}** format). Ready for immediate download.`;
+        ? `تم إنشاء تقرير البيانات التقييمي بنجاح. يمكنك طباعته أو حفظه كـ PDF.`
+        : `Generated Executive Spatial Risk & Operational Report. Ready for immediate printing.`;
 
       actionCards = [
-        { id: 'dl', label: `Download ${format.toUpperCase()}`, actionType: ACTION_TYPES.EXPORT_DATA, params: { format } }
+        { id: 'print', label: isArabic ? `طباعة التقرير` : `Print Executive Report`, actionType: ACTION_TYPES.EXPORT_DATA, params: { format } }
       ];
       return { reply, actions, actionCards };
     }
@@ -1189,9 +1186,9 @@ export const mockAiEngine = {
       results = [targetFacility];
       actionCards = [
         { id: 'view_map', label: isArabic ? 'عرض على الخريطة' : 'View on Map', actionType: ACTION_TYPES.MAP_FLY_TO, params: { lat: targetFacility.lat, lng: targetFacility.lng, zoom: 17 } },
-        { id: 'undo', label: isArabic ? 'تراجع' : 'Undo', actionType: ACTION_TYPES.UNDO_ACTION }
+        { id: 'print', label: isArabic ? 'طباعة التقرير' : 'Print Report', actionType: ACTION_TYPES.EXPORT_DATA }
       ];
-      suggestions = isArabic ? ["لماذا هذه المنشأة عالية الخطورة؟", "مقارنة التقييمات", "تراجع"] : ["Why is this high risk?", "Compare ratings", "Undo"];
+      suggestions = isArabic ? ["لماذا هذه المنشأة عالية الخطورة؟", "مقارنة التقييمات", "فحص جودة البيانات"] : ["Why is this high risk?", "Compare ratings", "Check data quality"];
 
       return { reply, results, actions, actionCards, suggestions };
     }
@@ -1222,7 +1219,7 @@ export const mockAiEngine = {
         ? `تم تطبيق الفلتر الجغرافي لـ **${matchedDistrict.name}** والتركيز على الخريطة. تتوفر ${results.length} منشآت.`
         : `Applied **${matchedDistrict.name}** geographic sector filter and zoomed map. Found ${results.length} active facilities.`;
 
-      suggestions = isArabic ? ["عرض المستشفيات الأكثر خطورة", "عرض المدارس", "تراجع"] : ["Show highest risk facility", "Show schools", "Undo"];
+      suggestions = isArabic ? ["عرض المستشفيات الأكثر خطورة", "عرض المدارس", "عرض الانبعاثات"] : ["Show highest risk facility", "Show schools", "Show emissions"];
       return { reply, results, actions, suggestions };
     }
 

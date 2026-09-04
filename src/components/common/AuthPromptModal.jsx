@@ -12,13 +12,13 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-md">
+      <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/60 backdrop-blur-md pointer-events-auto cursor-default">
         <motion.div
           initial={{ opacity: 0, scale: 0.92, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.92, y: 10 }}
           transition={{ duration: 0.2 }}
-          className={`relative w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border flex flex-col overflow-hidden ${
+          className={`relative w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border flex flex-col overflow-hidden pointer-events-auto cursor-default ${
             isDarkMode 
               ? 'bg-[#0b132b]/95 border-slate-700/80 text-white shadow-[0_20px_50px_rgba(0,0,0,0.8)]' 
               : 'bg-white border-slate-200/90 text-slate-900 shadow-[0_20px_50px_rgba(33,90,158,0.2)]'
@@ -55,8 +55,8 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
           {/* Body Text */}
           <p className={`text-sm leading-relaxed mb-6 ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
             {isArabic 
-              ? `للحصول على التخصيص الكامل وحفظ الاستعلامات وتنزيل التقارير المكانية، يرجى تسجيل الدخول كـ "مستخدم مسجل".`
-              : `To access advanced analytics, download executive spatial reports, and save custom locations, please sign in as a Registered User.`}
+              ? `للحصول على التخصيص الكامل وحفظ الاستعلامات في حسابك الشخصي، يرجى تسجيل الدخول كـ "مستخدم مسجل".`
+              : `To save custom locations and manage your multi-session history, please sign in as a Registered User.`}
           </p>
 
           {/* Features Preview List */}

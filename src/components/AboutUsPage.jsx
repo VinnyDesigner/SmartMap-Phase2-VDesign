@@ -8,10 +8,10 @@ import { useTheme } from '../contexts/ThemeContext';
 
 function SectionCard({ icon: Icon, title, description, isDarkMode }) {
   return (
-    <div className={`rounded-2xl p-6 shadow-sm border flex gap-5 items-start transition-shadow ${
-      isDarkMode ? 'bg-[#0f1b38] border-slate-700/70 text-white shadow-md' : 'bg-white border-gray-100'
+    <div className={`rounded-2xl p-6 shadow-sm border flex gap-5 items-start transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#0f1932] border-slate-800 text-white shadow-md' : 'bg-white border-slate-200/90 shadow-2xs'
     }`}>
-      <div className={`p-3 rounded-full shrink-0 mt-1 ${isDarkMode ? 'bg-[#1e2e5a] text-[#00e5ff]' : 'bg-blue-50 text-dge-tech'}`}>
+      <div className={`p-3 rounded-2xl shrink-0 mt-1 ${isDarkMode ? 'bg-[#1a274a] text-[#00e5ff]' : 'bg-blue-50 text-dge-tech'}`}>
         <Icon className="w-6 h-6" />
       </div>
       <div>
@@ -24,10 +24,10 @@ function SectionCard({ icon: Icon, title, description, isDarkMode }) {
 
 function MissionCard({ icon: Icon, title, description, isDarkMode }) {
   return (
-    <div className={`rounded-3xl p-8 shadow-sm border flex flex-col items-center text-center transition-shadow flex-1 ${
-      isDarkMode ? 'bg-[#0f1b38] border-slate-700/70 text-white shadow-md' : 'bg-white border-gray-100'
+    <div className={`rounded-3xl p-8 shadow-sm border flex flex-col items-center text-center transition-colors duration-300 flex-1 ${
+      isDarkMode ? 'bg-[#0f1932] border-slate-800 text-white shadow-md' : 'bg-white border-slate-200/90 shadow-2xs'
     }`}>
-      <div className={`p-4 rounded-full mb-6 ${isDarkMode ? 'bg-[#1e2e5a] text-[#00e5ff]' : 'bg-blue-50 text-dge-tech'}`}>
+      <div className={`p-4 rounded-2xl mb-6 ${isDarkMode ? 'bg-[#1a274a] text-[#00e5ff]' : 'bg-blue-50 text-dge-tech'}`}>
         <Icon className="w-6 h-6" />
       </div>
       <h4 className={`text-lg font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{title}</h4>
@@ -45,23 +45,23 @@ export default function AboutUsPage({ onNavigate }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`absolute inset-0 z-20 flex flex-col overflow-hidden pt-24 transition-colors duration-300 ${
-        isDarkMode ? 'bg-[#0b132b] text-white' : 'bg-white text-slate-900'
+      className={`absolute inset-0 z-20 flex flex-col overflow-hidden pt-20 md:pt-24 transition-colors duration-300 ${
+        isDarkMode ? 'bg-[#060b19] text-white' : 'bg-slate-50 text-slate-900'
       }`}
     >
       <div className="relative z-10 w-full flex-1 overflow-y-auto">
         
         {/* Hero Section */}
-        <section className="max-w-6xl mx-auto px-8 py-20 flex flex-col md:flex-row items-center gap-12">
+        <section className="max-w-6xl mx-auto px-6 sm:px-8 py-16 md:py-20 flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 space-y-6">
-            <h1 className={`text-6xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{t('About Us', 'من نحن')}</h1>
+            <h1 className={`text-5xl md:text-6xl font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{t('About Us', 'من نحن')}</h1>
             <p className={`text-[17px] leading-relaxed max-w-lg ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
               {t("A collaborative initiative uniting Abu Dhabi's leading government technology organizations to deliver seamless, integrated public services across Abu Dhabi.", "مبادرة تعاونية توحد المنظمات التكنولوجية الحكومية الرائدة في أبوظبي لتقديم خدمات عامة متكاملة وسلسة عبر أبوظبي.")}
             </p>
           </div>
-          <div className="flex-1 w-full h-[320px] rounded-[32px] bg-gradient-to-br from-blue-900/50 to-slate-900 relative overflow-hidden shadow-inner">
+          <div className="flex-1 w-full h-[320px] rounded-[32px] bg-gradient-to-br from-[#063360] to-[#102a4e] relative overflow-hidden shadow-inner">
             <div className="absolute inset-0 opacity-40 bg-[url('https://images.unsplash.com/photo-1512632578888-169bbbc64f33?auto=format&fit=crop&q=80&w=1600')] bg-cover bg-center" />
-            <div className="absolute inset-0 bg-gradient-to-t from-dge-reliable/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#063360]/80 to-transparent" />
             <div className="absolute bottom-8 left-8 bg-white/90 p-2 rounded-full shadow-lg">
               <MapPin className="w-5 h-5 text-dge-tech" />
             </div>
@@ -72,12 +72,12 @@ export default function AboutUsPage({ onNavigate }) {
         </section>
 
         {/* DGE Section */}
-        <section className={`py-24 transition-colors duration-300 ${isDarkMode ? 'bg-[#0a1128]' : 'bg-[#F8FAFC]'}`}>
-          <div className="max-w-6xl mx-auto px-8 flex flex-col md:flex-row gap-16 items-center">
+        <section className={`py-20 md:py-24 transition-colors duration-300 ${isDarkMode ? 'bg-[#0b132b]' : 'bg-[#F8FAFC]'}`}>
+          <div className="max-w-6xl mx-auto px-6 sm:px-8 flex flex-col md:flex-row gap-16 items-center">
             <div className="flex-1 space-y-6">
-              <h2 className="text-4xl font-extrabold text-dge-reliable leading-tight">{t('Department of Government Enablement', 'دائرة التمكين الحكومي')}</h2>
+              <h2 className={`text-3xl sm:text-4xl font-extrabold leading-tight ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{t('Department of Government Enablement', 'دائرة التمكين الحكومي')}</h2>
               <p className="text-sm font-bold text-dge-tech uppercase tracking-widest">{t('Abu Dhabi Government', 'حكومة أبوظبي')}</p>
-              <div className="space-y-4 text-[15px] text-slate-600 leading-relaxed">
+              <div className={`space-y-4 text-[15px] leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                 <p>
                   {t("The Department of Government Enablement (DGE) serves as a centralized government enabler, delivering high-quality services to Abu Dhabi government entities, employees, citizens, residents, and businesses.", "تعمل دائرة التمكين الحكومي (DGE) كممكن حكومي مركزي، حيث تقدم خدمات عالية الجودة للجهات الحكومية في أبوظبي، وموظفيها، والمواطنين، والمقيمين، والشركات.")}
                 </p>
@@ -85,7 +85,7 @@ export default function AboutUsPage({ onNavigate }) {
                   {t("As the team behind the teams, DGE drives Abu Dhabi's transformation into a future-ready, digitally advanced government by building shared platforms and capabilities. DGE leads the Abu Dhabi Government Digital Strategy 2023-2027, steering 100% digitalization and automation of government services and platforms. Abu Dhabi as a global digital government leader.", "بصفتها الفريق الداعم للفرق الأخرى، تقود الدائرة تحول أبوظبي نحو حكومة مستقبلية متقدمة رقميًا من خلال بناء منصات وقدرات مشتركة. وتقود الدائرة الاستراتيجية الرقمية لحكومة أبوظبي 2023-2027، وتوجه رقمنة وأتمتة الخدمات والمنصات الحكومية بنسبة 100٪. لتعزيز مكانة أبوظبي كقائد عالمي في مجال الحكومة الرقمية.")}
                 </p>
               </div>
-              <button className="mt-4 px-8 py-3.5 bg-[#3D52A0] text-white rounded-full font-semibold hover:bg-dge-reliable transition-colors flex items-center gap-2 shadow-md">
+              <button className="mt-4 px-8 py-3.5 bg-[#3D52A0] text-white rounded-full font-semibold hover:bg-dge-reliable transition-colors flex items-center gap-2 shadow-md cursor-pointer">
                 {t('Visit DGE Website', 'زيارة موقع الدائرة')} <ArrowRight className="w-4 h-4 rtl:-scale-x-100" />
               </button>
             </div>
@@ -94,45 +94,51 @@ export default function AboutUsPage({ onNavigate }) {
                 icon={Shield} 
                 title={t("Centralized Government Enabler", "ممكن حكومي مركزي")} 
                 description={t("Delivers high-quality services to Abu Dhabi government entities, employees, citizens, and residents.", "يقدم خدمات عالية الجودة للجهات الحكومية في أبوظبي والموظفين والمواطنين والمقيمين.")} 
+                isDarkMode={isDarkMode}
               />
               <SectionCard 
                 icon={Lightbulb} 
                 title={t("Smart Digital Government", "حكومة رقمية ذكية")} 
                 description={t("Leads the implementation of the Abu Dhabi Government Digital Strategy 2023-2027, driving digital transformation and automation.", "تقود تنفيذ الاستراتيجية الرقمية لحكومة أبوظبي 2023-2027، وتدفع بالتحول الرقمي والأتمتة.")} 
+                isDarkMode={isDarkMode}
               />
               <SectionCard 
                 icon={Users} 
                 title={t("Team Behind the Teams", "الفريق الداعم للفرق")} 
                 description={t("The driving force behind Abu Dhabi's transformation into a future-ready, digitally advanced government.", "القوة الدافعة وراء تحول أبوظبي إلى حكومة مستقبلية متقدمة رقميًا.")} 
+                isDarkMode={isDarkMode}
               />
             </div>
           </div>
         </section>
 
         {/* AD-SDI Section */}
-        <section className="bg-white py-24 transition-colors duration-300">
-          <div className="max-w-6xl mx-auto px-8 flex flex-col-reverse md:flex-row gap-16 items-center">
+        <section className={`py-20 md:py-24 transition-colors duration-300 ${isDarkMode ? 'bg-[#060b19]' : 'bg-white'}`}>
+          <div className="max-w-6xl mx-auto px-6 sm:px-8 flex flex-col-reverse md:flex-row gap-16 items-center">
             <div className="flex-1 space-y-4 w-full">
               <SectionCard 
                 icon={Layers} 
                 title={t("Geospatial Data Viewer", "عارض البيانات الجغرافية المكانية")} 
                 description={t("Provides easy access to view maps and analyze spatial data across Abu Dhabi.", "يوفر وصولاً سهلاً لعرض الخرائط وتحليل البيانات المكانية في جميع أنحاء أبوظبي.")} 
+                isDarkMode={isDarkMode}
               />
               <SectionCard 
                 icon={Database} 
                 title={t("Open Data Sharing", "مشاركة البيانات المفتوحة")} 
                 description={t("Facilitates the sharing and exchange of geospatial data among government entities and stakeholders.", "يسهل مشاركة وتبادل البيانات الجغرافية المكانية بين الجهات الحكومية وأصحاب المصلحة.")} 
+                isDarkMode={isDarkMode}
               />
               <SectionCard 
                 icon={Crosshair} 
                 title={t("Spatially Enabled Services", "الخدمات المدعمة مكانياً")} 
                 description={t("Promotes the increased GIS capabilities with easy and timely access to highly accurate spatial data.", "يعزز قدرات نظم المعلومات الجغرافية المتزايدة من خلال الوصول السهل والمناسب للبيانات المكانية عالية الدقة.")} 
+                isDarkMode={isDarkMode}
               />
             </div>
             <div className="flex-1 space-y-6">
-              <h2 className="text-4xl font-extrabold text-dge-reliable leading-tight">{t("Abu Dhabi Spatial Data Infrastructure", "البيانات المكانية لإمارة أبوظبي")}</h2>
+              <h2 className={`text-3xl sm:text-4xl font-extrabold leading-tight ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{t("Abu Dhabi Spatial Data Infrastructure", "البيانات المكانية لإمارة أبوظبي")}</h2>
               <p className="text-sm font-bold text-dge-tech uppercase tracking-widest">{t("AD-SDI Program", "برنامج البيانات المكانية")}</p>
-              <div className="space-y-4 text-[15px] text-slate-600 leading-relaxed">
+              <div className={`space-y-4 text-[15px] leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                 <p>
                   {t("Abu Dhabi Spatial Data Infrastructure (AD-SDI) is a government-wide network orchestrated by the Department of Government Enablement that enables the secure sharing and exchange of geospatial data among government entities and stakeholders.", "البيانات المكانية لإمارة أبوظبي (AD-SDI) هي شبكة حكومية تديرها دائرة التمكين الحكومي التي تمكن المشاركة الآمنة وتبادل البيانات الجغرافية المكانية بين الجهات الحكومية وأصحاب المصلحة.")}
                 </p>
@@ -143,7 +149,7 @@ export default function AboutUsPage({ onNavigate }) {
                   {t("The program supports spatially enabled e-government services through the seamless discovery, integration, and use of spatial data across the emirate.", "يدعم البرنامج خدمات الحكومة الإلكترونية الممكنة مكانيًا من خلال الاكتشاف والتكامل والاستخدام السلس للبيانات المكانية في جميع أنحاء الإمارة.")}
                 </p>
               </div>
-              <button className="mt-4 px-8 py-3.5 bg-[#3D52A0] text-white rounded-full font-semibold hover:bg-dge-reliable transition-colors flex items-center gap-2 shadow-md">
+              <button className="mt-4 px-8 py-3.5 bg-[#3D52A0] text-white rounded-full font-semibold hover:bg-dge-reliable transition-colors flex items-center gap-2 shadow-md cursor-pointer">
                 {t("Visit AD-SDI Portal", "زيارة بوابة البيانات المكانية")} <ArrowRight className="w-4 h-4 rtl:-scale-x-100" />
               </button>
             </div>
@@ -151,17 +157,17 @@ export default function AboutUsPage({ onNavigate }) {
         </section>
 
         {/* Mission Section */}
-        <section className="bg-[#F8FAFC] py-24 relative overflow-hidden">
+        <section className={`py-20 md:py-24 relative overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-[#0b132b]' : 'bg-[#F8FAFC]'}`}>
           {/* Subtle curved background lines */}
-          <svg className="absolute inset-0 w-full h-full text-slate-200/50 pointer-events-none" viewBox="0 0 1440 400" fill="none" preserveAspectRatio="none">
+          <svg className={`absolute inset-0 w-full h-full pointer-events-none ${isDarkMode ? 'text-slate-800/40' : 'text-slate-200/50'}`} viewBox="0 0 1440 400" fill="none" preserveAspectRatio="none">
             <path d="M0,200 C320,100 420,300 1440,150" stroke="currentColor" strokeWidth="2" fill="none" />
             <path d="M0,250 C400,350 800,100 1440,250" stroke="currentColor" strokeWidth="2" fill="none" />
           </svg>
           
-          <div className="max-w-6xl mx-auto px-8 relative z-10">
+          <div className="max-w-6xl mx-auto px-6 sm:px-8 relative z-10">
             <div className="text-center max-w-3xl mx-auto mb-16 space-y-6">
-              <h2 className="text-4xl font-extrabold text-dge-reliable">{t("Our Mission", "مهمتنا")}</h2>
-              <p className="text-lg text-dge-tech font-medium leading-relaxed">
+              <h2 className={`text-3xl sm:text-4xl font-extrabold ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>{t("Our Mission", "مهمتنا")}</h2>
+              <p className={`text-lg font-medium leading-relaxed ${isDarkMode ? 'text-[#00e5ff]' : 'text-dge-tech'}`}>
                 {t("GeoVision empowers smarter public services across Abu Dhabi by combining digital government innovation with geospatial intelligence.", "تمكّن جيوفيجين الخدمات العامة الذكية في جميع أنحاء أبوظبي من خلال الجمع بين الابتكار الحكومي الرقمي والذكاء الجغرافي المكاني.")}
               </p>
             </div>
@@ -170,30 +176,33 @@ export default function AboutUsPage({ onNavigate }) {
                 icon={MapPin} 
                 title={t("Accessible Services", "خدمات يسهل الوصول إليها")} 
                 description={t("Find healthcare and education facilities easily with our intuitive map interface.", "ابحث عن مرافق الرعاية الصحية والتعليم بسهولة باستخدام واجهة الخريطة البديهية الخاصة بنا.")} 
+                isDarkMode={isDarkMode}
               />
               <MissionCard 
                 icon={Database} 
                 title={t("Open Data", "بيانات مفتوحة")} 
                 description={t("Leverages government geospatial data to provide accurate, up-to-date information.", "يستفيد من البيانات الجغرافية المكانية الحكومية لتوفير معلومات دقيقة ومحدثة.")} 
+                isDarkMode={isDarkMode}
               />
               <MissionCard 
                 icon={Building} 
                 title={t("Smart Government", "حكومة ذكية")} 
                 description={t("Supports Abu Dhabi's journey toward a digitally transformed, intelligent government.", "يدعم رحلة أبوظبي نحو حكومة ذكية ومحولة رقميًا.")} 
+                isDarkMode={isDarkMode}
               />
             </div>
           </div>
         </section>
 
         {/* Ready to Explore Banner */}
-        <section className="py-16 px-8">
-          <div className="max-w-6xl mx-auto rounded-[32px] bg-dge-reliable overflow-hidden relative shadow-2xl flex flex-col md:flex-row items-center justify-between p-12 md:p-16">
+        <section className="py-16 px-6 sm:px-8">
+          <div className="max-w-6xl mx-auto rounded-[32px] bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] overflow-hidden relative shadow-2xl flex flex-col md:flex-row items-center justify-between p-8 sm:p-12 md:p-16 text-white">
             <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1546412414-8035e1776c9a?auto=format&fit=crop&q=80&w=1600')] bg-cover bg-center" />
-            <div className="absolute inset-0 bg-gradient-to-r from-dge-reliable via-dge-reliable/90 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#063360] via-[#215A9E]/90 to-transparent" />
             
             <div className="relative z-10 text-white space-y-4 max-w-lg">
-              <h2 className="text-4xl font-extrabold">{t("Ready to Explore?", "هل أنت جاهز للاستكشاف؟")}</h2>
-              <p className="text-lg text-white/80 leading-relaxed">
+              <h2 className="text-3xl sm:text-4xl font-extrabold">{t("Ready to Explore?", "هل أنت جاهز للاستكشاف؟")}</h2>
+              <p className="text-sm sm:text-base text-white/80 leading-relaxed">
                 {t("Discover nearby Healthcare & Wellness and Education services through our intelligent map platform.", "اكتشف خدمات الرعاية الصحية والتعليم القريبة من خلال منصة الخرائط الذكية الخاصة بنا.")}
               </p>
             </div>
@@ -201,7 +210,7 @@ export default function AboutUsPage({ onNavigate }) {
             <div className="relative z-10 mt-8 md:mt-0 shrink-0">
               <button 
                 onClick={() => onNavigate?.('explorer')}
-                className="px-8 py-4 bg-white text-dge-reliable rounded-full font-bold hover:bg-gray-50 transition-colors shadow-lg flex items-center gap-2"
+                className="px-8 py-4 bg-white text-[#215A9E] rounded-full font-bold hover:bg-gray-50 transition-colors shadow-lg flex items-center gap-2 cursor-pointer"
               >
                 {t("Open GeoVision", "افتح منصة جيوفيجين")} <ArrowRight className="w-5 h-5 rtl:-scale-x-100" />
               </button>
@@ -210,8 +219,10 @@ export default function AboutUsPage({ onNavigate }) {
         </section>
 
         {/* Footer */}
-        <footer className="bg-[#F8FAFC] pt-16 pb-8 border-t border-gray-200">
-          <div className="max-w-6xl mx-auto px-8">
+        <footer className={`pt-16 pb-8 border-t transition-colors duration-300 ${
+          isDarkMode ? 'bg-[#040814] border-slate-800 text-slate-400' : 'bg-[#F8FAFC] border-gray-200 text-slate-600'
+        }`}>
+          <div className="max-w-6xl mx-auto px-6 sm:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
               
               {/* Col 1 */}
@@ -221,11 +232,11 @@ export default function AboutUsPage({ onNavigate }) {
                      G
                    </div>
                    <div>
-                     <div className="font-extrabold text-dge-reliable text-lg leading-tight">GeoVision</div>
-                     <div className="text-[10px] text-dge-grey font-semibold uppercase tracking-wider">Abu Dhabi Spatial Data<br/>Infrastructure</div>
+                     <div className={`font-extrabold text-lg leading-tight ${isDarkMode ? 'text-white' : 'text-dge-reliable'}`}>GeoVision</div>
+                     <div className={`text-[10px] font-semibold uppercase tracking-wider ${isDarkMode ? 'text-slate-400' : 'text-dge-grey'}`}>Abu Dhabi Spatial Data<br/>Infrastructure</div>
                    </div>
                 </div>
-                <p className="text-sm text-slate-500 leading-relaxed">
+                <p className={`text-sm leading-relaxed ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
                   {t("Providing instant access to Healthcare & Wellness and Education services across Abu Dhabi.", "توفير وصول فوري لخدمات الرعاية الصحية والتعليم في جميع أنحاء أبوظبي.")}
                 </p>
               </div>
@@ -233,17 +244,17 @@ export default function AboutUsPage({ onNavigate }) {
               {/* Col 2 */}
               <div className="space-y-6">
                 <h4 className="text-xs font-bold text-dge-tech uppercase tracking-widest">{t("Quick Links", "روابط سريعة")}</h4>
-                <ul className="space-y-3 text-sm text-slate-600 font-medium">
-                  <li><a href="#" className="hover:text-[#3D52A0] transition-colors flex items-center gap-2"><ArrowRight className="w-3 h-3 text-dge-tech rtl:-scale-x-100"/> GeoVision</a></li>
-                  <li><a href="#" className="hover:text-[#3D52A0] transition-colors flex items-center gap-2"><ArrowRight className="w-3 h-3 text-dge-tech rtl:-scale-x-100"/> {t("AD-SDI Portal", "بوابة البيانات المكانية")}</a></li>
-                  <li><a href="#" className="hover:text-[#3D52A0] transition-colors flex items-center gap-2"><ArrowRight className="w-3 h-3 text-dge-tech rtl:-scale-x-100"/> {t("DGE Website", "موقع دائرة التمكين الحكومي")}</a></li>
+                <ul className={`space-y-3 text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                  <li><a href="#" className="hover:text-[#3D52A0] dark:hover:text-[#00e5ff] transition-colors flex items-center gap-2"><ArrowRight className="w-3 h-3 text-dge-tech rtl:-scale-x-100"/> GeoVision</a></li>
+                  <li><a href="#" className="hover:text-[#3D52A0] dark:hover:text-[#00e5ff] transition-colors flex items-center gap-2"><ArrowRight className="w-3 h-3 text-dge-tech rtl:-scale-x-100"/> {t("AD-SDI Portal", "بوابة البيانات المكانية")}</a></li>
+                  <li><a href="#" className="hover:text-[#3D52A0] dark:hover:text-[#00e5ff] transition-colors flex items-center gap-2"><ArrowRight className="w-3 h-3 text-dge-tech rtl:-scale-x-100"/> {t("DGE Website", "موقع دائرة التمكين الحكومي")}</a></li>
                 </ul>
               </div>
 
               {/* Col 3 */}
               <div className="space-y-6">
                 <h4 className="text-xs font-bold text-dge-tech uppercase tracking-widest">{t("Data Themes", "موضوعات البيانات")}</h4>
-                <ul className="space-y-3 text-sm text-slate-600 font-medium">
+                <ul className={`space-y-3 text-sm font-medium ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500"/> {t("Healthcare & Wellness", "الرعاية الصحية")}</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-blue-500"/> {t("Education", "التعليم")}</li>
                 </ul>
@@ -251,16 +262,17 @@ export default function AboutUsPage({ onNavigate }) {
 
               {/* Col 4 (Map Silhouette) */}
               <div className="flex justify-end opacity-20 hover:opacity-40 transition-opacity">
-                <svg viewBox="0 0 100 100" className="w-32 h-32 fill-dge-reliable">
+                <svg viewBox="0 0 100 100" className={`w-32 h-32 ${isDarkMode ? 'fill-white' : 'fill-dge-reliable'}`}>
                    <path d="M 20,40 C 30,35 40,30 50,40 C 60,50 70,45 80,40 C 85,50 80,60 70,70 C 60,80 40,75 30,65 C 20,55 10,50 20,40 Z" />
-                   {/* Dotted pattern overlay */}
                 </svg>
               </div>
 
             </div>
 
-            <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500 font-medium">
-              <div>{t("© 2023 Abu Dhabi Spatial Data Infrastructure - AD-SDI. GeoVision", "© 2023 البيانات المكانية لإمارة أبوظبي - AD-SDI. جيوفيجين")}</div>
+            <div className={`border-t pt-8 flex flex-col md:flex-row justify-between items-center text-xs font-medium ${
+              isDarkMode ? 'border-slate-800 text-slate-400' : 'border-gray-200 text-slate-500'
+            }`}>
+              <div>{t("© 2026 Abu Dhabi Spatial Data Infrastructure - AD-SDI. GeoVision", "© 2026 البيانات المكانية لإمارة أبوظبي - AD-SDI. جيوفيجين")}</div>
               <div className="flex items-center gap-2 mt-4 md:mt-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                 {t("API Operational", "الأنظمة تعمل بكفاءة")}

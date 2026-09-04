@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sun, Moon, User, HelpCircle, Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dgeLogo from '../assets/dge-logo.png';
@@ -7,29 +7,47 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import LanguageSelector from './common/LanguageSelector';
 
-
-
 export default function BrandHeader({ onNavigate, currentView, userAuth, onSignOut, onSignIn }) {
   const { isArabic, setIsArabic, t } = useLanguage();
   const { isDarkMode, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [pendingLanguage, setPendingLanguage] = useState(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = (e) => {
+      const target = e.target;
+      const scrollTop = target === document || target === window ? window.scrollY : (target && target.scrollTop !== undefined ? target.scrollTop : 0);
+      if (scrollTop > 15) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+    return () => window.removeEventListener('scroll', handleScroll, true);
+  }, []);
 
   const isLoggedIn = userAuth?.isLoggedIn;
 
   return (
     <>
       {/* Top SDI Brand Line */}
-      <div className="absolute top-0 left-0 right-0 h-1.5 z-50 bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed]" />
+      <div className="fixed top-0 left-0 right-0 h-1.5 z-50 bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed]" />
 
-      <header className={`absolute top-1.5 left-0 right-0 z-40 px-4 md:px-8 h-14 md:h-16 flex items-center justify-between pointer-events-auto transition-all duration-300 ${
+      <header className={`fixed top-1.5 left-0 right-0 z-40 px-4 md:px-8 h-14 md:h-16 flex items-center justify-between pointer-events-auto transition-all duration-300 ${
         currentView === 'explorer'
           ? isDarkMode 
             ? 'bg-[#060a12] border-b border-slate-800/90 text-white shadow-md' 
             : 'bg-white border-b border-slate-200 text-slate-900 shadow-xs'
-          : isDarkMode 
-            ? 'bg-transparent border-b border-transparent text-white' 
-            : 'bg-transparent border-b border-transparent text-slate-800'
+          : isScrolled
+            ? isDarkMode
+              ? 'bg-[#060a12]/95 backdrop-blur-md border-b border-slate-800/90 text-white shadow-lg'
+              : 'bg-white/95 backdrop-blur-md border-b border-slate-200/90 text-slate-900 shadow-md'
+            : isDarkMode 
+              ? 'bg-transparent border-b border-transparent text-white' 
+              : 'bg-transparent border-b border-transparent text-slate-800'
       }`}>
         {/* Left: Logos */}
         <div className="flex items-center pointer-events-auto gap-3 md:gap-4 h-full">

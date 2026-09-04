@@ -225,7 +225,7 @@ export default function CustomCursor({ mouseX, mouseY, isSearchFocused, isHoveri
         isVisible={!(isSearchFocused || isHoveringSearch)} 
       />
       <motion.div
-        className="fixed top-0 left-0 z-50 pointer-events-none"
+        className="fixed top-0 left-0 z-[1001] pointer-events-none"
         style={{
           x: cursorX,
           y: cursorY,

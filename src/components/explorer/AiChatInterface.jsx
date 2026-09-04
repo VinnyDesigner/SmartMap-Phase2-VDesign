@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Bot, User, MapPin, GraduationCap, PlusSquare, TreePine, Bus, 
-  Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight 
+  Bookmark, History, MessageSquare, Zap, Trash2, ExternalLink, RotateCcw, ArrowRight, Pencil, Check, X
 } from 'lucide-react';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine } from '../../services/mockAiEngine';
@@ -112,18 +112,51 @@ import AuthPromptModal from '../common/AuthPromptModal';
 
 export default function AiChatInterface({ explorerState, setExplorerState, onNavigate }) {
   const { t, isArabic, setIsArabic } = useLanguage();
-  const { isDarkMode } = useTheme();
+  const { isDarkMode, toggleTheme, setTheme } = useTheme();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [activeStepText, setActiveStepText] = useState(null);
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'saved' | 'history'
   const [saveSuccessToast, setSaveSuccessToast] = useState(null);
   const [authModalState, setAuthModalState] = useState({ isOpen: false, featureName: '' });
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editingText, setEditingText] = useState('');
   const scrollContainerRef = useRef(null);
 
   const isLoggedIn = Boolean(explorerState?.userAuth?.isLoggedIn || explorerState?.isLoggedIn || explorerState?.user?.isAuthenticated);
 
-  const handleSaveSearchClick = (queryText) => {
+  const handleDeleteUserMessage = (msgIndex) => {
+    setExplorerState(prev => {
+      const history = [...(prev.chatHistory || [])];
+      // Remove target user query and its corresponding assistant response if present
+      if (history[msgIndex + 1] && history[msgIndex + 1].role === 'assistant') {
+        history.splice(msgIndex, 2);
+      } else {
+        history.splice(msgIndex, 1);
+      }
+      return { ...prev, chatHistory: history };
+    });
+  };
+
+  const handleSaveEditedMessage = (msgId, msgIndex) => {
+    if (!editingText.trim()) return;
+    const newQuery = editingText.trim();
+    setEditingMsgId(null);
+
+    setExplorerState(prev => {
+      const history = [...(prev.chatHistory || [])];
+      if (history[msgIndex + 1] && history[msgIndex + 1].role === 'assistant') {
+        history.splice(msgIndex, 2);
+      } else {
+        history.splice(msgIndex, 1);
+      }
+      return { ...prev, chatHistory: history };
+    });
+
+    handleSubmit(null, newQuery);
+  };
+
+  const handleSaveSearchClick = (customText) => {
     if (!isLoggedIn) {
       setAuthModalState({
         isOpen: true,
@@ -132,18 +165,30 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       return;
     }
 
+    const history = explorerState?.chatHistory || [];
+    const lastUserMsg = [...history].reverse().find(m => m.role === 'user');
+    const lastAssistantMsg = [...history].reverse().find(m => m.role === 'assistant');
+
+    const queryText = customText || lastUserMsg?.content || lastAssistantMsg?.content || (isArabic ? 'استعلام مكاني مخصص' : 'Custom Spatial Search');
+    const cleanTitle = queryText.replace(/\*\*/g, '').trim();
+
     const newSavedItem = {
       id: 'saved-' + Date.now(),
-      name: queryText || (isArabic ? 'استعلام مكاني مخصص' : 'Custom Spatial Search'),
+      name: cleanTitle,
+      query: lastUserMsg?.content || cleanTitle,
+      messages: history.length > 0 ? [...history] : null,
       district: explorerState?.activeContext?.district || 'Abu Dhabi Sector',
       facilityType: explorerState?.activeContext?.category || 'ALL',
       savedAt: 'Just now'
     };
 
-    setExplorerState(prev => ({
-      ...prev,
-      savedLocations: [newSavedItem, ...(prev.savedLocations || SEED_SAVED_LOCATIONS)]
-    }));
+    setExplorerState(prev => {
+      const currentList = prev.savedLocations || SEED_SAVED_LOCATIONS;
+      return {
+        ...prev,
+        savedLocations: [newSavedItem, ...currentList]
+      };
+    });
 
     setSaveSuccessToast(isArabic ? "تم حفظ البحث في المفضلة 🔖" : "Search saved to Favorites! 🔖");
     setTimeout(() => setSaveSuccessToast(null), 3000);
@@ -303,22 +348,6 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     if (!forcedQuery) setInputValue('');
     setActiveTab('chat'); // Switch to chat view when submitting a query
 
-    // Check if query is a restricted analytics, simulation, or report request for Guest user
-    const RESTRICTED_GUEST_KEYWORDS = [
-      'compare', 'nearby facilities', 'trend', 'line', 'simulate', 'scenario', 'flood', 
-      'report', 'download', 'export', 'water', 'emissions', 'consumption', 'analytics',
-      'مقارنة', 'منشآت', 'مسار', 'محاكاة', 'سيناريو', 'فيضان', 'تقرير', 'تحميل', 'تصدير', 'استهلاك', 'انبعاثات', 'تحليلات'
-    ];
-    const isAnalyticsQuery = RESTRICTED_GUEST_KEYWORDS.some(k => queryToProcess.toLowerCase().includes(k));
-
-    if (isAnalyticsQuery && !isLoggedIn) {
-      setAuthModalState({
-        isOpen: true,
-        featureName: isArabic ? 'تحليلات البيانات المكانية المتقدمة والسجل' : 'Advanced Analytics & Spatial Intelligence'
-      });
-      return;
-    }
-
     // 1. Add User Message
     const userMsgId = `msg-user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const userMsg = { id: userMsgId, role: 'user', content: queryToProcess };
@@ -327,6 +356,198 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       ...prev,
       chatHistory: [...(prev.chatHistory || []), userMsg]
     }));
+
+    const qLower = queryToProcess.toLowerCase().trim();
+
+    // =========================================================
+    // DIRECT CHAT COMMAND INTENTS: PRINT, THEME, MAP, BROWSE
+    // =========================================================
+    
+    // A. DIRECT PRINT COMMAND
+    if (['print', 'print report', 'print page', 'print screen', 'طباعة', 'اطبع', 'تصدير التقرير', 'طباعة التقرير'].some(k => qLower === k || qLower.startsWith(k))) {
+      printExecutiveReport();
+      const printReplyMsg = {
+        id: `msg-ast-${Date.now()}`,
+        role: 'assistant',
+        content: isArabic 
+          ? "جاري إرسال الواجهة التفاعلية والتحليلات الحالية إلى طابعة الجهاز... 🖨️" 
+          : "Opening native print window for current spatial view & active analytics... 🖨️"
+      };
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: [...(prev.chatHistory || []), printReplyMsg]
+      }));
+      return;
+    }
+
+    // B. DIRECT THEME TOGGLE / MODE SWITCH COMMAND
+    const normText = qLower.replace(/changin\s*g/g, 'changing').trim();
+    const isThemeQuery = 
+      normText.includes('theme') || 
+      normText.includes('مظهر') || 
+      normText.includes('ثيم') ||
+      (normText.includes('mode') && (normText.includes('dark') || normText.includes('light') || normText.includes('change') || normText.includes('switch'))) ||
+      ['dark mode', 'light mode', 'dark theme', 'light theme', 'night mode', 'وضع داكن', 'الوضع المظلم', 'الوضع الفاتح', 'الوضع الداكن', 'تغيير المظهر', 'تغيير النمط'].some(k => normText.includes(k));
+
+    if (isThemeQuery) {
+      let targetMode = null; // 'dark' | 'light' | null
+      const wantDark = normText.includes('dark') || normText.includes('مظلم') || normText.includes('داكن') || normText.includes('ليل');
+      const wantLight = normText.includes('light') || normText.includes('فاتح') || normText.includes('نهار');
+
+      if (wantDark && !wantLight) {
+        targetMode = 'dark';
+      } else if (wantLight && !wantDark) {
+        targetMode = 'light';
+      } else if (normText.includes('to dark') || normText.includes('to dark mode')) {
+        targetMode = 'dark';
+      } else if (normText.includes('to light') || normText.includes('to light mode')) {
+        targetMode = 'light';
+      }
+
+      if (setTheme && targetMode) {
+        setTheme(targetMode);
+      } else if (toggleTheme) {
+        toggleTheme();
+      }
+
+      const activeIsDark = targetMode === 'dark' ? true : targetMode === 'light' ? false : !isDarkMode;
+
+      const themeReplyMsg = {
+        id: `msg-ast-${Date.now()}`,
+        role: 'assistant',
+        content: isArabic 
+          ? `تم تغيير مظهر التطبيق إلى **${activeIsDark ? 'الوضع الداكن 🌙' : 'الوضع الفاتح ☀️'}** بنجاح.` 
+          : `Switched application color theme to **${activeIsDark ? 'Dark Mode 🌙' : 'Light Mode ☀️'}**.`
+      };
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: [...(prev.chatHistory || []), themeReplyMsg]
+      }));
+      return;
+    }
+
+    // C. DIRECT MAP BASEMAP SWITCH COMMAND
+    if (['change map', 'switch map', 'change basemap', 'switch basemap', 'satellite view', 'satellite map', 'dark map', 'street map', 'topo map', 'تغيير الخريطة', 'الخريطة السحابية', 'خريطة الأقمار الصناعية', 'الخريطة المظلمة'].some(k => qLower.includes(k))) {
+      let targetBasemap = 'satellite';
+      if (qLower.includes('dark') || qLower.includes('مظلمة')) targetBasemap = 'dark';
+      else if (qLower.includes('street') || qLower.includes('تخطيطية')) targetBasemap = 'streets';
+      else if (qLower.includes('topo') || qLower.includes('تضاريس')) targetBasemap = 'topo';
+
+      setExplorerState(prev => ({
+        ...prev,
+        activeBasemap: targetBasemap,
+        basemap: targetBasemap
+      }));
+
+      const mapReplyMsg = {
+        id: `msg-ast-${Date.now()}`,
+        role: 'assistant',
+        content: isArabic 
+          ? `تم تغيير الخريطة الأساسية إلى الخريطة المطلوبة (**${targetBasemap}**). 🗺️` 
+          : `Switched active map view to **${targetBasemap.toUpperCase()}**. 🗺️`
+      };
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: [...(prev.chatHistory || []), mapReplyMsg]
+      }));
+      return;
+    }
+
+    // D. DIRECT LANGUAGE SWITCH COMMAND
+    const normLangText = qLower.replace(/langauage|langauge|langauge/g, 'language').trim();
+    const isLangQuery = 
+      normLangText.includes('language') || 
+      normLangText.includes('لغة') || 
+      normLangText.includes('تغيير اللغة') ||
+      normLangText.includes('arabic') || 
+      normLangText.includes('english') || 
+      normLangText.includes('عربي') || 
+      normLangText.includes('العربية') || 
+      normLangText.includes('إنجليزية') || 
+      normLangText.includes('الإنجليزية') ||
+      ['change language', 'switch language', 'toggle language', 'change to arabic', 'change to english', 'arabic', 'english'].some(k => normLangText === k || normLangText.includes(k));
+
+    if (isLangQuery) {
+      let targetLang = null; // 'ar' | 'en' | null
+      const wantArabic = normLangText.includes('arabic') || normLangText.includes('عربي') || normLangText.includes('العربية');
+      const wantEnglish = normLangText.includes('english') || normLangText.includes('إنجليزية') || normLangText.includes('الإنجليزية');
+
+      if (wantArabic && !wantEnglish) {
+        targetLang = 'ar';
+      } else if (wantEnglish && !wantArabic) {
+        targetLang = 'en';
+      }
+
+      const nextIsArabic = targetLang ? (targetLang === 'ar') : !isArabic;
+      if (setIsArabic) {
+        setIsArabic(nextIsArabic);
+      }
+
+      const langReplyMsg = {
+        id: `msg-ast-${Date.now()}`,
+        role: 'assistant',
+        content: nextIsArabic 
+          ? "تم تغيير لغة التطبيق إلى **اللغة العربية 🇦🇪** بنجاح." 
+          : "Switched application language to **English 🇬🇧**."
+      };
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: [...(prev.chatHistory || []), langReplyMsg]
+      }));
+      return;
+    }
+
+    // D. DIRECT BROWSE / NAVIGATION COMMAND
+    if (['browse page', 'go to about us', 'about us page', 'about page', 'help page', 'go to help', 'open help', 'open about us', 'تصفح الصفحات', 'عن المنصة', 'صفحة المساعدة', 'عرض الخريطة', 'map view', 'go to map'].some(k => qLower.includes(k))) {
+      let targetView = 'explorer';
+      if (qLower.includes('about') || qLower.includes('من نحن')) targetView = 'about';
+      else if (qLower.includes('help') || qLower.includes('مساعدة')) targetView = 'help';
+      else if (qLower.includes('map') || qLower.includes('explorer') || qLower.includes('خريطة') || qLower.includes('رئيسية')) targetView = 'explorer';
+
+      if (onNavigate) onNavigate(targetView);
+
+      const navReplyMsg = {
+        id: `msg-ast-${Date.now()}`,
+        role: 'assistant',
+        content: isArabic 
+          ? `تم الانتقال إلى صفحة **${targetView === 'about' ? 'عن المنصة' : targetView === 'help' ? 'المساعدة' : 'الخريطة الرئيسية'}** بنجاح. 🚀` 
+          : `Navigated to **${targetView.toUpperCase()}** screen. 🚀`
+      };
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: [...(prev.chatHistory || []), navReplyMsg]
+      }));
+      return;
+    }
+
+    // E. DIRECT LOCATION CAPTURE / PERMISSION MODAL COMMAND
+    const cleanQ = qLower.replace(/[.\s]+$/g, '').trim();
+    const isLocQuery = [
+      'allow location capture', 'enable location access', 'location access', 'allow location', 
+      'enable location', 'capture location', 'location permission', 'show location modal', 
+      'open location modal', 'get location', 'gps location', 'location popup', 'location modal',
+      'enable location...', 'تفعيل تحديد الموقع', 'سماح الوصول للموقع', 'تحديد الموقع', 'إذن الموقع'
+    ].some(k => cleanQ.includes(k) || k.includes(cleanQ) || qLower.includes(k));
+
+    if (isLocQuery) {
+      setExplorerState(prev => ({
+        ...prev,
+        showLocationModal: true
+      }));
+
+      const locReplyMsg = {
+        id: `msg-ast-${Date.now()}`,
+        role: 'assistant',
+        content: isArabic 
+          ? "تم فتح نافذة طلب تفعيل تحديد الموقع الجغرافي (GPS). يرجى منح الإذن أو اختيار الإحداثيات المرجعية. 📍" 
+          : "Opening **Location Access Permission** modal. Please grant GPS access or choose Abu Dhabi reference coordinates. 📍"
+      };
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: [...(prev.chatHistory || []), locReplyMsg]
+      }));
+      return;
+    }
 
     // 2. Set Thinking / Processing State with Realistic 4-Step GIS Reasoning Sequence
     setIsTyping(true);
@@ -396,103 +617,33 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }
   };
 
-  const downloadDummyExecutiveReport = (reportTitle = 'Abu_Dhabi_Spatial_Executive_Report_2026') => {
-    const content = `========================================================================
-ABU DHABI SPATIAL DATA INFRASTRUCTURE (AD-SDI)
-DEPARTMENT OF GOVERNMENT ENABLEMENT (DGE)
-EXECUTIVE SPATIAL INTELLIGENCE REPORT 2026
-========================================================================
-
-Report Title: ${reportTitle}
-Generated For: H.E. Eng. Ahmed Al-Mansoori (UAE PASS Verified)
-Timestamp: ${new Date().toLocaleString()}
-Coordinate Reference System: WGS 84 / UTM Zone 40N (EPSG:32640)
-
-------------------------------------------------------------------------
-1. EXECUTIVE SUMMARY
-------------------------------------------------------------------------
-Spatial analysis indicates Mussafah Industrial Hub carbon emissions exceed 
-KIZAD industrial area by 17% (+14,000 tCO2e/yr). 
-
-Compound risk indexing places Sheikh Shakbout Medical City (SSMC) at High 
-Risk level (78/100) due to 1.5m coastal storm surge buffer proximity.
-
-------------------------------------------------------------------------
-2. KEY SPATIAL METRICS & HAZARDS
-------------------------------------------------------------------------
-- Mussafah Industrial Emissions: 98,000 tCO2e/yr
-- KIZAD Industrial Emissions: 84,000 tCO2e/yr
-- SSMC Risk Index: 78/100 (Critical Coastal Surge Zone)
-- Cleveland Clinic Abu Dhabi Risk Index: 42/100 (Normal Status)
-- Zayed Airport Capacity: 45,000,000 Passengers/yr
-
-------------------------------------------------------------------------
-3. RECOMMENDATIONS & POLICY ACTIONS
-------------------------------------------------------------------------
-- Target solar electrification and carbon capture across Mussafah Sector 3.
-- Expand coastal surge barriers and emergency response buffers near SSMC.
-
-========================================================================
-CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
-========================================================================`;
-
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    const fileName = (reportTitle || 'Abu_Dhabi_Spatial_Report').toLowerCase().replace(/[^a-z0-9_]/gi, '_') + '_2026.txt';
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  const printExecutiveReport = () => {
+    // Print current active interface (map, spatial analytics, right panel, header)
+    window.print();
   };
 
   const handleActionCardClick = async (card) => {
     if (!card) return;
 
-    // Check if card is a restricted analytics, simulation, or report action for Guest user
-    const RESTRICTED_GUEST_KEYWORDS = [
-      'compare', 'nearby facilities', 'trend', 'line', 'simulate', 'scenario', 'flood', 
-      'report', 'download', 'export', 'water', 'emissions', 'consumption', 'analytics',
-      'مقارنة', 'منشآت', 'مسار', 'محاكاة', 'سيناريو', 'فيضان', 'تقرير', 'تحميل', 'تصدير', 'استهلاك', 'انبعاثات', 'تحليلات'
-    ];
-    const isAnalyticsAction = card.actionType === ACTION_TYPES.ANALYTICS_SHOW_CHART || 
-                             card.actionType === ACTION_TYPES.REPORTS_GENERATE || 
-                             card.actionType === ACTION_TYPES.RISK_DECOMPOSE ||
-                             RESTRICTED_GUEST_KEYWORDS.some(k => (card.title || card.label || '').toLowerCase().includes(k));
-
-    if (isAnalyticsAction && !isLoggedIn) {
-      setAuthModalState({
-        isOpen: true,
-        featureName: isArabic ? 'تحليلات البيانات المكانية المتقدمة والسجل' : 'Advanced Analytics & Spatial Intelligence'
-      });
-      return;
-    }
-
-    // Check if report download action for Registered User
+    // Check if report print action
     const isReportAction = card.actionType === ACTION_TYPES.REPORT_GENERATE || 
                            card.actionType === ACTION_TYPES.REPORTS_GENERATE || 
                            card.actionType === ACTION_TYPES.EXPORT_DATA || 
                            card.id === 'export' ||
-                           ['report', 'download', 'export', 'تقرير', 'تحميل', 'تصدير'].some(k => (card.title || card.label || '').toLowerCase().includes(k));
+                           ['report', 'print', 'download', 'export', 'تقرير', 'طباعة', 'تحميل', 'تصدير'].some(k => (card.title || card.label || '').toLowerCase().includes(k));
 
-    if (isReportAction && isLoggedIn) {
-      downloadDummyExecutiveReport(card.label || card.title || 'Abu_Dhabi_Spatial_Executive_Report');
-      setSaveSuccessToast(isArabic ? "تم تحميل التقرير التنفيذي بنجاح! 📄" : "Executive Spatial Report Downloaded! 📄");
+    if (isReportAction) {
+      printExecutiveReport();
+      setSaveSuccessToast(isArabic ? "جاري فتح نافذة طباعة التقرير... 🖨️" : "Opening Executive Report Print View... 🖨️");
       setTimeout(() => setSaveSuccessToast(null), 4000);
       return;
     }
 
-    if (card.actionType === 'ENABLE_LOCATION') {
+    if (card.actionType === 'ENABLE_LOCATION' || card.actionType === 'LOCATION_PERMISSION' || ['enable location', 'location access', 'gps', 'تحديد الموقع'].some(k => (card.title || card.label || '').toLowerCase().includes(k))) {
       setExplorerState(prev => ({
         ...prev,
-        userLocationEnabled: true,
-        userLocation: { lat: 24.4839, lng: 54.3773 }
+        showLocationModal: true
       }));
-      setSaveSuccessToast(isArabic ? "تم تفعيل تحديد الموقع الجغرافي GPS 📍" : "GPS Location Access Granted! 📍");
-      setTimeout(() => setSaveSuccessToast(null), 3000);
-      handleSubmit(null, "Show vehicle inspection centers near me");
       return;
     }
 
@@ -518,6 +669,35 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
         selectedDetail: null,
         mapFocus: { lat: facility.lat, lng: facility.lng, zoom: 16 }
       }));
+    }
+  };
+
+  const handleSavedItemClick = (item) => {
+    if (!item) return;
+
+    // 1. Switch active tab to 'chat'
+    setActiveTab('chat');
+
+    // 2. If item has pre-saved conversation messages, restore them directly
+    if (item.messages && Array.isArray(item.messages) && item.messages.length > 0) {
+      setExplorerState(prev => ({
+        ...prev,
+        chatHistory: item.messages,
+        activeContext: item.activeContext || prev.activeContext,
+        activeContextTags: item.activeContextTags || prev.activeContextTags,
+        ...(item.lat && item.lng ? { selectedLocation: item, mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 } } : {})
+      }));
+      return;
+    }
+
+    // 3. Otherwise, clean query string (strip markdown **) and execute query to render conversation
+    const rawQuery = item.query || item.name || '';
+    const cleanQuery = rawQuery.replace(/\*\*/g, '').trim();
+
+    if (cleanQuery) {
+      handleSubmit(null, cleanQuery);
+    } else if (item.lat && item.lng) {
+      handleEntityClick(item);
     }
   };
 
@@ -629,9 +809,12 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
 
       {/* Save Action Success Toast Banner */}
       {saveSuccessToast && (
-        <div className="bg-emerald-600 text-white text-xs font-bold px-4 py-2 flex items-center justify-between shrink-0 shadow-md animate-fade-in z-30">
-          <span>{saveSuccessToast}</span>
-          <button onClick={() => setSaveSuccessToast(null)} className="ms-2 hover:opacity-80 font-bold cursor-pointer">✕</button>
+        <div className="bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] text-white text-xs font-bold px-4 py-2.5 flex items-center justify-between shrink-0 shadow-md animate-fade-in z-30 border-b border-blue-400/30">
+          <div className="flex items-center gap-2">
+            <span className="text-[#00e5ff] font-extrabold text-sm">✦</span>
+            <span>{saveSuccessToast}</span>
+          </div>
+          <button onClick={() => setSaveSuccessToast(null)} className="ms-2 text-white/80 hover:text-white font-bold cursor-pointer transition-colors">✕</button>
         </div>
       )}
 
@@ -648,12 +831,46 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
         <>
           <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-transparent' : 'bg-white'}`}>
             {messages.map((msg, idx) => (
-              <div key={msg.id ? `${msg.id}-${idx}` : `msg-${idx}`} className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div key={msg.id ? `${msg.id}-${idx}` : `msg-${idx}`} className={`flex gap-2.5 group items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
                   <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${
                     isDarkMode ? 'bg-[#182645] border border-slate-700/80 text-[#c084fc]' : 'bg-gradient-to-br from-[#063360] to-[#215A9E]'
                   }`}>
                     <Bot className="w-4 h-4" />
+                  </div>
+                )}
+
+                {/* Hover Action Icons for User Query Message (Edit & Delete) */}
+                {msg.role === 'user' && editingMsgId !== msg.id && (
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 self-center me-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingMsgId(msg.id);
+                        setEditingText(msg.content);
+                      }}
+                      className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                        isDarkMode 
+                          ? 'bg-[#182645] border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800' 
+                          : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                      }`}
+                      title={t("Edit query", "تعديل الاستعلام")}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteUserMessage(idx)}
+                      className={`p-1.5 rounded-lg border text-xs transition-all cursor-pointer ${
+                        isDarkMode 
+                          ? 'bg-[#182645] border-slate-700 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40' 
+                          : 'bg-slate-100 border-slate-200 text-rose-600 hover:text-rose-700 hover:bg-rose-50'
+                      }`}
+                      title={t("Delete query", "حذف الاستعلام")}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 )}
 
@@ -709,6 +926,35 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
                         </div>
                       )}
                     </>
+                  ) : editingMsgId === msg.id ? (
+                    <div className="flex flex-col gap-2 min-w-[220px]">
+                      <input
+                        type="text"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEditedMessage(msg.id, idx);
+                          if (e.key === 'Escape') setEditingMsgId(null);
+                        }}
+                        className="w-full px-2.5 py-1 text-xs rounded-xl bg-white/20 text-white placeholder-white/60 border border-white/40 focus:outline-none"
+                        autoFocus
+                      />
+                      <div className="flex items-center justify-end gap-1 text-[10px]">
+                        <button
+                          onClick={() => setEditingMsgId(null)}
+                          className="px-2 py-0.5 rounded-md bg-white/10 hover:bg-white/20 text-white cursor-pointer"
+                        >
+                          {t("Cancel", "إلغاء")}
+                        </button>
+                        <button
+                          onClick={() => handleSaveEditedMessage(msg.id, idx)}
+                          className="px-2.5 py-0.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white font-bold cursor-pointer flex items-center gap-1"
+                        >
+                          <Check className="w-3 h-3" />
+                          <span>{t("Save & Run", "حفظ وتشغيل")}</span>
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <p>{isArabic ? (USER_MSG_TRANSLATION_MAP[msg.content] || msg.content_ar || msg.content) : msg.content}</p>
                   )}
@@ -801,25 +1047,27 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
 
           {savedLocations.length > 0 ? (
             <div className="space-y-2">
-              {savedLocations.map(item => (
-                <div 
-                  key={item.id}
-                  className={`border rounded-2xl p-3.5 transition-all flex items-center justify-between group ${
-                    isDarkMode 
-                      ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-[#7c3aed]/60 shadow-xs' 
-                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-black/30 shadow-2xs'
-                  }`}
-                >
+              {savedLocations.map(item => {
+                const displayTitle = (isArabic && item.name_ar ? item.name_ar : item.name || '').replace(/\*\*/g, '').trim();
+                return (
                   <div 
-                    onClick={() => handleEntityClick(item)}
-                    className="flex-1 cursor-pointer min-w-0 me-2"
+                    key={item.id}
+                    className={`border rounded-2xl p-3.5 transition-all flex items-center justify-between group ${
+                      isDarkMode 
+                        ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-[#7c3aed]/60 shadow-xs' 
+                        : 'bg-white border-slate-200/90 text-slate-800 hover:border-black/30 shadow-2xs'
+                    }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <h4 className={`font-bold text-xs truncate transition-colors ${
-                        isDarkMode ? 'text-white group-hover:text-[#c084fc]' : 'text-[#1e2749] group-hover:text-[#215A9E]'
-                      }`}>
-                        {isArabic && item.name_ar ? item.name_ar : item.name}
-                      </h4>
+                    <div 
+                      onClick={() => handleSavedItemClick(item)}
+                      className="flex-1 cursor-pointer min-w-0 me-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <h4 className={`font-bold text-xs truncate transition-colors ${
+                          isDarkMode ? 'text-white group-hover:text-[#c084fc]' : 'text-[#1e2749] group-hover:text-[#215A9E]'
+                        }`}>
+                          {displayTitle}
+                        </h4>
                       {item.riskLevel && (
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold shrink-0 ${
                           item.riskLevel === 'Critical' 
@@ -844,7 +1092,8 @@ CONFIDENTIAL — FOR AUTHORIZED ABU DHABI DGE USE ONLY
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              ))}
+              );
+            })}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">

@@ -13,26 +13,26 @@ export default function AiWhyThisResult({ data }) {
   return (
     <div className={`border rounded-xl p-3 my-2.5 space-y-2 text-xs shadow-2xs ${
       isDarkMode 
-        ? 'bg-[#0d1527] border-slate-800 text-slate-100' 
-        : 'bg-emerald-50/80 border-emerald-200/90 text-emerald-950'
+        ? 'bg-[#0c192e] border-slate-700/80 text-slate-100' 
+        : 'bg-[#f4f7fc] border-[#215A9E]/30 text-slate-900'
     }`}>
       <div className={`flex items-center justify-between font-bold border-b pb-1.5 ${
-        isDarkMode ? 'text-emerald-400 border-slate-800' : 'text-emerald-950 border-emerald-200/60'
+        isDarkMode ? 'text-[#00e5ff] border-slate-700/80' : 'text-[#063360] border-slate-200'
       }`}>
         <span className="flex items-center gap-1.5">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-[#215A9E] dark:text-[#00e5ff] shrink-0" />
           <span>{t('WHY THIS RESULT?', 'لماذا هذه النتيجة؟')}</span>
         </span>
         {ranking && (
-          <span className="bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px] font-mono">
+          <span className="bg-gradient-to-r from-[#063360] to-[#215A9E] text-white px-2 py-0.5 rounded text-[10px] font-mono shadow-2xs">
             {isArabic ? 'المرشح الأبرز رقم 1' : ranking}
           </span>
         )}
       </div>
 
       {facilityName && (
-        <div className={`flex items-center gap-1 text-[11px] font-extrabold ${isDarkMode ? 'text-emerald-200' : 'text-emerald-900'}`}>
-          <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+        <div className={`flex items-center gap-1 text-[11px] font-extrabold ${isDarkMode ? 'text-slate-100' : 'text-[#063360]'}`}>
+          <MapPin className="w-3.5 h-3.5 text-[#215A9E] dark:text-[#00e5ff]" />
           <span>{isArabic && data.facilityName_ar ? data.facilityName_ar : facilityName}</span>
         </div>
       )}
@@ -48,7 +48,7 @@ export default function AiWhyThisResult({ data }) {
             else if (item.includes('Located in')) itemText = item.replace('Located in', 'تقع في');
           }
           return (
-            <div key={idx} className={`text-[11px] font-medium flex items-start gap-1.5 ${isDarkMode ? 'text-emerald-200' : 'text-emerald-900'}`}>
+            <div key={idx} className={`text-[11px] font-medium flex items-start gap-1.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
               <span>{itemText}</span>
             </div>
           );
@@ -56,11 +56,11 @@ export default function AiWhyThisResult({ data }) {
       </div>
 
       <div className={`pt-1.5 border-t flex items-center justify-between text-[10px] font-semibold ${
-        isDarkMode ? 'border-emerald-500/30 text-emerald-300' : 'border-emerald-200/60 text-emerald-800'
+        isDarkMode ? 'border-slate-800 text-slate-300' : 'border-slate-200 text-slate-700'
       }`}>
         <span>{t('Spatial Method', 'الطريقة المكانية')}: {spatialMethod || 'POINT_IN_POLYGON (WGS84 EPSG:4326)'}</span>
         <span className={`border px-2 py-0.5 rounded font-bold ${
-          isDarkMode ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' : 'bg-emerald-100 border-emerald-300/80 text-emerald-900'
+          isDarkMode ? 'bg-[#182645] border-slate-700 text-[#00e5ff]' : 'bg-[#eef3ff] border-[#215A9E]/30 text-[#215A9E]'
         }`}>
           {isArabic ? 'دقة عالية' : (confidence || 'HIGH')}
         </span>

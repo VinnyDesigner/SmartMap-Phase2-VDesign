@@ -468,42 +468,20 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
 
                     {/* 4. Action Buttons */}
                     <div className="space-y-1.5 pt-1">
-                      {isLoggedIn ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExplorerState(prev => ({
-                              ...prev,
-                              selectedDetail: item,
-                              selectedLocation: item
-                            }));
-                          }}
-                          className="w-full py-1.5 px-2.5 rounded-lg bg-slate-900 text-white text-[10.5px] font-bold hover:bg-[#215A9E] transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                        >
-                          <Sparkles className="w-3 h-3 text-emerald-400" />
-                          <span>{isArabic ? "عرض الملف المكاني الكامل" : "View Full Spatial Profile"}</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setExplorerState(prev => ({
-                              ...prev,
-                              showAuthPrompt: true,
-                              pendingAuthFeature: isArabic ? 'الملف المكاني الكامل' : 'Full Spatial Profile'
-                            }));
-                          }}
-                          className="w-full py-1.5 px-2.5 rounded-lg bg-slate-100 dark:bg-[#162035] text-slate-500 dark:text-slate-400 text-[10px] font-bold border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5 cursor-pointer hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-all group"
-                        >
-                          <span className="flex items-center gap-1">
-                            <Lock className="w-3 h-3 text-amber-500" />
-                            <span>{isArabic ? "الملف المكاني الكامل" : "View Full Spatial Profile"}</span>
-                          </span>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300 font-bold">
-                            {isArabic ? "مستخدم مسجل فقط" : "Registered User Only"}
-                          </span>
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExplorerState(prev => ({
+                            ...prev,
+                            selectedDetail: item,
+                            selectedLocation: item
+                          }));
+                        }}
+                        className="w-full py-1.5 px-2.5 rounded-lg bg-slate-900 text-white text-[10.5px] font-bold hover:bg-[#215A9E] transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                      >
+                        <Sparkles className="w-3 h-3 text-emerald-400" />
+                        <span>{isArabic ? "عرض الملف المكاني الكامل" : "View Full Spatial Profile"}</span>
+                      </button>
 
                       <button
                         type="button"

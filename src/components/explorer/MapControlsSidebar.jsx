@@ -325,10 +325,17 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
 
             {/* Locate Tool */}
             <SidebarButton 
-              icon={<Navigation className="w-4.5 h-4.5" />} 
+              icon={<Navigation className={`w-4.5 h-4.5 ${explorerState?.userLocationEnabled ? 'text-emerald-400' : ''}`} />} 
               label={t('Locate', 'موقعي')} 
               isDarkMode={isDarkMode}
-              onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'locate' }))} 
+              onClick={() => {
+                const loc = explorerState?.userLocation || { lat: 24.4839, lng: 54.3773 };
+                setExplorerState(prev => ({ 
+                  ...prev, 
+                  mapFocus: { lat: loc.lat, lng: loc.lng, zoom: 16 },
+                  showLocationModal: true 
+                }));
+              }} 
             />
 
             {/* Compass Tool */}

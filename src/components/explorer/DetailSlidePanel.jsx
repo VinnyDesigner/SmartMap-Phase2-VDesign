@@ -32,8 +32,6 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
     }));
   };
 
-  if (!isLoggedIn) return null;
-
   return (
     <AnimatePresence>
       {detail && (

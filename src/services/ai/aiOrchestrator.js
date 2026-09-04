@@ -257,7 +257,7 @@ export const aiOrchestrator = {
         },
         {
           type: 'ACTION_SUGGESTIONS',
-          suggestions: isArabic ? ["عرض المستشفيات", "عرض المدارس", "تراجع"] : ["Show hospitals", "Show schools", "Undo"]
+          suggestions: isArabic ? ["عرض المستشفيات", "عرض المدارس", "عرض الانبعاثات"] : ["Show hospitals", "Show schools", "Show emissions"]
         }
       ];
 
@@ -494,7 +494,7 @@ export const aiOrchestrator = {
             { label: 'Compare Nearby Facilities', label_ar: 'مقارنة المنشآت المجاورة', actionType: ACTION_TYPES.FACILITY_COMPARE, params: { facilityId: target.id } },
             { label: 'View 12-Month Trend Line', label_ar: 'عرض مسار الـ 12 شهراً', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART }
           ],
-          suggestions: isArabic ? ["محاكاة سيناريو الفيضانات", "تحميل التقرير الإداري"] : ["Simulate flood scenario", "Download executive report"]
+          suggestions: isArabic ? ["محاكاة سيناريو الفيضانات", "طباعة التقرير الإداري"] : ["Simulate flood scenario", "Print executive report"]
         }
       ];
 
@@ -541,7 +541,7 @@ export const aiOrchestrator = {
         {
           type: 'ACTION_SUGGESTIONS',
           actionCards: [
-            { label: 'Download Abu Dhabi Report', label_ar: 'تحميل تقرير أبوظبي الإداري', actionType: ACTION_TYPES.REPORT_GENERATE, params: { format: 'pdf' } }
+            { label: 'Print Abu Dhabi Report', label_ar: 'طباعة تقرير أبوظبي الإداري', actionType: ACTION_TYPES.REPORT_GENERATE, params: { format: 'pdf' } }
           ],
           suggestions: isArabic ? ["مقارنة مع المنشآت المجاورة", "الرجوع للمتوسط"] : ["Compare nearby facilities", "Back to average"]
         }
@@ -575,9 +575,9 @@ export const aiOrchestrator = {
         {
           type: 'KPI_GRID',
           metrics: [
-            { label: 'Target Site', value: `${targetName} (${target.riskScore})`, iconType: 'risk' },
-            { label: 'Nearest Asset', value: `${isArabic && neighbors[0]?.name_ar ? neighbors[0].name_ar : neighbors[0]?.name.split(' ')[0]} (${neighbors[0]?.riskScore})`, iconType: 'facilities' },
-            { label: 'Proximity Distance', value: `${neighbors[0]?.distanceKm} كم`, iconType: 'activity' }
+            { label: isArabic ? 'الموقع المستهدف' : 'Target Site', value: `${targetName} (${target.riskScore})`, iconType: 'risk' },
+            { label: isArabic ? 'أقرب منشأة' : 'Nearest Asset', value: `${isArabic && neighbors[0]?.name_ar ? neighbors[0].name_ar : neighbors[0]?.name.split(' ')[0]} (${neighbors[0]?.riskScore})`, iconType: 'facilities' },
+            { label: isArabic ? 'مسافة القرب' : 'Proximity Distance', value: `${neighbors[0]?.distanceKm} ${isArabic ? 'كم' : 'km'}`, iconType: 'activity' }
           ]
         },
         {
@@ -594,9 +594,11 @@ export const aiOrchestrator = {
         {
           type: 'ACTION_SUGGESTIONS',
           actionCards: [
-            { label: 'Export Abu Dhabi Report', actionType: ACTION_TYPES.REPORT_GENERATE, params: { format: 'pdf' } }
+            { label: 'Export Abu Dhabi Report', label_ar: 'تصدير تقرير أبوظبي', actionType: ACTION_TYPES.REPORT_GENERATE, params: { format: 'pdf' } }
           ],
-          suggestions: ["عرض التوجه الزمني", "فحص جودة البيانات"]
+          suggestions: isArabic 
+            ? ["عرض التوجه الزمني", "فحص جودة البيانات"] 
+            : ["View 12-Month Trend", "Check Data Quality"]
         }
       ];
 
@@ -621,7 +623,9 @@ export const aiOrchestrator = {
       blocks = [
         {
           type: 'TEXT',
-          content: `**Focused Map on ${matchedFacility.name}** (${matchedFacility.district}, Abu Dhabi).`
+          content: isArabic
+            ? `تم التركيز في الخريطة على **${matchedFacility.name_ar || matchedFacility.name}** (${matchedFacility.district_ar || matchedFacility.district || 'أبوظبي'}، أبوظبي).`
+            : `Focused map on **${matchedFacility.name}** (${matchedFacility.district}, Abu Dhabi).`
         },
         {
           type: 'LOCATION_LIST',
@@ -630,9 +634,11 @@ export const aiOrchestrator = {
         {
           type: 'ACTION_SUGGESTIONS',
           actionCards: [
-            { label: 'Why High Risk?', actionType: ACTION_TYPES.FACILITY_SELECT, params: { facility: matchedFacility } }
+            { label: 'Why High Risk?', label_ar: 'لماذا تعتبر عالية الخطورة؟', actionType: ACTION_TYPES.FACILITY_SELECT, params: { facility: matchedFacility } }
           ],
-          suggestions: ["عرض التوجه الزمني", "تصدير تقرير PDF"]
+          suggestions: isArabic 
+            ? ["عرض التوجه الزمني", "تصدير تقرير PDF"] 
+            : ["View 12-Month Trend", "Export PDF Report"]
         }
       ];
 

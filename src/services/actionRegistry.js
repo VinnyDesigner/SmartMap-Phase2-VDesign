@@ -229,6 +229,15 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
       return { success: false, message: "No previous action to undo" };
     }
 
+    case 'ENABLE_LOCATION':
+    case 'LOCATION_PERMISSION': {
+      setExplorerState(prev => ({
+        ...prev,
+        showLocationModal: true
+      }));
+      return { success: true, message: "Opened Location Access Permission Modal" };
+    }
+
     default:
       return null;
   }

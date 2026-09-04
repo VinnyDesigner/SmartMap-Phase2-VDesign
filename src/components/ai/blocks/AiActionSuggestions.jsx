@@ -5,11 +5,13 @@ import { useLanguage } from '../../../contexts/LanguageContext';
 
 const ACTION_LABEL_MAP = {
   'Compare Water Consumption': 'مقارنة استهلاك المياه',
-  'Export Emissions Report': 'تصدير تقرير الانبعاثات',
+  'Export Emissions Report': 'طباعة تقرير الانبعاثات',
   'Compare Nearby Facilities': 'مقارنة المنشآت المجاورة',
   'View 12-Month Trend Line': 'عرض خط المسار لـ 12 شهراً',
-  'Download Abu Dhabi Report': 'تحميل تقرير أبوظبي الإداري',
-  'Download executive report': 'تحميل التقرير التنفيذي',
+  'Print Abu Dhabi Report': 'طباعة تقرير أبوظبي الإداري',
+  'Print executive report': 'طباعة التقرير التنفيذي',
+  'Download Abu Dhabi Report': 'طباعة تقرير أبوظبي الإداري',
+  'Download executive report': 'طباعة التقرير التنفيذي',
   'Simulate flood scenario': 'محاكاة سيناريو الفيضانات',
   'Show hospitals': 'عرض المستشفيات',
   'Show hospitals in abu dhabi': 'اعرض المستشفيات في أبوظبي',
@@ -26,7 +28,7 @@ const ACTION_LABEL_MAP = {
   'Save this search': 'حفظ هذا البحث',
   'Save this location to Favorites': 'حفظ هذا الموقع إلى المفضلة',
   'Show schools near it': 'عرض المدارس القريبة منها',
-  'Export facility report': 'تصدير تقرير المنشأة',
+  'Export facility report': 'طباعة تقرير المنشأة',
   'Only government hospitals': 'المستشفيات الحكومية فقط',
   'Enable Location': 'تفعيل تحديد الموقع',
   'Choose Location on Map': 'اختر الموقع على الخريطة',
@@ -35,35 +37,79 @@ const ACTION_LABEL_MAP = {
   'Show water consumption': 'عرض استهلاك المياه',
   'Compare nearby': 'مقارنة بالمنشآت القريبة',
   'Show vehicle inspection centers near me': 'عرض مراكز فحص السيارات القريبة مني',
-  'Export Analysis': 'تصدير التحليلات',
+  'Export Analysis': 'طباعة التحليلات',
   'Emissions Chart': 'مخطط الانبعاثات',
   'View Water Chart': 'مخطط استهلاك المياه',
   'Why High Risk?': 'لماذا تعتبر عالية الخطورة؟'
 };
 
-const RESTRICTED_GUEST_KEYWORDS = [
-  'compare', 'nearby facilities', 'trend', 'line', 'simulate', 'scenario', 'flood', 
-  'report', 'download', 'export', 'water', 'emissions', 'consumption', 'analytics',
-  'مقارنة', 'منشآت', 'مسار', 'محاكاة', 'سيناريو', 'فيضان', 'تقرير', 'تحميل', 'تصدير', 'استهلاك', 'انبعاثات', 'تحليلات'
-];
+const REVERSE_LABEL_MAP = {
+  'مقارنة استهلاك المياه': 'Compare Water Consumption',
+  'طباعة تقرير الانبعاثات': 'Export Emissions Report',
+  'مقارنة المنشآت المجاورة': 'Compare Nearby Facilities',
+  'عرض خط المسار لـ 12 شهراً': 'View 12-Month Trend',
+  'عرض التوجه الزمني': 'View 12-Month Trend',
+  'طباعة تقرير أبوظبي الإداري': 'Print Abu Dhabi Report',
+  'طباعة التقرير التنفيذي': 'Print Executive Report',
+  'تصدير تقرير أبوظبي': 'Export Abu Dhabi Report',
+  'تصدير تقرير PDF': 'Export PDF Report',
+  'فحص جودة البيانات': 'Check Data Quality',
+  'محاكاة سيناريو الفيضانات': 'Simulate Flood Scenario',
+  'عرض المستشفيات': 'Show Hospitals',
+  'اعرض المستشفيات في أبوظبي': 'Show Hospitals in Abu Dhabi',
+  'عرض المدارس': 'Show Schools',
+  'عرض الحدائق العامة': 'Show Public Parks',
+  'حدائق عامة': 'Public Parks',
+  'عرض الانبعاثات': 'Show Emissions',
+  'تراجع': 'Undo',
+  'أيها الأقرب لي؟': 'Which one is closest?',
+  'عرض تفاصيلها': 'Show Details',
+  'عرض المدارس ضمن 2 كم من هذه المستشفيات': 'Show Schools within 2 km of these Hospitals',
+  'حفظ هذا البحث': 'Save this Search',
+  'حفظ هذا الموقع إلى المفضلة': 'Save Location to Favorites',
+  'عرض المدارس القريبة منها': 'Show Schools Near It',
+  'طباعة تقرير المنشأة': 'Print Facility Report',
+  'المستشفيات الحكومية فقط': 'Only Government Hospitals',
+  'تفعيل تحديد الموقع': 'Enable Location Access',
+  'لماذا تعتبر عالية الخطورة؟': 'Why is this High Risk?',
+  'لماذا مستشفى شخبوط عالي الخطورة؟': 'Why is SSMC High Risk?'
+};
 
 const isSaveOrFavoriteItem = (itemText = '') => {
   const text = (itemText || '').toLowerCase();
   return ['save', 'favorite', 'حفظ', 'مفضلة'].some(k => text.includes(k));
 };
 
-const isRestrictedGuestItem = (itemText = '') => {
+const isUndoItem = (itemText = '') => {
   const text = (itemText || '').toLowerCase();
-  return RESTRICTED_GUEST_KEYWORDS.some(k => text.includes(k));
+  return ['undo', 'تراجع', 'undo_action'].some(k => text.includes(k));
+};
+
+const isIrrelevantOrHeaderItem = (itemText = '') => {
+  if (!itemText) return true;
+  const text = (itemText || '').toLowerCase().trim();
+  return ['focused map', 'التركيز على موقع'].some(k => text.includes(k));
+};
+
+const isRestrictedGuestItem = (itemText = '') => {
+  return false;
 };
 
 export default function AiActionSuggestions({ actionCards = [], suggestions = [], onActionClick, onSuggestionClick, isLoggedIn = false }) {
   const { isDarkMode } = useTheme();
   const { isArabic } = useLanguage();
 
-  // Filter out any save/favorite actions or suggestions when user is not logged in
-  const filteredActionCards = (actionCards || []).filter(c => isLoggedIn || !isSaveOrFavoriteItem(c.label || c.title));
-  const filteredSuggestions = (suggestions || []).filter(sug => isLoggedIn || !isSaveOrFavoriteItem(sug));
+  // Filter out any save/favorite actions, Undo suggestions, or irrelevant header titles
+  const filteredActionCards = (actionCards || []).filter(c => 
+    !isUndoItem(c.label || c.title || c.id) && 
+    !isIrrelevantOrHeaderItem(c.label || c.title || c.id) && 
+    (isLoggedIn || !isSaveOrFavoriteItem(c.label || c.title))
+  );
+  const filteredSuggestions = (suggestions || []).filter(sug => 
+    !isUndoItem(sug) && 
+    !isIrrelevantOrHeaderItem(sug) && 
+    (isLoggedIn || !isSaveOrFavoriteItem(sug))
+  );
 
   const hasActions = filteredActionCards.length > 0;
   const hasSuggestions = filteredSuggestions.length > 0;
@@ -80,7 +126,9 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {filteredActionCards.filter(c => c.isOption).map((card, idx) => {
-              const labelText = isArabic ? (card.label_ar || card.title) : (card.label || card.title);
+              const labelText = isArabic 
+                ? (card.label_ar || ACTION_LABEL_MAP[card.label] || card.title) 
+                : (card.label || REVERSE_LABEL_MAP[card.label_ar] || card.title);
               const cleanLabel = labelText.replace(/^○\s*/, '');
               
               return (
@@ -114,7 +162,12 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
       {hasActions && filteredActionCards.some(c => !c.isOption) && (
         <div className="flex flex-col gap-1.5 my-1">
           {filteredActionCards.filter(c => !c.isOption).map((card, idx) => {
-            const cardLabel = isArabic ? (card.label_ar || card.title_ar || ACTION_LABEL_MAP[card.label] || card.label || card.title) : (card.label || card.title);
+            const rawLabel = card.label || card.title || '';
+            const rawAr = card.label_ar || card.title_ar || '';
+            const cardLabel = isArabic 
+              ? (rawAr || ACTION_LABEL_MAP[rawLabel] || rawLabel) 
+              : (rawLabel && !/[\u0600-\u06FF]/.test(rawLabel) ? rawLabel : (REVERSE_LABEL_MAP[rawAr || rawLabel] || rawLabel));
+            
             const isRestricted = isRestrictedGuestItem(card.label || card.title);
             const isLocked = isRestricted && !isLoggedIn;
 
@@ -160,7 +213,9 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
       {hasSuggestions && (
         <div className="flex flex-col gap-1.5 my-1">
           {filteredSuggestions.map((sug, idx) => {
-            const sugLabel = isArabic ? (ACTION_LABEL_MAP[sug] || sug) : sug;
+            const sugLabel = isArabic 
+              ? (ACTION_LABEL_MAP[sug] || sug) 
+              : (REVERSE_LABEL_MAP[sug] || (sug && !/[\u0600-\u06FF]/.test(sug) ? sug : sug));
             const isRestricted = isRestrictedGuestItem(sug);
             const isLocked = isRestricted && !isLoggedIn;
 
