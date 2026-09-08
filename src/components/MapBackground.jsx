@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { motion } from 'framer-motion';
 import { MapPin, ArrowRight, Sparkles, Navigation, Target } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useProject } from '../contexts/ProjectContext';
 import ArcGISBasemap from './explorer/ArcGISBasemap';
 import { getLandmarkThumbnail } from '../utils/landmarkImages';
 
@@ -101,13 +102,17 @@ function MapController({ explorerState, setExplorerState, isExplorer }) {
 function CustomDrawControl({ explorerState, setExplorerState }) {
   const map = useMap();
   const { isArabic } = useLanguage();
+  const { activeProject } = useProject();
   const [startPoint, setStartPoint] = useState(null);
   const [currentPoint, setCurrentPoint] = useState(null);
+  const [isDraggingDraw, setIsDraggingDraw] = useState(false);
   const [polyPoints, setPolyPoints] = useState([]);
   const [mousePos, setMousePos] = useState(null);
 
+  const drawingTool = explorerState?.drawingTool;
+
   useEffect(() => {
-    if (explorerState?.drawingTool) {
+    if (drawingTool) {
       map.dragging.disable();
       map.getContainer().style.cursor = 'crosshair';
     } else {
@@ -115,39 +120,256 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
       map.getContainer().style.cursor = '';
       setStartPoint(null);
       setCurrentPoint(null);
+      setIsDraggingDraw(false);
       setPolyPoints([]);
+      setMousePos(null);
     }
-  }, [explorerState?.drawingTool, map]);
+  }, [drawingTool, map]);
+
+  const generateAiChatMessages = (shapeType, filtered) => {
+    let shapeLabelEn = 'Drawn Area';
+    let shapeLabelAr = 'المنطقة المحددة';
+    if (shapeType === 'circle') { shapeLabelEn = 'Circle Zone'; shapeLabelAr = 'المنطقة الدائرية'; }
+    else if (shapeType === 'rectangle') { shapeLabelEn = 'Box Zone'; shapeLabelAr = 'المنطقة المربعة'; }
+    else if (shapeType === 'polygon') { shapeLabelEn = 'Polygon Zone'; shapeLabelAr = 'المنطقة المضلعة'; }
+
+    const userMsg = {
+      id: `msg-draw-usr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      role: 'user',
+      content: isArabic 
+        ? `تحليل مكاني: ${shapeLabelAr} (${filtered.length} نتائج)` 
+        : `Spatial Analysis: ${shapeLabelEn} (${filtered.length} results found)`
+    };
+
+    const assistantMsg = {
+      id: `msg-draw-ast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      role: 'assistant',
+      content: isArabic
+        ? `🎯 **اكتمل التحليل المكاني لـ ${shapeLabelAr}**\n\nتم تحليل نطاق الرسم بنجاح وتصفية **${filtered.length}** موقعاً ومعلماً حكومياً ضمن الحدود المحددة.`
+        : `🎯 **Spatial Analysis Complete for ${shapeLabelEn}**\n\nSuccessfully processed your spatial drawing and identified **${filtered.length}** points of interest and government facilities within the bounding zone.`,
+      results: filtered,
+      datasetsUsed: ['DGE Spatial SDI 2026', 'Abu Dhabi Government Facilities Registry'],
+      suggestions: isArabic
+        ? ["مقارنة المنشآت القريبة", "تصدير التحليل إلى PDF", "عرض الملخص الديموغرافي"]
+        : ["Compare nearby facilities", "Export spatial analysis to PDF", "Show area demographics"]
+    };
+
+    return [userMsg, assistantMsg];
+  };
+
+  const finishRectangle = (start, end) => {
+    if (!start || !end) return;
+    const minLat = Math.min(start.lat, end.lat);
+    const maxLat = Math.max(start.lat, end.lat);
+    const minLng = Math.min(start.lng, end.lng);
+    const maxLng = Math.max(start.lng, end.lng);
+
+    if (Math.abs(maxLat - minLat) < 0.00005 || Math.abs(maxLng - minLng) < 0.00005) {
+      return;
+    }
+
+    const bounds = [[minLat, minLng], [maxLat, maxLng]];
+    const dataset = activeProject?.datasets || [];
+    const filtered = dataset.filter(loc => 
+      loc.lat >= minLat && loc.lat <= maxLat &&
+      loc.lng >= minLng && loc.lng <= maxLng
+    );
+
+    const newDrawing = {
+      id: 'rect-' + Date.now(),
+      type: 'rectangle',
+      bounds
+    };
+
+    const [userMsg, assistantMsg] = generateAiChatMessages('rectangle', filtered);
+
+    setExplorerState(prev => ({
+      ...prev,
+      drawingTool: null,
+      activeMenu: null,
+      drawnRectangle: bounds,
+      drawings: [...(prev.drawings || []), newDrawing],
+      chatHistory: [...(prev.chatHistory || []), userMsg, assistantMsg],
+      activeResults: filtered,
+      showSearchResults: filtered.length > 0
+    }));
+
+    setStartPoint(null);
+    setCurrentPoint(null);
+    setIsDraggingDraw(false);
+  };
+
+  const finishCircle = (start, end) => {
+    if (!start || !end) return;
+    const radius = start.distanceTo(end);
+    if (radius < 5) return;
+
+    const center = [start.lat, start.lng];
+    const dataset = activeProject?.datasets || [];
+    const filtered = dataset.filter(loc => {
+      const dist = L.latLng(start.lat, start.lng).distanceTo([loc.lat, loc.lng]);
+      return dist <= radius;
+    });
+
+    const newDrawing = {
+      id: 'circle-' + Date.now(),
+      type: 'circle',
+      center,
+      radius
+    };
+
+    const [userMsg, assistantMsg] = generateAiChatMessages('circle', filtered);
+
+    setExplorerState(prev => ({
+      ...prev,
+      drawingTool: null,
+      activeMenu: null,
+      drawnCircle: { center, radius },
+      drawings: [...(prev.drawings || []), newDrawing],
+      chatHistory: [...(prev.chatHistory || []), userMsg, assistantMsg],
+      activeResults: filtered,
+      showSearchResults: filtered.length > 0
+    }));
+
+    setStartPoint(null);
+    setCurrentPoint(null);
+    setIsDraggingDraw(false);
+  };
+
+  const finishPolygon = (pts) => {
+    if (!pts || pts.length < 3) return;
+    const positions = pts.map(p => [p.lat, p.lng]);
+
+    const lats = pts.map(p => p.lat);
+    const lngs = pts.map(p => p.lng);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+
+    const dataset = activeProject?.datasets || [];
+    const filtered = dataset.filter(loc => 
+      loc.lat >= minLat && loc.lat <= maxLat &&
+      loc.lng >= minLng && loc.lng <= maxLng
+    );
+
+    const newDrawing = {
+      id: 'poly-' + Date.now(),
+      type: 'polygon',
+      positions
+    };
+
+    const [userMsg, assistantMsg] = generateAiChatMessages('polygon', filtered);
+
+    setExplorerState(prev => ({
+      ...prev,
+      drawingTool: null,
+      activeMenu: null,
+      drawnPolygon: positions,
+      drawings: [...(prev.drawings || []), newDrawing],
+      chatHistory: [...(prev.chatHistory || []), userMsg, assistantMsg],
+      activeResults: filtered,
+      showSearchResults: filtered.length > 0
+    }));
+
+    setPolyPoints([]);
+    setMousePos(null);
+  };
 
   useMapEvents({
     mousedown(e) {
-      if (explorerState?.drawingTool === 'rectangle' || explorerState?.drawingTool === 'circle') {
-        setStartPoint(e.latlng);
-        setCurrentPoint(e.latlng);
-      } else if (explorerState?.drawingTool === 'polygon') {
+      if (drawingTool === 'rectangle' || drawingTool === 'circle') {
+        if (!startPoint) {
+          setStartPoint(e.latlng);
+          setCurrentPoint(e.latlng);
+          setIsDraggingDraw(true);
+        }
+      } else if (drawingTool === 'polygon') {
         setPolyPoints(prev => [...prev, e.latlng]);
       }
     },
     mousemove(e) {
-      if (explorerState?.drawingTool === 'rectangle' || explorerState?.drawingTool === 'circle') {
-        if (startPoint) setCurrentPoint(e.latlng);
-      } else if (explorerState?.drawingTool === 'polygon') {
+      if (drawingTool === 'rectangle' || drawingTool === 'circle') {
+        if (startPoint) {
+          setCurrentPoint(e.latlng);
+        }
+      } else if (drawingTool === 'polygon') {
         setMousePos(e.latlng);
+      }
+    },
+    mouseup(e) {
+      if ((drawingTool === 'rectangle' || drawingTool === 'circle') && startPoint && currentPoint) {
+        const dist = startPoint.distanceTo(currentPoint);
+        if (dist > 10) {
+          if (drawingTool === 'rectangle') {
+            finishRectangle(startPoint, currentPoint);
+          } else if (drawingTool === 'circle') {
+            finishCircle(startPoint, currentPoint);
+          }
+        }
+      }
+    },
+    click(e) {
+      if ((drawingTool === 'rectangle' || drawingTool === 'circle') && startPoint && currentPoint) {
+        const dist = startPoint.distanceTo(currentPoint);
+        if (dist > 10) {
+          if (drawingTool === 'rectangle') {
+            finishRectangle(startPoint, currentPoint);
+          } else if (drawingTool === 'circle') {
+            finishCircle(startPoint, currentPoint);
+          }
+        }
+      }
+    },
+    dblclick(e) {
+      if (drawingTool === 'polygon') {
+        finishPolygon(polyPoints);
       }
     }
   });
 
-  if (explorerState?.drawingTool === 'rectangle' && startPoint && currentPoint) {
-    const bounds = L.latLngBounds(startPoint, currentPoint);
-    return <Rectangle bounds={bounds} pathOptions={{ color: '#7c3aed', weight: 2, dashArray: '5, 5', fillColor: '#7c3aed', fillOpacity: 0.2 }} />;
-  }
+  return (
+    <>
+      {/* Transient rectangle while drawing */}
+      {drawingTool === 'rectangle' && startPoint && currentPoint && (
+        <Rectangle 
+          bounds={L.latLngBounds(startPoint, currentPoint)} 
+          pathOptions={{ color: '#7c3aed', weight: 2.5, dashArray: '6, 6', fillColor: '#7c3aed', fillOpacity: 0.25 }} 
+        />
+      )}
 
-  if (explorerState?.drawingTool === 'circle' && startPoint && currentPoint) {
-    const radius = startPoint.distanceTo(currentPoint);
-    return <Circle center={startPoint} radius={radius} pathOptions={{ color: '#7c3aed', weight: 2, dashArray: '5, 5', fillColor: '#7c3aed', fillOpacity: 0.2 }} />;
-  }
+      {/* Transient circle while drawing */}
+      {drawingTool === 'circle' && startPoint && currentPoint && (
+        <Circle 
+          center={startPoint} 
+          radius={startPoint.distanceTo(currentPoint)} 
+          pathOptions={{ color: '#7c3aed', weight: 2.5, dashArray: '6, 6', fillColor: '#7c3aed', fillOpacity: 0.25 }} 
+        />
+      )}
 
-  return null;
+      {/* Transient polygon while drawing */}
+      {drawingTool === 'polygon' && polyPoints.length > 0 && (
+        <>
+          <Polyline 
+            positions={polyPoints.map(p => [p.lat, p.lng])} 
+            pathOptions={{ color: '#7c3aed', weight: 2.5, dashArray: '6, 6' }} 
+          />
+          {polyPoints.length >= 3 && (
+            <Polygon 
+              positions={polyPoints.map(p => [p.lat, p.lng])} 
+              pathOptions={{ color: '#7c3aed', weight: 2, fillColor: '#7c3aed', fillOpacity: 0.15 }} 
+            />
+          )}
+          {mousePos && polyPoints.length > 0 && (
+            <Polyline 
+              positions={[[polyPoints[polyPoints.length - 1].lat, polyPoints[polyPoints.length - 1].lng], [mousePos.lat, mousePos.lng]]} 
+              pathOptions={{ color: '#00e5ff', weight: 2, dashArray: '4, 4' }} 
+            />
+          )}
+        </>
+      )}
+    </>
+  );
 }
 
 // Helper function to generate realistic road waypoints following Abu Dhabi road network and bridges
@@ -370,6 +592,59 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           </>
         )}
 
+        {/* Render Saved Drawings from explorerState */}
+        {isExplorer && (explorerState?.drawings || []).map((draw, idx) => {
+          if (draw.type === 'rectangle' && draw.bounds) {
+            return (
+              <Rectangle 
+                key={draw.id || `rect-${idx}`} 
+                bounds={draw.bounds} 
+                pathOptions={{ color: '#7c3aed', weight: 2.5, fillColor: '#7c3aed', fillOpacity: 0.2 }} 
+              />
+            );
+          }
+          if (draw.type === 'circle' && draw.center && draw.radius) {
+            return (
+              <Circle 
+                key={draw.id || `circ-${idx}`} 
+                center={draw.center} 
+                radius={draw.radius} 
+                pathOptions={{ color: '#7c3aed', weight: 2.5, fillColor: '#7c3aed', fillOpacity: 0.2 }} 
+              />
+            );
+          }
+          if (draw.type === 'polygon' && draw.positions) {
+            return (
+              <Polygon 
+                key={draw.id || `poly-${idx}`} 
+                positions={draw.positions} 
+                pathOptions={{ color: '#7c3aed', weight: 2.5, fillColor: '#7c3aed', fillOpacity: 0.2 }} 
+              />
+            );
+          }
+          return null;
+        })}
+
+        {isExplorer && !explorerState?.drawings?.length && explorerState?.drawnRectangle && (
+          <Rectangle 
+            bounds={explorerState.drawnRectangle} 
+            pathOptions={{ color: '#7c3aed', weight: 2.5, fillColor: '#7c3aed', fillOpacity: 0.2 }} 
+          />
+        )}
+        {isExplorer && !explorerState?.drawings?.length && explorerState?.drawnCircle && (
+          <Circle 
+            center={explorerState.drawnCircle.center} 
+            radius={explorerState.drawnCircle.radius} 
+            pathOptions={{ color: '#7c3aed', weight: 2.5, fillColor: '#7c3aed', fillOpacity: 0.2 }} 
+          />
+        )}
+        {isExplorer && !explorerState?.drawings?.length && explorerState?.drawnPolygon && (
+          <Polygon 
+            positions={explorerState.drawnPolygon} 
+            pathOptions={{ color: '#7c3aed', weight: 2.5, fillColor: '#7c3aed', fillOpacity: 0.2 }} 
+          />
+        )}
+
         {/* Selected Location Highlight Marker */}
         {(selectedLocation || explorerState?.selectedDetail) && (
           <Marker 
@@ -382,6 +657,25 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           />
         )}
       </MapContainer>
+
+      {/* Floating Drawing Tool Guidance Toast Banner */}
+      {isExplorer && explorerState?.drawingTool && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] px-4 py-2 rounded-2xl bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] text-white shadow-2xl border border-white/20 flex items-center gap-3 font-bold text-xs animate-bounce">
+          <span className="w-2 h-2 rounded-full bg-[#00e5ff] animate-ping" />
+          <span>
+            {explorerState.drawingTool === 'rectangle' && (isArabic ? 'انقر واسحب أو انقر لتحديد منطقة المربع' : 'Click & drag or click on map to fix Box area')}
+            {explorerState.drawingTool === 'circle' && (isArabic ? 'انقر واسحب أو انقر لتحديد نطاق الدائرة' : 'Click & drag or click on map to fix Circle area')}
+            {explorerState.drawingTool === 'polygon' && (isArabic ? 'انقر لإضافة نقاط، وانقر مرتين لإكمال المضلع' : 'Click map to add vertices, double-click to finish Polygon')}
+          </span>
+          <button
+            type="button"
+            onClick={() => setExplorerState(prev => ({ ...prev, drawingTool: null }))}
+            className="ms-2 px-2 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] cursor-pointer"
+          >
+            {isArabic ? 'إلغاء' : 'Cancel'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

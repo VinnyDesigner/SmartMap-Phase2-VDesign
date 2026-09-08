@@ -142,6 +142,8 @@ export default function DataExplorerLayout({
            explorerState?.activeResults?.length > 0 && 
            !explorerState?.selectedDetail && 
            explorerState?.activeMenu !== 'legend' && 
+           explorerState?.activeMenu !== 'draw' &&
+           !explorerState?.drawingTool &&
            !explorerState?.showCategoriesPanel && 
            !explorerState?.showBasemapMenu && (
             <SearchResultsList 
@@ -154,6 +156,8 @@ export default function DataExplorerLayout({
         {/* Floating Location Details Card Panel (Wireframe Page 05) */}
         <AnimatePresence>
           {explorerState?.selectedDetail && 
+           explorerState?.activeMenu !== 'draw' &&
+           !explorerState?.drawingTool &&
            !explorerState?.showCategoriesPanel && 
            !explorerState?.showBasemapMenu && (
             <DetailSlidePanel 
@@ -167,6 +171,7 @@ export default function DataExplorerLayout({
         <AnimatePresence>
           {explorerState?.activeMenu === 'legend' && 
            !explorerState?.selectedDetail && 
+           !explorerState?.drawingTool &&
            !explorerState?.showCategoriesPanel && 
            !explorerState?.showBasemapMenu && (
             <MapLegendPanel 

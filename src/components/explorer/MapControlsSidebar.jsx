@@ -253,21 +253,42 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       label={t('Draw Box', 'رسم مربع')} 
                       isActive={explorerState?.drawingTool === 'rectangle'}
                       isDarkMode={isDarkMode}
-                      onClick={() => setExplorerState(prev => ({ ...prev, drawingTool: 'rectangle' }))}
+                      onClick={() => setExplorerState(prev => ({ 
+                        ...prev, 
+                        drawingTool: 'rectangle',
+                        showSearchResults: false,
+                        showCategoriesPanel: false,
+                        showBasemapMenu: false,
+                        selectedDetail: null
+                      }))}
                     />
                     <DrawOption 
                       icon={Circle} 
                       label={t('Draw Circle', 'رسم دائرة')} 
                       isActive={explorerState?.drawingTool === 'circle'}
                       isDarkMode={isDarkMode}
-                      onClick={() => setExplorerState(prev => ({ ...prev, drawingTool: 'circle' }))}
+                      onClick={() => setExplorerState(prev => ({ 
+                        ...prev, 
+                        drawingTool: 'circle',
+                        showSearchResults: false,
+                        showCategoriesPanel: false,
+                        showBasemapMenu: false,
+                        selectedDetail: null
+                      }))}
                     />
                     <DrawOption 
                       icon={Hexagon} 
                       label={t('Draw Polygon', 'رسم مضلع')} 
                       isActive={explorerState?.drawingTool === 'polygon'}
                       isDarkMode={isDarkMode}
-                      onClick={() => setExplorerState(prev => ({ ...prev, drawingTool: 'polygon' }))}
+                      onClick={() => setExplorerState(prev => ({ 
+                        ...prev, 
+                        drawingTool: 'polygon',
+                        showSearchResults: false,
+                        showCategoriesPanel: false,
+                        showBasemapMenu: false,
+                        selectedDetail: null
+                      }))}
                     />
                   </motion.div>
                 )}
