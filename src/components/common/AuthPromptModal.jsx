@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, ShieldCheck, Bookmark, History, X, ArrowRight } from 'lucide-react';
+import { Lock, ShieldCheck, Heart, History, X, ArrowRight } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -64,8 +64,8 @@ export default function AuthPromptModal({ isOpen, onClose, onSignIn, featureName
             isDarkMode ? 'bg-[#101a36] border-slate-800' : 'bg-slate-50 border-slate-200/80'
           }`}>
             <div className="flex items-center gap-2.5 text-xs font-semibold">
-              <Bookmark className="w-4 h-4 text-[#3D52A0] dark:text-[#00e5ff]" />
-              <span>{t("Saved Searches & Custom Spatial Filters", "حفظ الاستعلامات والفلاتر المكانية")}</span>
+              <Heart className="w-4 h-4 text-rose-500 fill-current" />
+              <span>{t("Saved Favorites & Custom Spatial Filters", "حفظ المفضلة والفلاتر المكانية")}</span>
             </div>
             <div className="flex items-center gap-2.5 text-xs font-semibold">
               <History className="w-4 h-4 text-[#7c3aed]" />

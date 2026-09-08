@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowLeft, Eye, EyeOff, ShieldCheck, User } from 'lucide-react';
-import dgeLogo from '../assets/dge-logo.png';
-import sdiLogo from '../assets/sdilogo.png';
+import dgeDarkLogo from '../assets/dge-dark.webp';
+import dgeLightLogo from '../assets/dge-light.webp';
+import sdiDarkLogo from '../assets/sdi-dark.webp';
+import sdiLightLogo from '../assets/sdi-light.webp';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import LanguageSelector from './common/LanguageSelector';
@@ -26,19 +28,21 @@ export default function SignInPage({ onNavigate, onSignIn }) {
       <div className="absolute top-0 left-0 right-0 h-1.5 z-50 bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed]" />
 
       {/* Top Header Controls Bar */}
-      <div className="absolute top-1.5 left-0 right-0 z-40 px-6 py-4 flex items-center justify-between pointer-events-auto">
-        <button
-          onClick={() => onNavigate('landing')}
-          className={`flex items-center gap-2 transition-colors group cursor-pointer ${
-            isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-[#063360]'
-          }`}
-        >
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 rtl:rotate-180 rtl:group-hover:translate-x-1 transition-transform" />
-          <span className="font-semibold text-sm">{t("Back to Home", "العودة للرئيسية")}</span>
-        </button>
+      <div className="absolute top-1.5 left-0 right-0 z-40 py-4 pointer-events-auto">
+        <div className="w-full max-w-[1600px] mx-auto px-6 sm:px-10 lg:px-12 xl:px-16 flex items-center justify-between">
+          <button
+            onClick={() => onNavigate('landing')}
+            className={`flex items-center gap-2 transition-colors group cursor-pointer ${
+              isDarkMode ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-[#063360]'
+            }`}
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 rtl:rotate-180 rtl:group-hover:translate-x-1 transition-transform" />
+            <span className="font-semibold text-sm">{t("Back to Home", "العودة للرئيسية")}</span>
+          </button>
 
-        {/* SDI-Style Text-Only Language Selector */}
-        <LanguageSelector isDarkMode={isDarkMode} />
+          {/* SDI-Style Text-Only Language Selector */}
+          <LanguageSelector isDarkMode={isDarkMode} />
+        </div>
       </div>
 
       {/* Left Panel - Branding & Visuals */}
@@ -50,7 +54,7 @@ export default function SignInPage({ onNavigate, onSignIn }) {
         <div className="relative z-10 p-16 flex flex-col justify-between h-full w-full">
           <div>
             <div className="flex items-center gap-4 mb-8">
-              <img src={dgeLogo} alt="Department of Government Enablement" className="h-10 md:h-12 object-contain brightness-0 invert" />
+              <img src={dgeDarkLogo} alt="Department of Government Enablement" className="h-10 md:h-12 object-contain" />
             </div>
 
             <motion.div
@@ -69,7 +73,7 @@ export default function SignInPage({ onNavigate, onSignIn }) {
           </div>
 
           <div className="flex items-center gap-6 pt-12 border-t border-white/10">
-            <img src={sdiLogo} alt="Abu Dhabi Spatial Data Infrastructure" className="h-9 md:h-10 object-contain brightness-0 invert opacity-90" />
+            <img src={sdiDarkLogo} alt="Abu Dhabi Spatial Data Infrastructure" className="h-10 md:h-12 object-contain opacity-90" />
             <div className="h-8 w-px bg-white/20" />
             <div className="flex items-center gap-2 text-white/80">
               <ShieldCheck className="w-5 h-5 text-[#7DA1C4]" />
@@ -89,7 +93,7 @@ export default function SignInPage({ onNavigate, onSignIn }) {
         >
           {/* Mobile Brand Logo */}
           <div className="lg:hidden mb-8 text-center">
-            <img src={dgeLogo} alt="DGE" className={`h-9 object-contain mx-auto ${isDarkMode ? 'brightness-0 invert' : ''}`} />
+            <img src={isDarkMode ? dgeDarkLogo : dgeLightLogo} alt="DGE" className="h-9 object-contain mx-auto" />
           </div>
 
           <div className="mb-6 text-center lg:text-start">

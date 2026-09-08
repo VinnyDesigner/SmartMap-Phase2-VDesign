@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Layers, Pencil, Grid, Home, Navigation, Compass, Plus, Minus, 
-  Square, Circle, Hexagon, Map, Menu, X, Trash2, List
+  Square, Circle, Hexagon, Map, Menu, X, Trash2, List, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -113,6 +113,28 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
         >
           <Home className="w-4 h-4" />
         </button>
+
+        {/* Toggle Search Results List Panel Button */}
+        {explorerState?.activeResults?.length > 0 && (
+          <button
+            onClick={() => setExplorerState(prev => ({ 
+              ...prev, 
+              showSearchResults: !prev.showSearchResults, 
+              selectedDetail: null 
+            }))}
+            title={explorerState?.showSearchResults === false ? t('Show Search Results List', 'إظهار قائمة النتائج') : t('Hide Search Results List', 'إخفاء قائمة النتائج')}
+            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
+              explorerState?.showSearchResults !== false && !explorerState?.selectedDetail
+                ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-xs' : 'bg-[#215A9E] text-white shadow-xs')
+                : (isDarkMode ? 'bg-[#182645] text-[#00e5ff] border border-slate-700/80 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white')
+            }`}
+          >
+            <Search className="w-4 h-4" />
+            <span className="absolute -top-1 -end-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-extrabold flex items-center justify-center border-2 border-white dark:border-[#0b132b]">
+              {explorerState.activeResults.length}
+            </span>
+          </button>
+        )}
 
         {/* Clear Active Drawing Button */}
         {hasActiveDrawings && (
@@ -332,8 +354,8 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                 const loc = explorerState?.userLocation || { lat: 24.4839, lng: 54.3773 };
                 setExplorerState(prev => ({ 
                   ...prev, 
-                  mapFocus: { lat: loc.lat, lng: loc.lng, zoom: 16 },
-                  showLocationModal: true 
+                  userLocationEnabled: true,
+                  mapFocus: { lat: loc.lat, lng: loc.lng, zoom: 16 }
                 }));
               }} 
             />

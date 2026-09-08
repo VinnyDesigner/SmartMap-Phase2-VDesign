@@ -168,6 +168,7 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
       if (facility) {
         setExplorerState(prev => ({
           ...prev,
+          selectedDetail: facility,
           selectedLocation: facility,
           activeSlidePanel: 'detail',
           mapFocus: { lat: facility.lat, lng: facility.lng, zoom: 16 }
@@ -236,9 +237,10 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
     case 'LOCATION_PERMISSION': {
       setExplorerState(prev => ({
         ...prev,
-        showLocationModal: true
+        userLocationEnabled: true,
+        mapFocus: { lat: 24.4839, lng: 54.3773, zoom: 14 }
       }));
-      return { success: true, message: "Opened Location Access Permission Modal" };
+      return { success: true, message: "Enabled location access and centered on Abu Dhabi coordinates" };
     }
 
     default:

@@ -6,99 +6,56 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { LOCATIONS_DB } from '../../services/mockAiEngine';
-
-export const GIS_CATEGORIES_DATA = [
-  {
-    id: 'tourism',
-    title: 'Tourism & Culture',
-    title_ar: 'السياحة والثقافة',
-    icon: Landmark,
-    subcategories: [
-      { id: 'museums', label: 'Museums & Galleries', label_ar: 'المتاحف والمعارض', count: 18 },
-      { id: 'heritage', label: 'Cultural Heritage', label_ar: 'التراث الثقافي', count: 24 },
-      { id: 'landmarks', label: 'Landmarks & Monuments', label_ar: 'المعالم البارزة', count: 32 }
-    ]
-  },
-  {
-    id: 'government',
-    title: 'Government Services',
-    title_ar: 'الخدمات الحكومية',
-    icon: Landmark,
-    subcategories: [
-      { id: 'tamm_hubs', label: 'TAMM Customer Hubs', label_ar: 'مراكز تم للمتعاملين', count: 24 },
-      { id: 'executive_hq', label: 'Executive Governance', label_ar: 'المقرات الحكومية', count: 18 },
-      { id: 'municipality_offices', label: 'Municipality Offices', label_ar: 'مكاتب البلدية', count: 14 }
-    ]
-  },
-  {
-    id: 'utilities',
-    title: 'Civic Infrastructure',
-    title_ar: 'البنية التحتية والمرافق',
-    icon: Zap,
-    subcategories: [
-      { id: 'desalination', label: 'Desalination & Water', label_ar: 'تحلية المياه وإمداداتها', count: 12 },
-      { id: 'power_plants', label: 'Power & Solar Stations', label_ar: 'محطات الطاقة والشمسية', count: 28 },
-      { id: 'waste_recycling', label: 'Eco & Recycling Hubs', label_ar: 'مجمعات التدوير البيئي', count: 19 }
-    ]
-  },
-  {
-    id: 'transport',
-    title: 'Mobility & Transit',
-    title_ar: 'النقل والمواصفات',
-    icon: Bus,
-    subcategories: [
-      { id: 'bus_stations', label: 'Bus Terminals', label_ar: 'محطات الحافلات', count: 65 },
-      { id: 'aviation_hubs', label: 'Airports & Aviation', label_ar: 'المطارات والملاحة', count: 6 },
-      { id: 'maritime_ports', label: 'Maritime Ports', label_ar: 'الموانئ البحرية', count: 12 }
-    ]
-  },
-  {
-    id: 'parks_recreation',
-    title: 'Parks & Public Spaces',
-    title_ar: 'الحدائق والمساحات العامة',
-    icon: TreePine,
-    subcategories: [
-      { id: 'public_parks', label: 'Public Parks', label_ar: 'الحدائق العامة', count: 45 },
-      { id: 'botanical', label: 'Botanical Gardens', label_ar: 'الحدائق النباتية', count: 14 },
-      { id: 'sanctuaries', label: 'Environmental Sanctuaries', label_ar: 'المحميات البيئية', count: 19 }
-    ]
-  }
-];
+import { useProject } from '../../contexts/ProjectContext';
 
 export default function GisCategoriesPanel({ isOpen, onClose, explorerState, setExplorerState }) {
+
   const [searchTerm, setSearchTerm] = useState('');
   const [collapsedCategories, setCollapsedCategories] = useState({});
   const { t, isArabic } = useLanguage();
   const { isDarkMode } = useTheme();
+  const { activeProject } = useProject();
 
+  const categoriesData = activeProject.categories || [];
   const selectedSubcategories = explorerState?.selectedGisSubcategories || [];
 
   const filterLocationsBySubcategories = (subIds) => {
     let filtered = [];
-    const hasTourism = subIds.some(id => ['tourism', 'museums', 'heritage', 'landmarks'].includes(id));
-    const hasGovt = subIds.some(id => ['government', 'tamm_hubs', 'executive_hq', 'municipality_offices'].includes(id));
-    const hasUtilities = subIds.some(id => ['utilities', 'desalination', 'power_plants', 'waste_recycling'].includes(id));
-    const hasTransit = subIds.some(id => ['transport', 'bus_stations', 'aviation_hubs', 'maritime_ports'].includes(id));
-    const hasParks = subIds.some(id => ['parks_recreation', 'public_parks', 'botanical', 'sanctuaries'].includes(id));
+    const projectDataset = activeProject.datasets || [];
 
-    if (hasTourism) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'TOURISM')];
-    if (hasGovt) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'GOVERNMENT')];
-    if (hasUtilities) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'CIVIC_INFRASTRUCTURE' || l.type === 'MANUFACTURING')];
-    if (hasTransit) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'TRANSPORT')];
-    if (hasParks) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'PARK')];
+    if (!subIds || subIds.length === 0) {
+      filtered = projectDataset;
+    } else {
+      // Find subcategory definitions
+      const activeFilterRules = [];
+      categoriesData.forEach(cat => {
+        cat.subcategories.forEach(sub => {
+          if (subIds.includes(sub.id)) {
+            activeFilterRules.push(sub);
+          }
+        });
+      });
 
-    if (filtered.length === 0 && subIds.length === 0) {
-      filtered = LOCATIONS_DB;
+      filtered = projectDataset.filter(loc => {
+        return activeFilterRules.some(rule => {
+          if (rule.filterType && loc.type === rule.filterType) return true;
+          if (rule.filterValue && (loc.subType === rule.filterValue || loc.type === rule.filterValue)) return true;
+          return false;
+        });
+      });
+
+      if (filtered.length === 0) {
+        filtered = projectDataset;
+      }
     }
 
-    const topLoc = filtered[0] || LOCATIONS_DB[0];
+    const topLoc = filtered[0] || projectDataset[0];
 
     setExplorerState(prev => ({
       ...prev,
       selectedGisSubcategories: subIds,
       activeResults: filtered,
-      mapFocus: topLoc ? { lat: topLoc.lat, lng: topLoc.lng, zoom: 13 } : prev.mapFocus
+      mapFocus: topLoc ? { lat: topLoc.lat, lng: topLoc.lng, zoom: activeProject.defaultZoom || 13 } : prev.mapFocus
     }));
   };
 
@@ -172,7 +129,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
         isDarkMode ? 'bg-[#060a12]/80' : 'bg-slate-50/50'
       }`}>
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-          {GIS_CATEGORIES_DATA.length} {t('CATEGORIES', 'تصنيفات')}
+          {categoriesData.length} {t('CATEGORIES', 'تصنيفات')}
         </span>
 
         <button
@@ -214,8 +171,9 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
 
       {/* Scrollable Categories List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5 sleek-scrollbar">
-        {GIS_CATEGORIES_DATA.map((cat) => {
-          const CatIcon = cat.icon;
+        {categoriesData.map((cat) => {
+          const CatIcon = cat.icon || Layers;
+
           const isCollapsed = collapsedCategories[cat.id];
           
           const filteredSubs = cat.subcategories.filter(sub => {

@@ -63,7 +63,7 @@ export default function HelpPage({ onNavigate, explorerState, setExplorerState, 
     <div className={`w-full flex-1 overflow-y-auto pt-16 md:pt-20 flex flex-col transition-colors duration-300 ${
       isDarkMode ? 'bg-[#060b19] text-slate-100' : 'bg-slate-50 text-slate-900'
     }`}>
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 md:py-12 space-y-10">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-6 sm:px-10 lg:px-12 xl:px-16 py-8 md:py-12 space-y-10">
         {/* Page Hero Header */}
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#3D52A0]/10 dark:bg-[#00e5ff]/10 text-[#3D52A0] dark:text-[#00e5ff] border border-[#3D52A0]/20 dark:border-[#00e5ff]/20 text-xs font-bold">

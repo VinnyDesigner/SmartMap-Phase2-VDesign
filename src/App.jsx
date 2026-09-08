@@ -11,19 +11,31 @@ import SignInPage from './components/SignInPage';
 import WebGLFluidReveal from './components/WebGLFluidReveal';
 import LocationPermissionModal from './components/common/LocationPermissionModal';
 import MapPrintTemplate from './components/common/MapPrintTemplate';
+import AnalyticsModal from './components/common/AnalyticsModal';
 
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
+import { useProject } from './contexts/ProjectContext';
 
 function App() {
   const { isDarkMode } = useTheme();
   const { isArabic } = useLanguage();
+  const { activeProject } = useProject();
   
   const mouseX = useMotionValue(window.innerWidth / 2);
   const mouseY = useMotionValue(window.innerHeight / 2);
 
   const smoothMouseX = useSpring(mouseX, { stiffness: 40, damping: 25 });
   const smoothMouseY = useSpring(mouseY, { stiffness: 40, damping: 25 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
   
   const orbX = useTransform(smoothMouseX, v => v - 400);
   const orbY = useTransform(smoothMouseY, v => v - 400);
@@ -42,16 +54,6 @@ function App() {
     }
     setCurrentView(view);
   };
-  
-  const MOCK_DATA = [
-    { id: 201, name: 'Louvre Abu Dhabi', name_ar: 'متحف اللوفر أبوظبي', type: 'TOURISM', location: 'Saadiyat Cultural District', lat: 24.5338, lng: 54.3982 },
-    { id: 202, name: 'Qasr Al Watan Cultural Palace', name_ar: 'قصر الوطن الثقافي', type: 'TOURISM', location: 'Al Ras Al Akhdar', lat: 24.4628, lng: 54.3056 },
-    { id: 101, name: 'Department of Government Enablement (DGE) HQ', name_ar: 'دائرة التمكين الحكومي - المقر الرئيسي', type: 'GOVERNMENT', location: 'Corniche West', lat: 24.4789, lng: 54.3312 },
-    { id: 105, name: 'TAMM Customer Service Hub - Al Reem', name_ar: 'مركز تم لخدمات المتعاملين - الريم', type: 'GOVERNMENT', location: 'Al Reem Island', lat: 24.5028, lng: 54.4056 },
-    { id: 901, name: 'Al Taweelah Power & Desalination Complex', name_ar: 'مجمّع الطويلة للطاقة وتحلية المياه', type: 'CIVIC_INFRASTRUCTURE', location: 'Al Taweelah', lat: 24.7810, lng: 54.7120 },
-    { id: 12, name: 'Umm Al Emarat Park', name_ar: 'حديقة أم الإمارات', type: 'PARK', location: 'Al Mushrif', lat: 24.4533, lng: 54.3879 },
-    { id: 15, name: 'Abu Dhabi Main Bus Terminal', name_ar: 'محطة حافلات أبوظبي الرئيسية', type: 'TRANSPORT', location: 'Al Nahyan', lat: 24.4719, lng: 54.3725 }
-  ];
 
   const [userAuth, setUserAuth] = useState({
     isLoggedIn: false,
@@ -95,21 +97,28 @@ function App() {
   };
 
   const [explorerState, setExplorerState] = useState({
-    mapFocus: null,
-    activeResults: MOCK_DATA,
+    mapFocus: {
+      lat: activeProject.defaultCenter.lat,
+      lng: activeProject.defaultCenter.lng,
+      zoom: activeProject.defaultZoom
+    },
+    activeResults: activeProject.datasets,
+    showSearchResults: true,
     selectedDetail: null,
-    basemap: 'abu-dhabi-dge',
-    activeBasemap: 'abu-dhabi-dge',
+    selectedLocation: activeProject.datasets[1] || activeProject.datasets[0],
+    basemap: activeProject.mapConfig.defaultBasemap,
+    activeBasemap: activeProject.mapConfig.defaultBasemap,
     isDrawingMode: false,
     chatHistory: [],
     savedLocations: [],
     savedChatHistory: [],
     userAuth: { isLoggedIn: false },
     isLoggedIn: false,
-    userLocationEnabled: false,
-    userLocation: null,
+    userLocationEnabled: true,
+    userLocation: { lat: 24.4839, lng: 54.3773 },
     showLocationModal: false
   });
+
 
   useEffect(() => {
     setExplorerState(prev => ({
@@ -119,7 +128,7 @@ function App() {
     }));
   }, [userAuth]);
 
-  // Automatic browser geolocation on app launch
+  // Automatic browser geolocation on app launch without intrusive modal popups
   useEffect(() => {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -128,20 +137,17 @@ function App() {
           setExplorerState(prev => ({
             ...prev,
             userLocationEnabled: true,
-            userLocation: userCoords,
-            mapFocus: { lat: userCoords.lat, lng: userCoords.lng, zoom: 15 }
+            userLocation: userCoords
           }));
         },
         (err) => {
-          console.log("Geolocation prompt denied or unavailable, using Abu Dhabi default extent.");
           setExplorerState(prev => ({
             ...prev,
             userLocationEnabled: true,
-            userLocation: { lat: 24.4839, lng: 54.3773 },
-            mapFocus: { lat: 24.4839, lng: 54.3773, zoom: 13 }
+            userLocation: { lat: 24.4839, lng: 54.3773 }
           }));
         },
-        { timeout: 5000 }
+        { timeout: 3000 }
       );
     }
   }, []);
@@ -151,13 +157,18 @@ function App() {
   }
 
   return (
-    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] dark:bg-[#060a12] transition-colors duration-300 ${isArabic ? 'rtl' : 'ltr'} ${currentView === 'landing' ? 'custom-cursor-active' : ''}`} dir={isArabic ? 'rtl' : 'ltr'}>
-      <BrandHeader onNavigate={handleNavigate} currentView={currentView} userAuth={userAuth} onSignOut={handleSignOut} onSignIn={handleSignIn} />
+    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] dark:bg-[#060a12] transition-colors duration-300 ${isArabic ? 'rtl' : 'ltr'}`} dir={isArabic ? 'rtl' : 'ltr'}>
+      <BrandHeader onNavigate={handleNavigate} currentView={currentView} userAuth={userAuth} onSignOut={handleSignOut} onSignIn={handleSignIn} setExplorerState={setExplorerState} />
       
       {currentView === 'landing' && (
-        <div className="absolute inset-0 z-0 pointer-events-none">
-          <WebGLFluidReveal mouseX={smoothMouseX} mouseY={smoothMouseY} isDarkMode={isDarkMode} />
-        </div>
+        <>
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <WebGLFluidReveal mouseX={smoothMouseX} mouseY={smoothMouseY} isDarkMode={isDarkMode} />
+          </div>
+          <CustomCursor 
+            isSearchFocused={isSearchFocused} 
+          />
+        </>
       )}
       
       {currentView === 'landing' ? (
@@ -197,32 +208,16 @@ function App() {
         <AboutUsPage onNavigate={handleNavigate} />
       )}
       
-      {/* Location Permission Enforcement Modal */}
-      <LocationPermissionModal 
-        isOpen={explorerState?.showLocationModal}
-        onClose={() => setExplorerState(prev => ({ ...prev, showLocationModal: false }))}
-        onGrantLocation={(pos) => {
-          setExplorerState(prev => ({
-            ...prev,
-            userLocationEnabled: true,
-            userLocation: { lat: pos.lat, lng: pos.lng },
-            mapFocus: { lat: pos.lat, lng: pos.lng, zoom: 15 },
-            showLocationModal: false
-          }));
-        }}
-        onUseDefaultLocation={() => {
-          setExplorerState(prev => ({
-            ...prev,
-            userLocationEnabled: true,
-            userLocation: { lat: 24.4839, lng: 54.3773 },
-            mapFocus: { lat: 24.4839, lng: 54.3773, zoom: 13 },
-            showLocationModal: false
-          }));
-        }}
-      />
-
       {/* Map-Centric Dedicated Print Layout Container */}
       <MapPrintTemplate explorerState={explorerState} />
+
+      {/* On-Demand Analytics Modal (Wireframe Page 6) */}
+      <AnalyticsModal
+        isOpen={Boolean(explorerState?.showAnalyticsModal)}
+        onClose={() => setExplorerState(prev => ({ ...prev, showAnalyticsModal: false }))}
+        title={explorerState?.analyticsTitle}
+        results={explorerState?.activeResults}
+      />
     </div>
   );
 }

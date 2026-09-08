@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReactImport from 'highcharts-react-official';
 import { motion } from 'framer-motion';
-import { BarChart2, PieChart as PieChartIcon, Star, Bookmark } from 'lucide-react';
+import { BarChart2, PieChart as PieChartIcon, Star, Bookmark, Maximize2 } from 'lucide-react';
 
 const HighchartsReact = HighchartsReactImport.default || HighchartsReactImport;
 
@@ -34,7 +34,7 @@ Highcharts.setOptions({
   }
 });
 
-export default function AiChart({ chartData, results, isBookmarked, onBookmark }) {
+export default function AiChart({ chartData, results, isBookmarked, onBookmark, onOpenAnalytics }) {
   const [viewMode, setViewMode] = useState('custom');
 
   if (!chartData) return null;
@@ -147,6 +147,16 @@ export default function AiChart({ chartData, results, isBookmarked, onBookmark }
           title={isBookmarked ? "Remove Bookmark" : "Bookmark Chart"}
         >
           <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+        </motion.button>
+      )}
+      {onOpenAnalytics && (
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
+          onClick={onOpenAnalytics}
+          className="p-1.5 rounded-lg transition-all border bg-[#063360] text-white hover:bg-[#215A9E] cursor-pointer"
+          title="Expand Full Analytics (On Demand)"
+        >
+          <Maximize2 className="w-4 h-4 text-[#00e5ff]" />
         </motion.button>
       )}
     </div>

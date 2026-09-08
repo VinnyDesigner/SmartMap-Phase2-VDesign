@@ -7,13 +7,17 @@ import './index.css'
 import App from './App.jsx'
 import { LanguageProvider } from './contexts/LanguageContext.jsx'
 import { ThemeProvider } from './contexts/ThemeContext.jsx'
+import { ProjectProvider } from './contexts/ProjectContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>
       <LanguageProvider>
-        <App />
+        <ProjectProvider>
+          <App />
+        </ProjectProvider>
       </LanguageProvider>
     </ThemeProvider>
   </StrictMode>,
 )
+

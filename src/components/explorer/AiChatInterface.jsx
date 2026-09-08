@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Send, Bot, User, MapPin, Bookmark, History, MessageSquare, 
+  Send, Bot, User, MapPin, Heart, History, MessageSquare, 
   Trash2, ArrowRight, Pencil, Check, Pin, Sparkles
 } from 'lucide-react';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
@@ -10,7 +10,10 @@ import { executeAppAction, ACTION_TYPES } from '../../services/actionRegistry';
 import AiResponseRenderer from '../ai/AiResponseRenderer';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useProject } from '../../contexts/ProjectContext';
 import CurrentContextBar from './CurrentContextBar';
+
+import { getRotatedPromptSuggestions } from '../../services/ai/promptLibrary';
 import AuthPromptModal from '../common/AuthPromptModal';
 
 // Seed initial saved favorites
@@ -75,6 +78,7 @@ const SEED_HISTORY_SESSIONS = [
 export default function AiChatInterface({ explorerState, setExplorerState, onNavigate }) {
   const { t, isArabic, setIsArabic } = useLanguage();
   const { isDarkMode, toggleTheme, setTheme } = useTheme();
+  const { activeProject } = useProject();
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [activeStepText, setActiveStepText] = useState(null);
@@ -192,15 +196,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   }, [explorerState?.pendingQuery]);
 
   const placeholderText = useTypewriterPlaceholder(
-    isArabic ? [
-      'عرض المعالم السياحية بالقرب مني...',
-      'أيها الأقرب لي؟',
-      'اعرض الاتجاهات إلى أحدث نتيجة'
-    ] : [
-      'Show tourism attractions near me...',
-      'Which one is closest?',
-      'Show me directions'
-    ]
+    isArabic ? activeProject.searchSuggestions_ar : activeProject.searchSuggestions
   );
 
   const messages = explorerState?.chatHistory || [];
@@ -220,27 +216,25 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }
   }, [messages, activeStepText, activeTab]);
 
-  // Initial Welcome Message
+  // Initial Welcome Message with Dynamic Prompt Rotation
   useEffect(() => {
     setExplorerState(prev => {
       const currentHistory = prev.chatHistory || [];
       const welcomeContent = isArabic 
-        ? "مرحباً بك في GeoVision - مساعد الخرائط والتحليل المكاني لـ Abu Dhabi SDI. كيف يمكنني مساعدتك اليوم؟" 
-        : "Welcome to GeoVision — your Conversational Spatial AI Assistant for Abu Dhabi SDI. How can I help you today?";
+        ? "مرحباً! أنا مساعد الخريطة المكانية الذكية لإمارة أبوظبي.\n\nيمكنني مساعدتك في استكشاف المرافق الحكومية، المتاحف، المتنزهات، وشبكات النقل وتصفية الاستعلامات المكانية. كيف يمكنني مساعدتك اليوم؟"
+        : "Welcome to SmartMap AI Assistant! I can help you explore Abu Dhabi spatial data, government facilities, tourism landmarks, public transit, and environmental layers. What would you like to analyze today?";
       
-      const welcomeSuggestions = isArabic 
-        ? ["عرض المعالم السياحية بالقرب مني", "اعرض المراكز الحكومية في الريم", "تغيير الخريطة إلى قمر صناعي"] 
-        : ["Show tourism attractions near me", "Show government centers in Reem", "Change basemap to satellite"];
+      const rotatedSuggestions = getRotatedPromptSuggestions(isArabic, Date.now());
 
-      if (currentHistory.length === 0) {
+      if (!currentHistory || currentHistory.length === 0) {
         return {
           ...prev,
-          chatHistory: [{ id: 1, role: 'assistant', content: welcomeContent, suggestions: welcomeSuggestions }]
+          chatHistory: [{ id: Date.now(), role: 'assistant', content: welcomeContent, suggestions: rotatedSuggestions }]
         };
       }
       return prev;
     });
-  }, [isArabic]);
+  }, [isArabic, activeProject, explorerState?.chatHistory?.length]);
 
   const handleSubmit = async (e, forcedQuery = null) => {
     if (e) e.preventDefault();
@@ -266,7 +260,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     await new Promise(r => setTimeout(r, 250));
 
     try {
-      const aiResponse = await mockAiEngine.processQuery(queryToProcess, explorerState, isArabic);
+      const stateWithProject = { ...explorerState, activeProject };
+      const aiResponse = await mockAiEngine.processQuery(queryToProcess, stateWithProject, isArabic);
 
       if (aiResponse.actions && aiResponse.actions.length > 0) {
         for (const action of aiResponse.actions) {
@@ -350,7 +345,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       isDarkMode ? 'bg-transparent text-slate-100' : 'bg-white text-slate-800'
     }`}>
       {/* Header Tab Selector Bar */}
-      <div className={`flex items-center justify-around border-b shrink-0 px-2 py-2 z-20 backdrop-blur-md transition-colors duration-300 ${
+      <div className={`flex items-center ${isLoggedIn ? 'justify-around' : 'justify-start ps-3'} border-b shrink-0 px-2 py-2 z-20 backdrop-blur-md transition-colors duration-300 ${
         isDarkMode ? 'bg-[#0f1932]/95 border-slate-800/90' : 'bg-white border-slate-200'
       }`}>
         <button 
@@ -376,7 +371,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                   : (isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-800')
               }`}
             >
-              <Bookmark className="w-3.5 h-3.5 text-amber-500 fill-current" />
+              <Heart className="w-3.5 h-3.5 text-rose-500 fill-current" />
               <span>{t('Favorites', 'المفضلة')}</span>
               {savedLocations.length > 0 && (
                 <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-[#00e5ff]' : 'bg-[#215A9E] text-white'}`}>
@@ -416,7 +411,45 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       {activeTab === 'chat' && (
         <>
           <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-transparent' : 'bg-white'}`}>
-            {messages.map((msg, idx) => (
+            {messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center p-6 text-center">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-md ${
+                  isDarkMode ? 'bg-[#182645] text-[#00e5ff] border border-slate-700' : 'bg-[#eef3ff] text-[#215A9E] border border-[#215A9E]/20'
+                }`}>
+                  <Sparkles className="w-7 h-7 animate-pulse" />
+                </div>
+                <h3 className="font-extrabold text-sm mb-1 text-slate-800 dark:text-white">
+                  {t('Welcome to SmartMap AI Assistant', 'مرحباً بك في مساعد الخريطة الذكية')}
+                </h3>
+                <p className="text-[11px] text-slate-400 max-w-xs mb-4 leading-relaxed">
+                  {t(
+                    'Your conversational spatial intelligence partner. Explore government facilities, public safety, transit networks, and environmental data across Abu Dhabi.',
+                    'شريكك في الذكاء المكاني الحواري. استكشف المنشآت الحكومية، السلامة العامة، شبكات النقل، والبيانات البيئية في إمارة أبوظبي.'
+                  )}
+                </p>
+
+                <div className="w-full max-w-xs space-y-2">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                    {t('Suggested Spatial Prompts', 'مقترحات الاستعلام المكاني')}
+                  </span>
+                  {getRotatedPromptSuggestions(isArabic, Date.now()).slice(0, 4).map((sug, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleSubmit(null, sug)}
+                      className={`w-full text-left p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer flex items-center justify-between group ${
+                        isDarkMode 
+                          ? 'bg-[#101a35] border-slate-800 hover:border-[#00e5ff] text-slate-200 hover:text-[#00e5ff]' 
+                          : 'bg-slate-50 border-slate-200 hover:border-[#215A9E] text-slate-700 hover:text-[#215A9E]'
+                      }`}
+                    >
+                      <span className="truncate">{sug}</span>
+                      <ArrowRight className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all shrink-0 ms-2 text-[#215A9E] dark:text-[#00e5ff]" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              messages.map((msg, idx) => (
               <div key={msg.id ? `${msg.id}-${idx}` : `msg-${idx}`} className={`flex gap-2.5 group items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
                   <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${
@@ -479,12 +512,17 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         isLoggedIn={isLoggedIn}
                         onToggleFavorite={handleToggleFavoriteLocation}
                         onPromptAuth={(feat) => setAuthModalState({ isOpen: true, featureName: feat })}
+                        onOpenAnalytics={() => setExplorerState(prev => ({
+                          ...prev,
+                          showAnalyticsModal: true,
+                          analyticsTitle: isArabic ? 'تحليل المنشآت والبيانات' : 'Government Facilities Analysis'
+                        }))}
                         savedLocations={savedLocations}
                         userLocation={explorerState?.userLocation}
                       />
 
-                      {/* Pin Query Action Line for User Bubbles */}
-                      {idx > 0 && msg.role === 'assistant' && (
+                      {/* Pin Query Action Line for User Bubbles (Registered Users Only) */}
+                      {isLoggedIn && idx > 0 && msg.role === 'assistant' && (
                         <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-end">
                           <button
                             type="button"
@@ -540,7 +578,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                   </div>
                 )}
               </div>
-            ))}
+            ))
+            )}
 
             {isTyping && (
               <div className="flex gap-2.5 justify-start items-center">

@@ -32,8 +32,6 @@ const ALL_FACILITIES = facilitiesData.features.map(f => ({
   coordinates: { latitude: f.geometry.coordinates[1], longitude: f.geometry.coordinates[0] }
 }));
 
-let lastContextFacility = ALL_FACILITIES[2]; // Default Mussafah
-
 export const aiOrchestrator = {
   async processUserQuery(queryText, currentState = null, isArabic = false) {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -43,12 +41,17 @@ export const aiOrchestrator = {
     let actions = [];
     let blocks = [];
 
+    const activeProject = currentState?.activeProject;
+    const activeDataset = activeProject?.datasets || currentState?.activeResults || ALL_FACILITIES;
+    let lastContextFacility = activeDataset[0] || ALL_FACILITIES[0];
+
     // Resolve active context
     if (currentState?.selectedLocation) {
       lastContextFacility = currentState.selectedLocation;
     } else if (currentState?.activeResults && currentState.activeResults.length > 0) {
       lastContextFacility = currentState.activeResults[0];
     }
+
 
     // ==========================================
     // MANDATORY NEGATIVE TEST 3: CONTRADICTORY FILTERS
@@ -369,8 +372,21 @@ export const aiOrchestrator = {
     if (q.includes('emissions') || (q.includes('mussafah') && q.includes('kizad')) || (q.includes('compare') && q.includes('emissions'))) {
       executionLogs.push({ step: 'Query Parsed (Emissions Intent)', status: 'success' });
 
+      const supportsEmissions = activeProject?.analyticsConfig?.supportedMetrics?.includes('emissions');
+
+      if (!supportsEmissions && activeProject) {
+        blocks = [{
+          type: 'TEXT',
+          content: isArabic
+            ? `⚠️ **التحليلات غير متوفرة**: مشروع **"${activeProject.name_ar}"** لا يحتوي حالياً على مؤشرات انبعاثات الطاقة.`
+            : `⚠️ **Analytics Unavailable**: The active project (**${activeProject.name}**) does not currently contain energy emissions metrics.`
+        }];
+        return { reply: blocks[0].content, blocks, actions: [], executionLogs };
+      }
+
       const musEmissions = 98000;
       const kizEmissions = 84000;
+
 
       blocks = [
         {

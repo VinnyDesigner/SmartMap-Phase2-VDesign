@@ -1,11 +1,14 @@
 import React from 'react';
-import dgeLogo from '../../assets/dge-logo.png';
-import sdiLogo from '../../assets/sdilogo.png';
+import dgeLightLogo from '../../assets/dge-light.webp';
+import sdiLightLogo from '../../assets/sdi-light.webp';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useProject } from '../../contexts/ProjectContext';
 
 export default function MapPrintTemplate({ explorerState }) {
   const { isArabic } = useLanguage();
-  const activeResults = explorerState?.activeResults || [];
+  const { activeProject } = useProject();
+  const activeResults = explorerState?.activeResults || activeProject.datasets || [];
   const selectedLoc = explorerState?.selectedLocation || explorerState?.selectedDetail;
   const now = new Date().toLocaleString();
 
@@ -14,17 +17,17 @@ export default function MapPrintTemplate({ explorerState }) {
       {/* Header */}
       <div className="flex items-center justify-between border-b-2 border-[#063360] pb-4 mb-6">
         <div className="flex items-center gap-4">
-          <img src={dgeLogo} alt="DGE Logo" className="h-10 object-contain" />
+          <img src={dgeLightLogo} alt="DGE Logo" className="h-10 object-contain" />
           <div>
             <h1 className="text-xl font-bold text-[#063360]">
-              {isArabic ? "منصة القرار الذكي للمعلومات المكانية - أبوظبي" : "Abu Dhabi Spatial Data Infrastructure (AD-SDI)"}
+              {isArabic ? activeProject.name_ar : activeProject.name} — {isArabic ? "منصة الخرائط الذكية" : "SmartMap Project Report"}
             </h1>
             <p className="text-xs text-slate-500 font-semibold">
-              {isArabic ? "تقرير الخريطة والتحليلات المكانية الرسمية" : "Official Executive Spatial Analysis & Map Report"}
+              {isArabic ? activeProject.description_ar : activeProject.description}
             </p>
           </div>
         </div>
-        <img src={sdiLogo} alt="SDI Logo" className="h-8 object-contain" />
+        <img src={sdiLightLogo} alt="SDI Logo" className="h-8 object-contain" />
       </div>
 
       {/* Map Extent & Context Info Card */}
@@ -34,14 +37,15 @@ export default function MapPrintTemplate({ explorerState }) {
           <span className="font-semibold text-slate-800">{now}</span>
         </div>
         <div>
-          <span className="text-slate-400 font-bold block uppercase tracking-wider">{isArabic ? "الاستعلام النشط:" : "Active Query:"}</span>
-          <span className="font-semibold text-[#215A9E]">{explorerState?.activeContext?.category || "Government Facilities & Infrastructure"}</span>
+          <span className="text-slate-400 font-bold block uppercase tracking-wider">{isArabic ? "نطاق المشروع:" : "Project Geography:"}</span>
+          <span className="font-semibold text-[#215A9E]">{activeProject.geography}</span>
         </div>
         <div>
           <span className="text-slate-400 font-bold block uppercase tracking-wider">{isArabic ? "عدد النتائج:" : "Total Results Found:"}</span>
-          <span className="font-bold text-emerald-700">{activeResults.length} {isArabic ? "منشآت" : "facilities"}</span>
+          <span className="font-bold text-emerald-700">{activeResults.length} {isArabic ? "منشآت" : "features"}</span>
         </div>
       </div>
+
 
       {/* Simulated Map Print Viewport Frame with North Arrow & Scale */}
       <div className="relative w-full h-[400px] bg-slate-100 rounded-2xl border-2 border-slate-300 overflow-hidden mb-6 flex flex-col items-center justify-center p-4">

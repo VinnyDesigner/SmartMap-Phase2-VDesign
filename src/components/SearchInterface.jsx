@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowRight, Landmark, Zap, TreePine, Bus, LayoutGrid, Mic, Sparkles } from 'lucide-react';
+import { Search, ArrowRight, Landmark, Zap, TreePine, Bus, LayoutGrid, Mic, Sparkles, Palmtree, Building2, MapPin, Factory } from 'lucide-react';
 import WebGLTextEffect from './WebGLTextEffect';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriter';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useProject } from '../contexts/ProjectContext';
 
 export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
   const [searchValue, setSearchValue] = useState('');
   const { t, isArabic } = useLanguage();
   const { isDarkMode } = useTheme();
+  const { activeProject } = useProject();
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -21,28 +23,31 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
 
   const placeholderText = useTypewriterPlaceholder(
     isArabic ? [
-      'البحث عن الأماكن والمعالم...',
-      'البحث عن مراكز تم الحكومية بالقرب من جزيرة الريم',
-      'اسأل عن أي شيء حول السياحة والخدمات والمرافق في أبوظبي...'
+      `البحث في مشروع ${activeProject.name_ar}...`,
+      ...activeProject.searchSuggestions_ar,
+      `اسأل عن أي شيء يتعلق بـ ${activeProject.name_ar}...`
     ] : [
-      'Search places & assets...',
-      'Find Tamm government centers near Al Reem Island',
-      'Ask anything about tourism, services, or infrastructure in Abu Dhabi...'
+      `Search ${activeProject.name}...`,
+      ...activeProject.searchSuggestions,
+      `Ask anything about ${activeProject.name}...`
     ]
   );
 
-  const suggestions = [
-    { icon: <Landmark className="w-4 h-4 text-purple-500" />, text: t("Tourism attractions near me", "المعالم السياحية القريبة مني") },
-    { icon: <Sparkles className="w-4 h-4 text-blue-500" />, text: t("Tamm service centers", "مراكز تم الحكومية") },
-    { icon: <Zap className="w-4 h-4 text-amber-500" />, text: t("Power & water utilities", "مرافق الطاقة والمياه") },
-    { icon: <Bus className="w-4 h-4 text-emerald-500" />, text: t("Public transit stops", "مواقف النقل العام") },
-    { icon: <TreePine className="w-4 h-4 text-teal-500" />, text: t("Public parks", "الحدائق العامة") }
-  ];
+  const suggestions = (isArabic ? activeProject.searchSuggestions_ar : activeProject.searchSuggestions).map((text, idx) => {
+    const icons = [
+      <Landmark key={idx} className="w-4 h-4 text-purple-500" />,
+      <Sparkles key={idx} className="w-4 h-4 text-blue-500" />,
+      <Zap key={idx} className="w-4 h-4 text-amber-500" />,
+      <Bus key={idx} className="w-4 h-4 text-emerald-500" />
+    ];
+    return { icon: icons[idx % icons.length], text };
+  });
+
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none mt-16">
+    <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none mt-16 overflow-y-auto py-12">
       <motion.div 
-        className="search-ui relative w-full max-w-4xl px-4 md:px-6 flex flex-col items-center text-center"
+        className="search-ui relative w-full max-w-5xl px-4 md:px-6 flex flex-col items-center text-center my-auto"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
@@ -84,18 +89,19 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-1 md:gap-3 mb-2">
-            <span className={`text-xl md:text-3xl font-bold tracking-tight ${isDarkMode ? 'text-white drop-shadow-md' : 'text-slate-800'}`}>{t('Find.', 'ابحث.')}</span>
-            <span className={`text-xl md:text-3xl font-bold tracking-tight ${isDarkMode ? 'text-slate-200 drop-shadow-md' : 'text-slate-800'}`}>{t('Explore.', 'استكشف.')}</span>
-            <span className={`text-xl md:text-3xl font-extrabold tracking-tight ${isDarkMode ? 'text-[#c084fc] drop-shadow-[0_0_12px_rgba(192,132,252,0.5)]' : 'text-[#7c3aed]'}`}>{t('Understand.', 'افهم.')}</span>
+            <span className={`text-xl md:text-3xl font-bold tracking-tight ${isDarkMode ? 'text-white drop-shadow-md' : 'text-slate-800'}`}>{t('Search.', 'ابحث.')}</span>
+            <span className={`text-xl md:text-3xl font-bold tracking-tight ${isDarkMode ? 'text-slate-200 drop-shadow-md' : 'text-slate-800'}`}>{t('Discover.', 'استكشف.')}</span>
+            <span className={`text-xl md:text-3xl font-bold tracking-tight ${isDarkMode ? 'text-slate-200 drop-shadow-md' : 'text-slate-800'}`}>{t('Analyze.', 'حلل.')}</span>
+            <span className={`text-xl md:text-3xl font-extrabold tracking-tight ${isDarkMode ? 'text-[#c084fc] drop-shadow-[0_0_12px_rgba(192,132,252,0.5)]' : 'text-[#7c3aed]'}`}>{t('Decide.', 'قرر.')}</span>
           </div>
           <p className={`text-base md:text-xl font-medium ${isDarkMode ? 'text-slate-300 drop-shadow-md' : 'text-dge-grey'}`}>
-            {t("Abu Dhabi's Public Data, At Your Fingertips.", "بيانات أبوظبي العامة، بين يديك.")}
+            {t("Explore Abu Dhabi Through Spatial Intelligence", "استكشف أبوظبي عبر الذكاء الجغرافي المكاني")}
           </p>
         </motion.div>
 
         {/* The Search Bar Surface */}
         <motion.div 
-          className="relative group w-full rounded-full p-[2px] shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden pointer-events-auto"
+          className="relative group w-full max-w-4xl rounded-full p-[2px] shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden pointer-events-auto"
           onMouseMove={handleMouseMove}
           animate={{
             scale: isFocused ? 1.02 : 1,
@@ -148,15 +154,15 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
                 : 'bg-dge-tech'
             }`}>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-              <Sparkles className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
+              <Search className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
             </div>
             
-              <input 
-                type="text"
-                placeholder={placeholderText}
-                className={`flex-1 bg-transparent border-none outline-none px-3 md:px-5 font-medium text-base md:text-lg w-full ${
-                  isDarkMode ? 'text-white placeholder-slate-400' : 'text-dge-reliable placeholder-dge-grey/70'
-                }`}
+            <input 
+              type="text"
+              placeholder={t("Ask a location question...", "اسأل سؤالاً مكانياً...")}
+              className={`flex-1 bg-transparent border-none outline-none px-3 md:px-5 font-medium text-base md:text-lg w-full ${
+                isDarkMode ? 'text-white placeholder-slate-400' : 'text-dge-reliable placeholder-dge-grey/70'
+              }`}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onFocus={() => setIsFocused(true)}
@@ -193,29 +199,79 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
           </div>
         </motion.div>
 
-        {/* Suggestion Pills */}
+        {/* Explore by Theme Section (Wireframe Page 1) */}
         <motion.div 
-          className="mt-6 flex flex-wrap items-center gap-2 md:gap-4 justify-center pointer-events-auto"
-          animate={{ opacity: isFocused ? 0 : 1 }}
+          className="mt-8 w-full pointer-events-auto"
+          animate={{ opacity: isFocused ? 0 : 1, y: isFocused ? 20 : 0 }}
           transition={{ duration: 0.3 }}
         >
-          <span className={`hidden md:inline text-sm font-medium me-2 ${isDarkMode ? 'text-slate-300' : 'text-dge-grey'}`}>{t('Try searching:', 'جرب البحث عن:')}</span>
-          {suggestions.map((item, i) => (
-            <button 
-              key={i}
-              onClick={() => onSearch && onSearch(item.text)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md transition-all ${
-                isDarkMode 
-                  ? 'bg-[#0f1b38]/85 border border-slate-700/70 text-slate-200 shadow-md hover:bg-[#1e2e5a] hover:border-[#c084fc] hover:text-white hover:shadow-[0_0_15px_rgba(192,132,252,0.3)]' 
-                  : 'bg-white/80 border border-white shadow-sm hover:shadow-md hover:-translate-y-0.5'
-              }`}
-            >
-              <div className="flex items-center justify-center">
-                {item.icon}
-              </div>
-              <span className={`text-sm font-medium ${isDarkMode ? 'text-slate-200' : 'text-dge-reliable'}`}>{item.text}</span>
-            </button>
-          ))}
+          <div className="flex items-center justify-between mb-3 px-2">
+            <h3 className={`text-xs md:text-sm font-extrabold uppercase tracking-wider ${isDarkMode ? 'text-slate-300' : 'text-[#063360]'}`}>
+              {t("Explore by Theme", "استكشف حسب الموضوعات")}
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              {
+                icon: Palmtree,
+                title_en: "Tourism & Culture",
+                title_ar: "السياحة والثقافة",
+                query: "Show tourism & culture attractions in Abu Dhabi",
+                color: "text-purple-500 dark:text-purple-400"
+              },
+              {
+                icon: Landmark,
+                title_en: "Government Services",
+                title_ar: "الخدمات الحكومية",
+                query: "Show government facilities near me",
+                color: "text-blue-600 dark:text-blue-400"
+              },
+              {
+                icon: Building2,
+                title_en: "Infrastructure",
+                title_ar: "البنية التحتية",
+                query: "Show civic infrastructure datasets",
+                color: "text-indigo-600 dark:text-indigo-400"
+              },
+              {
+                icon: Bus,
+                title_en: "Mobility & Transport",
+                title_ar: "النقل والمواصلات",
+                query: "Show transit and transport stations",
+                color: "text-emerald-600 dark:text-emerald-400"
+              },
+              {
+                icon: MapPin,
+                title_en: "Parks & Public Spaces",
+                title_ar: "الحدائق والأماكن العامة",
+                query: "Find parks in Yas Island",
+                color: "text-amber-500 dark:text-amber-400"
+              },
+              {
+                icon: Factory,
+                title_en: "Manufacturing & Industry",
+                title_ar: "التصنيع والصناعة",
+                query: "Show manufacturing and industrial zones",
+                color: "text-rose-500 dark:text-rose-400"
+              }
+            ].map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => onSearch && onSearch(item.query)}
+                className={`p-3.5 rounded-2xl border transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg flex flex-col items-center justify-center text-center gap-2 cursor-pointer group ${
+                  isDarkMode 
+                    ? 'bg-[#0b1730]/90 border-slate-800 hover:border-[#00e5ff]/60 hover:bg-[#112347] text-white shadow-md' 
+                    : 'bg-white/95 border-slate-200/90 hover:border-[#215A9E]/60 hover:bg-white text-slate-800 shadow-xs'
+                }`}
+              >
+                <div className={`p-2.5 rounded-xl transition-transform group-hover:scale-110 ${isDarkMode ? 'bg-[#15274d]' : 'bg-blue-50'}`}>
+                  <item.icon className={`w-5 h-5 ${item.color}`} />
+                </div>
+                <span className="text-xs font-bold leading-tight">{t(item.title_en, item.title_ar)}</span>
+              </button>
+            ))}
+          </div>
         </motion.div>
 
       </motion.div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import Highcharts from 'highcharts';
 import HighchartsReactImport from 'highcharts-react-official';
+import { Maximize2, BarChart3 } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 
@@ -15,7 +16,7 @@ const CATEGORY_MAP = {
   'Abu Dhabi Regional Risk Comparison': 'مقارنة تقييم المخاطر الإقليمية بأبوظبي'
 };
 
-export default function AiChartBlock({ chartData, onEntityClick }) {
+export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics }) {
   const { isDarkMode } = useTheme();
   const { t, isArabic } = useLanguage();
   if (!chartData || !chartData.data) return null;
@@ -88,9 +89,29 @@ export default function AiChartBlock({ chartData, onEntityClick }) {
   };
 
   return (
-    <div className={`border rounded-xl p-2.5 my-2.5 shadow-2xs transition-all ${
+    <div className={`border rounded-xl p-2.5 my-2.5 shadow-2xs transition-all relative group ${
       isDarkMode ? 'bg-[#132042] border-slate-700/70' : 'bg-slate-50 border-slate-200/80'
     }`}>
+      <div className="flex items-center justify-between mb-1 px-1">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+          <BarChart3 className="w-3 h-3 text-[#215A9E] dark:text-[#00e5ff]" />
+          <span>{t("Analytics Chart", "رسم بياني تحليلي")}</span>
+        </span>
+
+        {onOpenAnalytics && (
+          <button
+            onClick={onOpenAnalytics}
+            className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
+              isDarkMode ? 'bg-[#182645] border-slate-700 text-[#00e5ff] hover:bg-[#7c3aed] hover:text-white' : 'bg-white border-slate-200 text-[#215A9E] hover:bg-[#215A9E] hover:text-white'
+            }`}
+            title={t("Expand Full Analytics (On Demand)", "توسيع التحليلات الكاملة")}
+          >
+            <Maximize2 className="w-3 h-3" />
+            <span>{t("On Demand Analytics", "تحليلات تفاعلية")}</span>
+          </button>
+        )}
+      </div>
+
       <HighchartsReact highcharts={Highcharts} options={options} />
     </div>
   );

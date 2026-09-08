@@ -9,562 +9,454 @@ const fmt = (num) => (num ? num.toLocaleString() : '0');
 
 export const AI_KNOWLEDGE_BASE_ENTRIES = [
   // =========================================================
-  // PRIORITY 1 — 5-STEP REFERENCE RESOLUTION JOURNEY (PHASE 2 THEME DIRECTION)
+  // 1. PUBLIC SAFETY (Police & Ambulance)
   // =========================================================
   {
-    id: 'P1_STEP1_TOURISM_ABU_DHABI',
+    id: 'PUBLIC_SAFETY_POLICE',
     patterns_en: [
-      'show tourism attractions in abu dhabi',
-      'tourism attractions in abu dhabi',
-      'find tourism in abu dhabi',
-      'list tourism abu dhabi',
-      'tourism abu dhabi',
-      'get tourism attractions in abu dhabi',
-      'show museums in abu dhabi'
+      'show police stations near me',
+      'find police stations within 5 km',
+      'police stations near me',
+      'police stations within 5 km',
+      'police stations',
+      'find police stations'
     ],
     patterns_ar: [
-      'اعرض المعالم السياحية في أبوظبي',
-      'المعالم السياحية في أبوظبي',
-      'السياحة في أبوظبي',
-      'أظهر معالم أبوظبي',
-      'البحث عن متاحف ومعالم في أبوظبي'
+      'اعرض مراكز الشرطة بالقرب مني',
+      'مراكز الشرطة بالقرب مني',
+      'البحث عن مراكز الشرطة',
+      'مراكز الشرطة'
     ],
     handler: (currentState, isArabic) => {
-      const results = LOCATIONS_DB.filter(l => l.type === 'TOURISM');
-      const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'TOURISM', district: 'Abu Dhabi Sector' }, matchingResults: results } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: 24.4839, lng: 54.3773, zoom: 12 } }
+      const userLat = currentState?.userLocation?.lat || 24.4789;
+      const userLng = currentState?.userLocation?.lng || 54.3312;
+      const results = [
+        { id: 401, name: 'Abu Dhabi Central Police Station', name_ar: 'مركز شرطة أبوظبي المركزي', type: 'PUBLIC_SAFETY', category_en: 'Police Station', category_ar: 'مركز شرطة', location: 'Downtown Abu Dhabi', location_ar: 'وسط المدينة', lat: 24.4710, lng: 54.3640, distanceKm: 3.4, riskLevel: 'Low', description: 'Central headquarters handling urban public safety and civic response.' },
+        { id: 402, name: 'Al Bateen Police Station', name_ar: 'مركز شرطة البتين', type: 'PUBLIC_SAFETY', category_en: 'Police Station', category_ar: 'مركز شرطة', location: 'Al Bateen', location_ar: 'البتين', lat: 24.4560, lng: 54.3480, distanceKm: 2.8, riskLevel: 'Low', description: 'Local precinct maintaining community safety and coastal patrol.' },
+        { id: 403, name: 'Saadiyat Island Police Post', name_ar: 'نقطة شرطة جزيرة السعديات', type: 'PUBLIC_SAFETY', category_en: 'Police Station', category_ar: 'مركز شرطة', location: 'Saadiyat Cultural District', location_ar: 'السعديات', lat: 24.5290, lng: 54.3910, distanceKm: 8.2, riskLevel: 'Low', description: 'Public safety unit guarding Saadiyat Cultural District and museums.' }
       ];
-      const reply = isArabic
-        ? `تم التركيز على **قطاع إمارة أبوظبي** وتحديد **${results.length} معالم سياحية وثقافية** على الخريطة:\n\n1. 🏛️ **${results[0].name_ar || results[0].name}** (المنطقة الثقافية بالسعديات)\n2. 🏛️ **${results[1].name_ar || results[1].name}** (الرأس الأخضر)\n3. 🕌 **${results[2].name_ar || results[2].name}** (الروضة)`
-        : `Identified **${results.length} cultural and tourism landmarks** across **Abu Dhabi sector**:\n\n1. 🏛️ **${results[0].name}** (Saadiyat Cultural District)\n2. 🏛️ **${results[1].name}** (Al Ras Al Akhdar)\n3. 🕌 **${results[2].name}** (Al Rawdah)`;
-
-      const datasetsUsed = ['DGE Spatial SDI 2026', 'DCT Cultural & Tourism Master Registry'];
-      const activeContextTags = [
-        { id: 'district', label: isArabic ? 'أبوظبي' : 'Abu Dhabi', icon: '📍' },
-        { id: 'category', label: isArabic ? 'معالم سياحية' : 'Tourism Assets', icon: '🏛️' },
-        { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
-      ];
-      const suggestions = isArabic 
-        ? ["المراكز الحكومية فقط", "ضمن نطاق 5 كم من الكورنيش", "أيها الأقرب لي؟"] 
-        : ["Only government centers", "Within 5 km of Corniche", "Which one is closest?"];
-
-      const howThisResultWasFound = {
-        question: isArabic ? "ما هي المعالم السياحية في أبوظبي؟" : "Show tourism attractions in Abu Dhabi.",
-        datasets: ['Cultural & Tourism Registry', 'Abu Dhabi Administrative Boundaries'],
-        filters: isArabic ? "جميع المعالم الثقافية والتراثية" : "All Cultural & Heritage Landmarks",
-        spatialCondition: isArabic ? "حدود قطاع إمارة أبوظبي" : "Abu Dhabi Administrative Boundary",
-        resultCount: `${results.length} facilities`
-      };
-
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { category: 'TOURISM', district: 'Abu Dhabi', activeLocations: results } };
-    }
-  },
-
-  {
-    id: 'P1_STEP2_GOVT_SERVICES',
-    patterns_en: [
-      'only government centers',
-      'only government facilities',
-      'government service centers',
-      'show government centers',
-      'tamm service centers'
-    ],
-    patterns_ar: [
-      'المراكز الحكومية فقط',
-      'مراكز تم فقط',
-      'الخدمات الحكومية',
-      'مراكز الخدمات الحكومية'
-    ],
-    handler: (currentState, isArabic) => {
-      const prevContext = currentState?.activeContext || {};
-      const currentDistrict = prevContext.district || 'Abu Dhabi';
-      const results = LOCATIONS_DB.filter(l => l.type === 'GOVERNMENT');
 
       const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'GOVERNMENT', district: currentDistrict }, matchingResults: results } },
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'PUBLIC_SAFETY' }, matchingResults: results } },
         { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: results[0].lat, lng: results[0].lng, zoom: 13 } }
       ];
 
       const reply = isArabic
-        ? `تم تصفية نتائج **${currentDistrict}** لعرض **المراكز الحكومية ومراكز تم فقط** (تم العثور على **${results.length} مراكز حكومية**):\n\n1. 🏢 **${results[0].name_ar || results[0].name}** (الكورنيش الغربي)\n2. 🏢 **${results[1]?.name_ar || results[1]?.name}** (جزيرة الريم)`
-        : `Refined active query for **${currentDistrict}** to display **Government & TAMM Service Centers only** (Found **${results.length} government hubs**):\n\n1. 🏢 **${results[0].name}** (Corniche West)\n2. 🏢 **${results[1]?.name}** (Al Reem Island)`;
-
-      const datasetsUsed = ['DGE Spatial SDI 2026', 'TAMM Government Service Registry'];
-      const activeContextTags = [
-        { id: 'district', label: isArabic ? currentDistrict : currentDistrict, icon: '📍' },
-        { id: 'category', label: isArabic ? 'مراكز حكومية' : 'Government Hubs', icon: '🏢' },
-        { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
-      ];
+        ? `تم تحديد **${results.length} مراكز شرطة** بالقرب من موقعك الجغرافي:`
+        : `Found **${results.length} police stations** near your current location:`;
 
       const suggestions = isArabic 
-        ? ["ضمن نطاق 5 كم من الكورنيش", "أيها الأقرب لي؟", "عرض تفاصيلها"] 
-        : ["Within 5 km of Corniche", "Which one is closest?", "Show its details"];
+        ? ["أيها الأقرب لي؟", "ما هي محطات الإسعاف القريبة؟", "عرض في جدول"] 
+        : ["Which one is closest?", "What ambulance stations are nearby?", "Put this in a table"];
 
-      const howThisResultWasFound = {
-        question: isArabic ? "عرض المراكز الحكومية ومراكز تم في أبوظبي" : "Only government centers.",
-        datasets: ['Government Facilities Registry', 'TAMM Service Hubs Layer'],
-        filters: isArabic ? "الفئة = منشآت حكومية ومراكز تم" : "Category = Government & TAMM Centers",
-        spatialCondition: isArabic ? "قطاع أبوظبي" : "Abu Dhabi Sector Spatial Limit",
-        resultCount: `${results.length} facilities`
-      };
-
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { ...prevContext, category: 'GOVERNMENT', district: currentDistrict, activeLocations: results } };
+      return { reply, results, actions, suggestions, activeContext: { category: 'PUBLIC_SAFETY', activeLocations: results } };
     }
   },
 
   {
-    id: 'P1_STEP3_WITHIN_5KM_ZAYED_SPORTS',
+    id: 'PUBLIC_SAFETY_AMBULANCE_NEARBY',
     patterns_en: [
-      'within 5 km of zayed sports city',
-      'within 5km of zayed sports city',
-      '5 km of zayed sports city',
-      'zayed sports city 5 km',
-      'hospitals 5 km zayed sports city'
+      'what ambulance stations are nearby',
+      'ambulance stations nearby',
+      'ambulance stations near police station',
+      'show ambulance stations',
+      'which communities have no nearby ambulance station'
     ],
     patterns_ar: [
-      'ضمن نطاق 5 كم من مدينة زايد الرياضية',
-      'في حدود 5 كم من مدينة زايد الرياضية',
-      'مدينة زايد الرياضية 5 كم',
-      '5 كم مدينة زايد الرياضية'
+      'ما هي محطات الإسعاف القريبة',
+      'محطات الإسعاف القريبة',
+      'اعرض محطات الإسعاف',
+      'المناطق بدون محطات إسعاف'
     ],
     handler: (currentState, isArabic) => {
-      const prevContext = currentState?.activeContext || {};
-      const sportsCityCenter = { lat: 24.4172, lng: 54.4531 };
-
-      const results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL' && l.tags.includes('government')).map(h => {
-        const d = Math.sqrt(Math.pow(h.lat - sportsCityCenter.lat, 2) + Math.pow(h.lng - sportsCityCenter.lng, 2)) * 111;
-        return { ...h, distanceKm: parseFloat(d.toFixed(1)) };
-      }).sort((a, b) => a.distanceKm - b.distanceKm);
-
-      const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL', ownership: 'Government', radius: '5 km of Zayed Sports City' }, matchingResults: results } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: sportsCityCenter.lat, lng: sportsCityCenter.lng, zoom: 14 } }
-      ];
-
-      const reply = isArabic
-        ? `تم تنفيذ تحليل النطاق المكاني (5 كم) حول **مدينة زايد الرياضية**. تم العثور على **${results.length} مستشفيات حكومية**:\n\n1. 🏥 **${results[0].name_ar || results[0].name}** (تبعد **${results[0].distanceKm} كم**)\n2. 🏥 **${results[1]?.name_ar || results[1]?.name || 'مستشفى العين الحكومي'}** (تبعد **${results[1]?.distanceKm || 4.2} كم**)`
-        : `Executed 5 km proximity analysis around **Zayed Sports City**. Found **${results.length} government hospitals**:\n\n1. 🏥 **${results[0].name}** (**${results[0].distanceKm} km** away)\n2. 🏥 **${results[1]?.name || 'Al Ain Government Hospital'}** (**${results[1]?.distanceKm || 4.2} km** away)`;
-
-      const datasetsUsed = ['DGE Spatial SDI 2026', 'DoH Proximity Buffer Engine'];
-      const activeContextTags = [
-        { id: 'district', label: isArabic ? 'مدينة زايد الرياضية' : 'Zayed Sports City', icon: '📍' },
-        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
-        { id: 'ownership', label: isArabic ? 'حكومي' : 'Government', icon: '🏛️' },
-        { id: 'radius', label: isArabic ? 'نطاق 5 كم' : 'Within 5 km', icon: '📏' },
-        { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
-      ];
-
-      const suggestions = isArabic 
-        ? ["أيها الأقرب لي؟", "عرض تفاصيلها", "عرض المدارس ضمن 2 كم من هذه المستشفيات"] 
-        : ["Which one is closest?", "Show its details", "Show schools within 2 km of these hospitals"];
-
-      const howThisResultWasFound = {
-        question: isArabic ? "عرض المستشفيات الحكومية ضمن 5 كم من مدينة زايد الرياضية" : "Within 5 km of Zayed Sports City.",
-        datasets: ['Healthcare Facilities Registry', 'Proximity Buffer Analytics Layer'],
-        filters: isArabic ? "حكومي فقط" : "Government Ownership",
-        spatialCondition: isArabic ? "نطاق بفر دائري 5 كم حول مدينة زايد الرياضية" : "5 km Circular Proximity Buffer around Zayed Sports City",
-        resultCount: `${results.length} facilities`
-      };
-
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { ...prevContext, category: 'HOSPITAL', ownership: 'Government', district: 'Zayed Sports City', radius: '5 km', activeLocations: results } };
-    }
-  },
-
-  {
-    id: 'P1_STEP4_WHICH_IS_CLOSEST',
-    patterns_en: [
-      'which one is closest',
-      'which is closest',
-      'which one is nearest',
-      'nearest to me',
-      'closest to me',
-      'rank by distance',
-      'which is nearest'
-    ],
-    patterns_ar: [
-      'أيها الأقرب',
-      'أيها الأقرب لي',
-      'أيها أقرب',
-      'أي واحد أقرب',
-      'ترتيب حسب المسافة'
-    ],
-    handler: (currentState, isArabic) => {
-      const prevContext = currentState?.activeContext || {};
-      const sportsCityCenter = { lat: 24.4172, lng: 54.4531 };
-
-      const baseList = prevContext.activeLocations || LOCATIONS_DB.filter(l => l.type === 'HOSPITAL' && l.tags.includes('government'));
-      const results = baseList.map(h => {
-        const d = Math.sqrt(Math.pow(h.lat - sportsCityCenter.lat, 2) + Math.pow(h.lng - sportsCityCenter.lng, 2)) * 111;
-        return { ...h, distanceKm: parseFloat(d.toFixed(1)) };
-      }).sort((a, b) => a.distanceKm - b.distanceKm);
-
-      const topLoc = results[0]; // Sheikh Shakhbout Medical City (SSMC)
-      const actions = [
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topLoc.lat, lng: topLoc.lng, zoom: 15 } },
-        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: topLoc } }
-      ];
-
-      const reply = isArabic
-        ? `**ترتيب المستشفيات الحكومية حسب القرب من مدينة زايد الرياضية**:\n\n1. 🥇 **${topLoc.name_ar || topLoc.name}** — **${topLoc.distanceKm} كم** (الأقرب)\n2. 🥈 **${results[1]?.name_ar || results[1]?.name || 'مستشفى العين الحكومي'}** — **${results[1]?.distanceKm || 4.2} كم**`
-        : `**Ranked Government Hospitals by Proximity to Zayed Sports City**:\n\n1. 🥇 **${topLoc.name}** — **${topLoc.distanceKm} km away** (Closest)\n2. 🥈 **${results[1]?.name || 'Al Ain Government Hospital'}** — **${results[1]?.distanceKm || 4.2} km away**`;
-
-      const datasetsUsed = ['DGE GPS Location Engine', 'DoH Proximity Buffer Engine'];
-      const activeContextTags = [
-        { id: 'district', label: isArabic ? 'مدينة زايد الرياضية' : 'Zayed Sports City', icon: '📍' },
-        { id: 'ownership', label: isArabic ? 'حكومي' : 'Government', icon: '🏛️' },
-        { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' },
-        { id: 'selected', label: isArabic ? `الأقرب: ${topLoc.name_ar || topLoc.name}` : `Closest: ${topLoc.name}`, icon: '⭐' }
-      ];
-
-      const suggestions = isArabic 
-        ? ["عرض تفاصيلها", "عرض المدارس ضمن 2 كم من هذه المستشفيات", "حفظ هذا البحث"] 
-        : ["Show its details", "Show schools within 2 km of these hospitals", "Save this search"];
-
-      const howThisResultWasFound = {
-        question: isArabic ? "أيها الأقرب من المستشفيات الحكومية الحالية؟" : "Which one is closest?",
-        datasets: ['GPS Proximity Engine', 'Healthcare Spatial Network'],
-        filters: isArabic ? "ترتيب تنازلي للمسافة المباشرة" : "Ranked Euclidean Proximity Calculation",
-        spatialCondition: isArabic ? "مسافة المركز الجغرافي لمدينة زايد الرياضية" : "Distance to Zayed Sports City Spatial Point",
-        resultCount: `Selected #1: ${topLoc.name} (${topLoc.distanceKm} km)`
-      };
-
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { ...prevContext, rank: 'DISTANCE', selectedFeature: topLoc, activeLocations: results } };
-    }
-  },
-
-  {
-    id: 'P1_STEP5_SHOW_ITS_DETAILS',
-    patterns_en: [
-      'show its details',
-      'its details',
-      'tell me more about it',
-      'show details',
-      'open facility details',
-      'details of the closest'
-    ],
-    patterns_ar: [
-      'عرض تفاصيلها',
-      'تفاصيلها',
-      'أظهر تفاصيلها',
-      'اخبرني المزيد عنها',
-      'عرض التفاصيل'
-    ],
-    handler: (currentState, isArabic) => {
-      const prevContext = currentState?.activeContext || {};
-      const selectedFac = currentState?.selectedLocation || prevContext.selectedFeature || prevContext.activeLocations?.[0] || LOCATIONS_DB[1]; // SSMC
-
-      const actions = [
-        { type: ACTION_TYPES.FACILITY_SELECT, params: { facility: selectedFac } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: selectedFac.lat, lng: selectedFac.lng, zoom: 16 } }
-      ];
-
-      const reply = isArabic
-        ? `📋 **تم تحديد الاستشهاد "تفاصيلها" لـ ${selectedFac.name_ar || selectedFac.name}**:\nتم فتح لوحة البيانات المكانية لـ **${selectedFac.name_ar || selectedFac.name}** (${selectedFac.location_ar || selectedFac.location}).\n\n- **نوع المنشأة**: ${selectedFac.type === 'HOSPITAL' ? 'مستشفى تخصصي حكومي' : selectedFac.type}\n- **السعة التشغيلية**: 741 سرير طوارئ أسرة تخصصية\n- **مستوى الخطورة المركب**: ${selectedFac.riskLevel === 'Critical' ? 'حرج' : selectedFac.riskLevel} (${selectedFac.riskScore}/100)\n- **استهلاك المياه**: ${fmt(selectedFac.waterConsumption)} م³/يوم`
-        : `📋 **Resolved reference "its" to ${selectedFac.name}**:\nOpened feature details slide panel for **${selectedFac.name}** (${selectedFac.location}).\n\n- **Facility Type**: ${selectedFac.type}\n- **Operational Capacity**: 741 Trauma Beds\n- **Compound Risk Level**: ${selectedFac.riskLevel} (${selectedFac.riskScore}/100)\n- **Water Consumption**: ${fmt(selectedFac.waterConsumption)} m³/day`;
-
-      const activeContextTags = [
-        { id: 'selected', label: isArabic ? `محدد: ${selectedFac.name_ar || selectedFac.name}` : `Selected: ${selectedFac.name}`, icon: '⭐' }
-      ];
-
-      const suggestions = isArabic
-        ? ["عرض المدارس القريبة منها", "حفظ هذا الموقع إلى المفضلة", "تصدير تقرير المنشأة"]
-        : ["Show schools near it", "Save this location to Favorites", "Export facility report"];
-
-      return { reply, results: [selectedFac], actions, suggestions, datasetsUsed: ['DoH Healthcare Registry 2026'], activeContextTags, activeContext: { ...prevContext, selectedFeature: selectedFac } };
-    }
-  },
-
-  // =========================================================
-  // PRIORITY 2 — AMBIGUOUS LOCATION RESOLUTION ("Show parks near Yas")
-  // =========================================================
-  {
-    id: 'P2_AMBIGUOUS_YAS',
-    patterns_en: [
-      'show parks near yas',
-      'parks near yas',
-      'parks in yas',
-      'show parks in yas',
-      'find parks near yas'
-    ],
-    patterns_ar: [
-      'اعرض الحدائق بالقرب من ياس',
-      'الحدائق في ياس',
-      'حدائق قريب من ياس',
-      'حدائق في ياس'
-    ],
-    handler: (currentState, isArabic) => {
-      const reply = isArabic
-        ? "🔍 **تم العثور على عدة مناطق تطابق اسم 'ياس'**:\nأي من المناطق التالية تود استخدامها لتحديد موقع الحدائق والمحميات؟"
-        : "🔍 **Ambiguous Location Detected**:\nI found several locations matching **'Yas'**. Which one would you like to use?";
-
-      const suggestions = isArabic
-        ? ["جزيرة ياس", "بني ياس", "جزيرة الياسات الغربية", "جزيرة الياسات"]
-        : ["Yas Island", "Bani Yas", "Yasat West Island", "Al Yasat Island"];
-
-      const actionCards = [
-        { title: "Yas Island", label: "○ Yas Island", label_ar: "○ جزيرة ياس", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Yas Island" }, isOption: true },
-        { title: "Bani Yas", label: "○ Bani Yas", label_ar: "○ بني ياس", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Bani Yas" }, isOption: true },
-        { title: "Yasat West Island", label: "○ Yasat West Island", label_ar: "○ جزيرة الياسات الغربية", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Yasat West Island" }, isOption: true },
-        { title: "Al Yasat Island", label: "○ Al Yasat Island", label_ar: "○ جزيرة الياسات", actionType: 'SEARCH_SUBMIT', params: { query: "Show parks in Al Yasat Island" }, isOption: true }
-      ];
-
-      return { reply, suggestions, actionCards, datasetsUsed: ['DGE Administrative Boundaries'] };
-    }
-  },
-
-  {
-    id: 'P2_RESOLVE_BANI_YAS',
-    patterns_en: [
-      'bani yas',
-      'show parks in bani yas',
-      'parks in bani yas',
-      'parks near bani yas'
-    ],
-    patterns_ar: [
-      'بني ياس',
-      'الحدائق في بني ياس',
-      'اعرض الحدائق في بني ياس'
-    ],
-    handler: (currentState, isArabic) => {
-      const results = LOCATIONS_DB.filter(l => l.type === 'PARK' || l.type === 'ATTRACTION').map(p => ({
-        ...p,
-        location: 'Bani Yas',
-        location_ar: 'بني ياس'
-      }));
-
-      const baniYasCenter = { lat: 24.3120, lng: 54.6320 };
-      const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'PARK', district: 'Bani Yas' }, matchingResults: results } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: baniYasCenter.lat, lng: baniYasCenter.lng, zoom: 14 } }
-      ];
-
-      const reply = isArabic
-        ? `✅ تم تحديد موقع **بني ياس** وعرض **${results.length} حدائق ومحميات طبيعية**:\n\n1. 🌲 **حديقة بني ياس العامة**\n2. 🌲 **حديقة الوثبة المجتمعية**\n3. 🌲 **منتزه بني ياس العائلي**`
-        : `✅ Resolved location to **Bani Yas** and identified **${results.length} public parks & green reserves**:\n\n1. 🌲 **Bani Yas Public Park**\n2. 🌲 **Al Wathba Community Park**\n3. 🌲 **Bani Yas Family Park**`;
-
-      const datasetsUsed = ['DGE Administrative Boundaries', 'DGE Parks & Greenery Layer v1.4'];
-      const activeContextTags = [
-        { id: 'district', label: isArabic ? 'بني ياس' : 'Bani Yas', icon: '📍' },
-        { id: 'category', label: isArabic ? 'حدائق' : 'Parks', icon: '🌲' },
-        { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
-      ];
-
-      const suggestions = isArabic
-        ? ["عرض المنشآت الصحية في بني ياس", "حفظ هذا البحث", "عرض المدارس القريبة"]
-        : ["Show healthcare in Bani Yas", "Save this search", "Show schools nearby"];
-
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: { category: 'PARK', district: 'Bani Yas', activeLocations: results } };
-    }
-  },
-
-  // =========================================================
-  // PRIORITY 3 — NO-RESULTS RECOVERY ("Show rehabilitation centers within 1 km of Zayed City")
-  // =========================================================
-  {
-    id: 'P3_NO_RESULTS_REHAB',
-    patterns_en: [
-      'show rehabilitation centers within 1 km of zayed city',
-      'rehabilitation centers within 1 km of zayed city',
-      'rehabilitation centers zayed city',
-      'rehabilitation 1 km zayed city'
-    ],
-    patterns_ar: [
-      'اعرض مراكز التأهيل ضمن 1 كم من مدينة زايد',
-      'مراكز التأهيل في مدينة زايد',
-      'مراكز التأهيل 1 كم مدينة زايد'
-    ],
-    handler: (currentState, isArabic) => {
-      const reply = isArabic
-        ? "⚠️ **لم يتم العثور على أي مراكز تأهيل ضمن نطاق 1 كم من مدينة زايد**.\n\nتتوفر عدة خيارات بديلة عند إدخال تعديل بسيط على نطاق أو نوع الاستعلام:"
-        : "⚠️ **No rehabilitation centers were found within 1 km of Zayed City**.\n\nSeveral alternative options are available by adjusting your search radius or facility category:";
-
-      const suggestions = isArabic
-        ? ["البحث ضمن نطاق 5 كم", "البحث حول مدينة زايد", "عرض جميع مراكز التأهيل", "عرض الرعاية الصحية القريبة"]
-        : ["Search within 5 km", "Search around Zayed City", "Show healthcare facilities nearby", "Show all rehabilitation centers"];
-
-      const actionCards = [
-        { title: isArabic ? "توسيع النطاق إلى 5 كم" : "Search within 5 km", actionType: 'SEARCH_SUBMIT', params: { query: "Show hospitals within 5 km of Zayed Sports City" } },
-        { title: isArabic ? "عرض الرعاية الصحية القريبة" : "Show Healthcare Nearby", actionType: 'SEARCH_SUBMIT', params: { query: "Show hospitals in Abu Dhabi" } }
-      ];
-
-      return { reply, results: [], suggestions, actionCards, datasetsUsed: ['DoH Master Spatial Registry 2026'] };
-    }
-  },
-
-  // =========================================================
-  // PRIORITY 4 — UNSUPPORTED REQUEST HANDLING ("Show me the richest areas of Abu Dhabi")
-  // =========================================================
-  {
-    id: 'P4_UNSUPPORTED_RICHEST_AREAS',
-    patterns_en: [
-      'show me the richest areas of abu dhabi',
-      'richest areas of abu dhabi',
-      'richest areas',
-      'wealthiest areas abu dhabi',
-      'income level abu dhabi'
-    ],
-    patterns_ar: [
-      'اعرض أغنى المناطق في أبوظبي',
-      'أغنى المناطق في أبوظبي',
-      'مناطق الدخل العالي أبوظبي'
-    ],
-    handler: (currentState, isArabic) => {
-      const reply = isArabic
-        ? "ℹ️ **بيانات المستوى الاقتصادي غير متوفرة ضمن المنظومة**:\nيمكنني تحليل وإجراء الاستعلامات المكانية لطبقات منصة GeoVision المتاحة (الصحة، التعليم، النقل، البيئة، الصناعة)، لكن لا تتوفر حالياً طبقة بيانات لتوزيع مستويات الدخل."
-        : "ℹ️ **Dataset Not Available**:\nI can search and analyze loaded **GeoVision SDI datasets** (Healthcare, Education, Transit, Infrastructure, Industry), but socio-economic household income data is not part of this spatial platform.";
-
-      const suggestions = isArabic
-        ? ["استكشاف البيانات المتاحة", "عرض المنشآت الصحية", "عرض وسائل النقل العامة"]
-        : ["Explore Available Data", "Show healthcare facilities", "Show public transport"];
-
-      return { reply, results: [], suggestions, datasetsUsed: ['DGE SDI Metadata Catalogue 2026'] };
-    }
-  },
-
-  // =========================================================
-  // PRIORITY 5 — LOCATION PERMISSION STATE ("Show vehicle inspection centers near me")
-  // =========================================================
-  // =========================================================
-  // PRIORITY 5 — HOSPITALS NEAR ME & LOCATION PERMISSION
-  // =========================================================
-  {
-    id: 'P5_HOSPITALS_NEAR_ME',
-    patterns_en: [
-      'hospitals near me',
-      'hospitals nearby',
-      'find hospitals near me',
-      'show hospitals near me',
-      'hospitals near me within 5 km',
-      'near me'
-    ],
-    patterns_ar: [
-      'مستشفيات بالقرب مني',
-      'المستشفيات القريبة مني',
-      'مستشفيات قريبة',
-      'قريب مني'
-    ],
-    handler: (currentState, isArabic) => {
-      const isLocationEnabled = currentState?.userLocationEnabled;
-
-      if (!isLocationEnabled) {
-        const reply = isArabic
-          ? "📍 **موقعك الحالي مطلوب لمتابعة هذا البحث**:\nيرجى السماح بتحديد الموقع الجغرافي (GPS) أو اختيار منطقة إدارية لعرض المستشفيات والمراكز الصحية القريبة منك."
-          : "📍 **Your current location is required to continue this search**:\nPlease grant location access or select a reference sector to view healthcare facilities near you.";
-
-        const actionCards = [
-          { title: isArabic ? "تفعيل تحديد الموقع GPS" : "Enable Location", label: "○ Enable Location", label_ar: "○ تفعيل تحديد الموقع", actionType: 'ENABLE_LOCATION', isOption: true },
-          { title: isArabic ? "مدينة زايد الرياضية" : "Zayed Sports City", label: "○ Zayed Sports City", label_ar: "○ مدينة زايد الرياضية", actionType: 'SEARCH_SUBMIT', params: { query: "Show hospitals within 5 km of Zayed Sports City" }, isOption: true },
-          { title: isArabic ? "مدينة خليفة" : "Khalifa City", label: "○ Khalifa City", label_ar: "○ مدينة خليفة", actionType: 'SEARCH_SUBMIT', params: { query: "Show hospitals in Khalifa City" }, isOption: true }
-        ];
-
-        return { reply, suggestions: ["Enable Location", "Zayed Sports City", "Khalifa City"], actionCards, datasetsUsed: ['DGE GPS Location Engine'] };
-      }
-
-      // Location enabled -> return 3 nearest healthcare facilities with distances
-      const userLat = currentState?.userLocation?.lat || 24.4839;
-      const userLng = currentState?.userLocation?.lng || 54.3773;
-
-      const results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL').map(h => {
-        const d = Math.sqrt(Math.pow(h.lat - userLat, 2) + Math.pow(h.lng - userLng, 2)) * 111;
-        return { ...h, distanceKm: parseFloat(d.toFixed(1)) };
-      }).sort((a, b) => a.distanceKm - b.distanceKm);
-
-      const topLoc = results[0];
-      const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL', radius: '5 km of User GPS' }, matchingResults: results } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: userLat, lng: userLng, zoom: 13 } }
-      ];
-
-      const reply = isArabic
-        ? `✅ تم تفعيل GPS وتحديد **${results.length} مستشفيات بالقرب من موقعك الحالي** (نطاق 5 كم):\n\n1. 🏥 **${results[0].name_ar || results[0].name}** (تبعد **${results[0].distanceKm} كم**)\n2. 🏥 **${results[1].name_ar || results[1].name}** (تبعد **${results[1].distanceKm} كم**)\n3. 🏥 **${results[2].name_ar || results[2].name}** (تبعد **${results[2].distanceKm} كم**)`
-        : `✅ Granted GPS Location Access. Identified **${results.length} healthcare facilities near your location** (5 km proximity radius):\n\n1. 🏥 **${results[0].name}** (**${results[0].distanceKm} km** away - Al Maryah Island)\n2. 🏥 **${results[1].name}** (**${results[1].distanceKm} km** away - Al Mafraq)\n3. 🏥 **${results[2].name}** (**${results[2].distanceKm} km** away - Electra Street)`;
-
-      const datasetsUsed = ['DGE GPS Location Engine', 'DoH Master Healthcare Registry v2.1'];
-      const activeContextTags = [
-        { id: 'location', label: isArabic ? 'موقعي الحالي' : 'My Location', icon: '📍' },
-        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
-        { id: 'radius', label: isArabic ? 'نطاق 5 كم' : 'Within 5 km', icon: '📏' },
-        { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
-      ];
-
-      const suggestions = isArabic 
-        ? ["المستشفيات الحكومية فقط", "أيها الأقرب لي؟", "عرض تفاصيلها"] 
-        : ["Only government hospitals", "Which one is closest?", "Show its details"];
-
-      const howThisResultWasFound = {
-        question: isArabic ? "عرض المستشفيات القريبة من موقعي الحالي" : "Show hospitals near me.",
-        datasets: ['GPS Location Proximity Engine', 'Healthcare Facilities Registry'],
-        filters: isArabic ? "نطاق بفر دائري 5 كم من إحداثيات GPS الحالية" : "5 km Radius Proximity Buffer around User GPS Location",
-        spatialCondition: `User Location Point [${userLat.toFixed(4)}, ${userLng.toFixed(4)}]`,
-        resultCount: `${results.length} facilities`
-      };
-
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { category: 'HOSPITAL', radius: '5 km', center: [userLat, userLng], activeLocations: results } };
-    }
-  },
-
-  {
-    id: 'P5_LOCATION_PERMISSION',
-    patterns_en: [
-      'show vehicle inspection centers near me',
-      'vehicle inspection centers near me',
-      'inspection centers near me',
-      'vehicle inspection near me'
-    ],
-    patterns_ar: [
-      'اعرض مراكز الفحص الفني بالقرب مني',
-      'مراكز الفحص الفني بالقرب مني',
-      'فحص السيارات قريب مني'
-    ],
-    handler: (currentState, isArabic) => {
-      const isLocationEnabled = currentState?.userLocationEnabled;
-
-      if (!isLocationEnabled) {
-        const reply = isArabic
-          ? "📍 **موقعك الحالي مطلوب لمتابعة هذا البحث**:\nيتطلب هذا الاستعلام تفعيل خاصية تحديد الموقع الجغرافي لتحديد مراكز الفحص الفني القريبة منك."
-          : "📍 **Your current location is required to continue this search**:\nPlease grant location access or select a reference area to view vehicle inspection centers.";
-
-        const actionCards = [
-          { title: isArabic ? "تفعيل تحديد الموقع" : "Enable Location", actionType: 'ENABLE_LOCATION', isOption: true },
-          { title: isArabic ? "اختيار الموقع على الخريطة" : "Choose Location on Map", actionType: 'SEARCH_SUBMIT', params: { query: "Show hospitals in Khalifa City" }, isOption: true },
-          { title: isArabic ? "اختيار منطقة إدارية" : "Select an Area", actionType: 'SEARCH_SUBMIT', params: { query: "Show hospitals in Abu Dhabi" }, isOption: true }
-        ];
-
-        return { reply, suggestions: ["Enable Location", "Choose Location on Map"], actionCards, datasetsUsed: ['GPS Location Engine'] };
-      }
-
-      // Location enabled -> return 6 vehicle inspection centers
-      const userLat = currentState?.userLocation?.lat || 24.4839;
-      const userLng = currentState?.userLocation?.lng || 54.3773;
-
+      const selectedPolice = currentState?.activeContext?.selectedFeature || { name: 'Abu Dhabi Central Police Station', lat: 24.4710, lng: 54.3640 };
       const results = [
-        { id: 'insp-1', name: 'Al Salama Vehicle Inspection Center', name_ar: 'مركز السلامة للفحص الفني', lat: 24.4620, lng: 54.3720, type: 'INSPECTION', distanceKm: 1.4 },
-        { id: 'insp-2', name: 'ADNOC Vehicle Inspection - Mushrif', name_ar: 'فحص أدنوك - المشرف', lat: 24.4480, lng: 54.3910, type: 'INSPECTION', distanceKm: 2.8 },
-        { id: 'insp-3', name: 'Mahawi Vehicle Testing Center', name_ar: 'مركز فحص مروح المحاوي', lat: 24.3210, lng: 54.5820, type: 'INSPECTION', distanceKm: 4.1 }
+        { id: 410, name: 'Abu Dhabi Central Ambulance & Medical Emergency Station', name_ar: 'محطة الإسعاف المركزية والطوارئ الطبية', type: 'PUBLIC_SAFETY', category_en: 'Ambulance Station', category_ar: 'محطة إسعاف', location: 'Al Mushrif', location_ar: 'المشرف', lat: 24.4510, lng: 54.3790, distanceKm: 2.1, description: 'Primary rapid-dispatch ambulance hub serving central Abu Dhabi.' },
+        { id: 411, name: 'Al Reem Island Emergency Medical Post', name_ar: 'نقطة الإسعاف الطبي الطارئ - جزيرة الريم', type: 'PUBLIC_SAFETY', category_en: 'Ambulance Station', category_ar: 'محطة إسعاف', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.5020, lng: 54.4060, distanceKm: 4.5, description: 'Dedicated paramedic response team for Al Reem district.' }
       ];
 
       const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'INSPECTION', radius: 'Near User Location' }, matchingResults: results } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: userLat, lng: userLng, zoom: 13 } }
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: results[0].lat, lng: results[0].lng, zoom: 13 } }
       ];
 
       const reply = isArabic
-        ? `✅ تم العثور على **3 مراكز فحص فني للمركبات بالقرب من موقعك**:\n\n1. 🚗 **مركز السلامة للفحص الفني** (1.4 كم - مفتوح الآن 24/7)\n2. 🚗 **فحص أدنوك للمركبات - المشرف** (2.8 كم)\n3. 🚗 **مركز فحص مروح المحاوي** (4.1 كم)`
-        : `✅ Found **3 vehicle inspection centers near your location**:\n\n1. 🚗 **Al Salama Vehicle Inspection Center** (1.4 km - Open Now 24/7)\n2. 🚗 **ADNOC Vehicle Inspection - Mushrif** (2.8 km)\n3. 🚗 **Mahawi Testing Hub** (4.1 km)`;
+        ? `بناءً على الاستشهاد بـ **${selectedPolice.name_ar || selectedPolice.name}**، تم العثور على **${results.length} محطات إسعاف قريبة**:`
+        : `Resolved spatial reference around **${selectedPolice.name}**. Found **${results.length} nearby ambulance stations**:`;
 
-      const datasetsUsed = ['Abu Dhabi Police Traffic Inspection Layer', 'ADNOC Auto Registry'];
-      const activeContextTags = [
-        { id: 'location', label: isArabic ? 'موقعي الحالي' : 'My Location', icon: '📍' },
-        { id: 'category', label: isArabic ? 'فحص فني' : 'Vehicle Inspection', icon: '🚗' },
-        { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
+      const suggestions = isArabic 
+        ? ["أيها الأقرب؟", "اعرض الاتجاهات", "مقارنة المنشآت"] 
+        : ["Which one is closest?", "Show me directions", "Compare them"];
+
+      return { reply, results, actions, suggestions, activeContext: { ...currentState?.activeContext, activeLocations: results } };
+    }
+  },
+
+  // =========================================================
+  // 2. TRANSPORTATION & MOBILITY
+  // =========================================================
+  {
+    id: 'TRANSPORT_BUS_STOPS',
+    patterns_en: [
+      'show bus stops near me',
+      'bus stops near me',
+      'find bus stops',
+      'bus stops within 500m',
+      'bus stops'
+    ],
+    patterns_ar: [
+      'اعرض محطات الحافلات بالقرب مني',
+      'محطات الحافلات القريبة',
+      'محطات حافلات'
+    ],
+    handler: (currentState, isArabic) => {
+      const results = [
+        { id: 501, name: 'Main Central Bus Terminal Hub', name_ar: 'محطة حافلات أبوظبي الرئيسية', type: 'TRANSPORT', category_en: 'Bus Terminal', category_ar: 'محطة حافلات', location: 'Al Nahyan', location_ar: 'آل نهيان', lat: 24.4719, lng: 54.3725, distanceKm: 0.4 },
+        { id: 502, name: 'Corniche Waterfront Transit Stop #4', name_ar: 'موقف حافلات الكورنيش رقم 4', type: 'TRANSPORT', category_en: 'Bus Stop', category_ar: 'موقف حافلات', location: 'Corniche', location_ar: 'الكورنيش', lat: 24.4820, lng: 54.3410, distanceKm: 0.8 },
+        { id: 503, name: 'Al Reem Plaza Bus Stop', name_ar: 'موقف حافلات ساحة الريم', type: 'TRANSPORT', category_en: 'Bus Stop', category_ar: 'موقف حافلات', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.4990, lng: 54.4080, distanceKm: 1.2 }
       ];
 
-      const suggestions = isArabic
-        ? ["كم منها مفتوح الآن؟", "عرض الأقرب لي", "حفظ البحث"]
-        : ["How many are open now?", "Which one is closest?", "Save this search"];
+      const actions = [
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: results[0].lat, lng: results[0].lng, zoom: 14 } }
+      ];
 
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, activeContext: { category: 'INSPECTION', activeLocations: results } };
+      const reply = isArabic
+        ? `تم تحديد **${results.length} محطات حافلات** بالقرب من موقعك:`
+        : `Identified **${results.length} bus stops** near your location:`;
+
+      const suggestions = isArabic 
+        ? ["فقط ضمن 500 متر", "أيها الأقرب؟", "عرض على الخريطة"] 
+        : ["Only within 500 metres", "Which one is closest?", "Show that one on the map"];
+
+      return { reply, results, actions, suggestions, activeContext: { category: 'TRANSPORT', activeLocations: results } };
+    }
+  },
+
+  {
+    id: 'TRANSPORT_PARKING_PARK_HELPER',
+    patterns_en: [
+      'i need a place to park',
+      'place to park',
+      'show parking facilities',
+      'parking near me',
+      'parking facilities'
+    ],
+    patterns_ar: [
+      'أحتاج إلى مكان لإيقاف السيارة',
+      'مواقف سيارات',
+      'اعرض مواقف السيارات'
+    ],
+    handler: (currentState, isArabic) => {
+      const results = [
+        { id: 510, name: 'Corniche Underground Smart Parking Plaza', name_ar: 'موقف الكورنيش الذكي تحت الأرض', type: 'TRANSPORT', category_en: 'Parking Facility', category_ar: 'موقف سيارات', location: 'Corniche West', location_ar: 'الكورنيش', lat: 24.4770, lng: 54.3350, distanceKm: 0.3, capacity: 850 },
+        { id: 511, name: 'Al Maryah Island Central Parking', name_ar: 'مواقف جزيرة المارية المركزية', type: 'TRANSPORT', category_en: 'Parking Facility', category_ar: 'موقف سيارات', location: 'Al Maryah Island', location_ar: 'جزيرة المارية', lat: 24.5010, lng: 54.3880, distanceKm: 1.1, capacity: 1200 }
+      ];
+
+      const reply = isArabic
+        ? `تم تحديد **${results.length} مواقف سيارات معتمدة** بالقرب منك:`
+        : `Found **${results.length} public parking facilities** near your area:`;
+
+      return { reply, results, suggestions: ["Which one is closest?", "Show on map"], activeContext: { category: 'TRANSPORT', activeLocations: results } };
+    }
+  },
+
+  // =========================================================
+  // 3. ENVIRONMENT & PROTECTED AREAS
+  // =========================================================
+  {
+    id: 'ENVIRONMENT_PROTECTED_AREAS',
+    patterns_en: [
+      'show protected areas in abu dhabi',
+      'show protected areas',
+      'protected areas',
+      'mangrove areas',
+      'show mangrove areas'
+    ],
+    patterns_ar: [
+      'اعرض المحميات الطبيعية في أبوظبي',
+      'اعرض المحميات',
+      'المحميات الطبيعية',
+      'مناطق القرم'
+    ],
+    handler: (currentState, isArabic) => {
+      const results = [
+        { id: 601, name: 'Eastern Mangrove Protected National Park', name_ar: 'محمية القرم الشرقي الوطنية', type: 'ENVIRONMENT', category_en: 'Protected Area', category_ar: 'محمية طبيعية', location: 'Eastern Ring Road', location_ar: 'طريق الطريق الدائري الشرقي', lat: 24.4410, lng: 54.4380, distanceKm: 4.2, description: 'Lush coastal mangrove ecosystem protecting coastal biodiversity and marine habitat.' },
+        { id: 602, name: 'Al Wathba Wetland Protected Reserve', name_ar: 'محمية الوثبة للأراضي الرطبة', type: 'ENVIRONMENT', category_en: 'Wetland Reserve', category_ar: 'محمية رطبة', location: 'Al Wathba', location_ar: 'الوثبة', lat: 24.2620, lng: 54.6290, distanceKm: 28.5, description: 'Ramsar wetland sanctuary famous for flamingo breeding and biological diversity.' },
+        { id: 603, name: 'Saadiyat Marine Conservation Zone', name_ar: 'منطقة السعديات للحماية البحرية', type: 'ENVIRONMENT', category_en: 'Marine Sanctuary', category_ar: 'محمية بحرية', location: 'Saadiyat Island', location_ar: 'جزيرة السعديات', lat: 24.5490, lng: 54.4480, distanceKm: 11.0, description: 'Protected marine turtle nesting coastal beach zone.' }
+      ];
+
+      const actions = [
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: results[0].lat, lng: results[0].lng, zoom: 12 } }
+      ];
+
+      const reply = isArabic
+        ? `تم رصد **${results.length} محميات بيئية وطبيعية مسجلة** في إمارة أبوظبي:`
+        : `Identified **${results.length} registered environmental protected areas** in Abu Dhabi:`;
+
+      const suggestions = isArabic
+        ? ["أيها المناطق التي تتقاطع معها؟", "عرض المشاريع العمرانية القريبة", "عرض في جدول"]
+        : ["Which communities overlap them?", "Show development projects near these areas", "Put this in a table"];
+
+      return { reply, results, actions, suggestions, activeContext: { category: 'ENVIRONMENT', activeLocations: results } };
+    }
+  },
+
+  {
+    id: 'ENVIRONMENT_OVERLAPPING_COMMUNITIES',
+    patterns_en: [
+      'which communities overlap them',
+      'which communities overlap protected areas',
+      'communities overlap protected areas',
+      'show development projects near these areas'
+    ],
+    patterns_ar: [
+      'أيها المناطق التي تتقاطع معها',
+      'المناطق المتقاطعة مع المحميات',
+      'المشاريع العمرانية القريبة من المحميات'
+    ],
+    handler: (currentState, isArabic) => {
+      const results = [
+        { id: 610, name: 'Al Reem & Eastern Mangrove Interface Zone', name_ar: 'منطقة تقاطع الريم والقرم الشرقي', type: 'URBAN', category_en: 'Intersecting Community', category_ar: 'منطقة تقاطع بيئي', location: 'Al Reem / Mangrove', location_ar: 'الريم / القرم', lat: 24.4550, lng: 54.4250, distanceKm: 3.5, description: 'Urban community sector adjacent to protected mangrove buffer.' },
+        { id: 611, name: 'Saadiyat Cultural Eco-Development Project', name_ar: 'مشروع التطوير البيئي بالسعديات', type: 'URBAN', category_en: 'Eco-Development', category_ar: 'مشروع تطوير بيئي', location: 'Saadiyat Island', location_ar: 'جزيرة السعديات', lat: 24.5410, lng: 54.4350, distanceKm: 10.5, description: 'Sustainable urban project under strict eco-compliance zoning.' }
+      ];
+
+      const reply = isArabic
+        ? `تحليل التقاطع المكاني: تم رصد **2 مناطق ومشاريع عمرانية** تتقاطع مباشرة مع حدود المحميات الطبيعية:`
+        : `Spatial Intersection Analysis: Found **2 communities/projects** intersecting protected environmental boundaries:`;
+
+      const suggestions = isArabic
+        ? ["استبعاد المحميات الطبيعية", "مقارنة المشاريع", "عرض الرسم البياني"]
+        : ["Exclude protected areas", "Compare projects", "Show a chart"];
+
+      return { reply, results, suggestions, activeContext: { ...currentState?.activeContext, activeLocations: results } };
+    }
+  },
+
+  // =========================================================
+  // 4. CROSS-THEME & MULTI-LAYER SPATIAL ANALYSIS
+  // =========================================================
+  {
+    id: 'CROSS_THEME_SCHOOLS_HOSPITALS_PARKS',
+    patterns_en: [
+      'which communities have schools, hospitals and parks nearby',
+      'communities with schools hospitals and parks',
+      'schools hospitals and parks'
+    ],
+    patterns_ar: [
+      'أيها المناطق التي تتواجد فيها مدارس ومستشفيات وحدائق',
+      'مناطق فيها مدارس ومستشفيات وحدائق'
+    ],
+    handler: (currentState, isArabic) => {
+      const results = [
+        { id: 701, name: 'Al Reem Island Central District', name_ar: 'قطاع جزيرة الريم المركزي', type: 'ADMINISTRATIVE', category_en: 'Integrated Community', category_ar: 'مجتمع متكامل', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.5000, lng: 54.4050, distanceKm: 2.1, schoolsCount: 4, hospitalsCount: 2, parksCount: 3 },
+        { id: 702, name: 'Khalifa City Sector A', name_ar: 'مدينة خليفة - القطاع أ', type: 'ADMINISTRATIVE', category_en: 'Integrated Community', category_ar: 'مجتمع متكامل', location: 'Khalifa City', location_ar: 'مدينة خليفة', lat: 24.4200, lng: 54.5800, distanceKm: 12.4, schoolsCount: 6, hospitalsCount: 3, parksCount: 5 }
+      ];
+
+      const reply = isArabic
+        ? `نتائج التحليل المكاني المتعدد الطبقات:\nتم العثور على **مجموعتين مجتمعيتين تتوفر فيهما المدارس والمستشفيات والحدائق معاً**:\n\n1. 🏙️ **${results[0].name_ar}** (مدارس: 4 | مستشفيات: 2 | حدائق: 3)\n2. 🏙️ **${results[1].name_ar}** (مدارس: 6 | مستشفيات: 3 | حدائق: 5)`
+        : `Multi-Layer Spatial Overlay Analysis:\nIdentified **2 communities with nearby Schools, Hospitals, and Parks**:\n\n1. 🏙️ **${results[0].name}** (Schools: 4 | Hospitals: 2 | Parks: 3)\n2. 🏙️ **${results[1].name}** (Schools: 6 | Hospitals: 3 | Parks: 5)`;
+
+      const suggestions = isArabic
+        ? ["قارن بينها في رسم بياني", "عرض في جدول", "عرض على الخريطة"]
+        : ["Compare them in a chart", "Put this in a table", "Show on the map"];
+
+      return { reply, results, suggestions, activeContext: { category: 'CROSS_THEME', activeLocations: results } };
+    }
+  },
+
+  {
+    id: 'CROSS_THEME_SCHOOLS_NEAR_BUS_STOPS',
+    patterns_en: [
+      'find schools within 500 m of bus stops',
+      'schools within 500 m of bus stops',
+      'schools near bus stops'
+    ],
+    patterns_ar: [
+      'البحث عن المدارس الواقعة ضمن 500 متر من محطات الحافلات',
+      'مدارس قريب من محطات الحافلات'
+    ],
+    handler: (currentState, isArabic) => {
+      const results = [
+        { id: 710, name: 'Cranleigh Abu Dhabi International School', name_ar: 'مدرسة كرانلي أبوظبي الدولية', type: 'EDUCATION', category_en: 'School', category_ar: 'مدرسة', location: 'Saadiyat Cultural District', location_ar: 'السعديات', lat: 24.5310, lng: 54.4080, distanceKm: 0.2, busStopsNearby: 3 },
+        { id: 711, name: 'GEMS World Academy - Abu Dhabi', name_ar: 'أكاديمية جيمس العالمية', type: 'EDUCATION', category_en: 'School', category_ar: 'مدرسة', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.4960, lng: 54.4020, distanceKm: 0.35, busStopsNearby: 2 }
+      ];
+
+      const reply = isArabic
+        ? `تم إجراء تراكب الطبقات المكانية: تم العثور على **${results.length} مدارس تقع ضمن نطاق 500م من محطات الحافلات**:`
+        : `Executed Spatial Buffer Overlay: Identified **${results.length} schools within 500m of public bus stops**:`;
+
+      const suggestions = isArabic
+        ? ["أيها التي تحوي أكثر عدد محطات؟", "اعرض الأقرب", "عرض في جدول"]
+        : ["Which one has the most bus stops nearby?", "Which is closest?", "Put this in a table"];
+
+      return { reply, results, suggestions, activeContext: { category: 'CROSS_THEME', activeLocations: results } };
+    }
+  },
+
+  // =========================================================
+  // 5. OUTPUT PRESENTATION CONTROLS (Table, Chart, Explanation)
+  // =========================================================
+  {
+    id: 'OUTPUT_TABLE_REQUEST',
+    patterns_en: [
+      'put this in a table',
+      'give me a table',
+      'show in a table',
+      'show in table',
+      'table view',
+      'format as table'
+    ],
+    patterns_ar: [
+      'ضع هذا في جدول',
+      'اعرض في جدول',
+      'عرض الجدول',
+      'جدول البيانات'
+    ],
+    handler: (currentState, isArabic) => {
+      const activeList = currentState?.activeContext?.activeLocations || LOCATIONS_DB.slice(0, 5);
+      const reply = isArabic
+        ? `تم تغيير نمط العرض إلى **جدول البيانات المكانية المنظمة**:`
+        : `Switched presentation mode to **Structured Spatial Data Table**:`;
+
+      return { reply, results: activeList, outputType: 'table', activeContext: currentState?.activeContext };
+    }
+  },
+
+  {
+    id: 'OUTPUT_CHART_REQUEST',
+    patterns_en: [
+      'compare them in a chart',
+      'show a chart',
+      'compare in a chart',
+      'generate a chart',
+      'chart view'
+    ],
+    patterns_ar: [
+      'قارن بينها في رسم بياني',
+      'اعرض رسم بياني',
+      'مخطط بياني'
+    ],
+    handler: (currentState, isArabic) => {
+      const activeList = currentState?.activeContext?.activeLocations || LOCATIONS_DB.slice(0, 5);
+      const chartData = {
+        id: 'user-chart-' + Date.now(),
+        title: isArabic ? "مقارنة السعة والقرب الجغرافي للمنشآت" : "Comparative Spatial Features Metric",
+        type: 'bar',
+        data: activeList.map(item => ({
+          label: isArabic && item.name_ar ? item.name_ar : item.name,
+          name: isArabic && item.name_ar ? item.name_ar : item.name,
+          value: item.capacity || (item.distanceKm ? Math.round(item.distanceKm * 10) : 50),
+          color: '#3b82f6'
+        }))
+      };
+
+      const reply = isArabic
+        ? `تم إنشاء الرسم البياني بناءً على طلبك الصريح:`
+        : `Generated comparative chart graph upon your explicit request:`;
+
+      return { reply, chartData, results: activeList, outputType: 'chart', activeContext: currentState?.activeContext };
+    }
+  },
+
+  {
+    id: 'OUTPUT_EXPLAIN_RESULTS',
+    patterns_en: [
+      'why are you showing me these locations',
+      'why are these results shown',
+      'why these results',
+      'explain results',
+      'why these locations'
+    ],
+    patterns_ar: [
+      'لماذا تعرض لي هذه المواقع',
+      'لماذا هذه النتائج',
+      'تفسير النتائج'
+    ],
+    handler: (currentState, isArabic) => {
+      const reply = isArabic
+        ? "💡 **توضيح النتيجة المكانية**:\nتم اختيار هذه المواقع بناءً على تصنيف المعالم ومطابقتها لاشتراطات النطاق الجغرافي المسجل في البنية المكانية لـ SDI بالنسبة لموقعك الحالي."
+        : "💡 **Spatial Result Explanation**:\nThese locations match your request because they are classified under the requested theme and fall within the calculated proximity radius from your active reference location.";
+
+      return { reply, outputType: 'explanation', activeContext: currentState?.activeContext };
+    }
+  },
+
+  {
+    id: 'OUTPUT_EXPLAIN_CALCULATION',
+    patterns_en: [
+      'how did you calculate this',
+      'how is this calculated',
+      'explain calculation',
+      'explain analysis',
+      'how did you find this'
+    ],
+    patterns_ar: [
+      'كيف قمت بحساب هذا',
+      'كيف تم الحساب',
+      'شرح طريقة الحساب'
+    ],
+    handler: (currentState, isArabic) => {
+      const reply = isArabic
+        ? "📐 **طريقة التحليل الجغرافي**:\nتم حساب النتائج عن طريق إجراء نطاق مكاني (Buffer Proximity) حول الموقع الجغرافي المرجعي، واستعلام مجموعة البيانات المحددة وترتيب المعالم بناءً على صيغة المسافة الجيوديسية الحقيقية."
+        : "📐 **GIS Calculation Method**:\nThe results were calculated by executing a spatial proximity buffer around the reference coordinates, querying the active SDI dataset layer, and ranking features using exact geodesic distance geometry.";
+
+      return { reply, outputType: 'analysis_explanation', activeContext: currentState?.activeContext };
+    }
+  },
+
+  // =========================================================
+  // 6. AMBIGUOUS & VAGUE NATURAL LANGUAGE QUESTIONS
+  // =========================================================
+  {
+    id: 'AMBIGUOUS_SHOW_FACILITIES_NEAR_ME',
+    patterns_en: [
+      'show facilities near me',
+      'facilities near me',
+      'show facilities',
+      'find facilities'
+    ],
+    patterns_ar: [
+      'اعرض المنشآت بالقرب مني',
+      'المنشآت القريبة مني',
+      'اعرض المنشآت'
+    ],
+    handler: (currentState, isArabic) => {
+      const reply = isArabic
+        ? "❓ **تحديد فئة المنشآت**:\nأيها نوع من المنشآت تود استكشافها بالقرب منك؟"
+        : "❓ **Clarification Required**:\nWhat type of facilities would you like to see around your area?";
+
+      const actionCards = [
+        { title: "Government", label: "○ Government", label_ar: "○ حكومية", actionType: 'SEARCH_SUBMIT', params: { query: "Show government facilities near me" }, isOption: true },
+        { title: "Transport", label: "○ Transport", label_ar: "○ وسائل نقل", actionType: 'SEARCH_SUBMIT', params: { query: "Show bus stops near me" }, isOption: true },
+        { title: "Tourism", label: "○ Tourism", label_ar: "○ سياحة ومعالم", actionType: 'SEARCH_SUBMIT', params: { query: "Show tourist attractions near me" }, isOption: true },
+        { title: "Public Safety", label: "○ Public Safety", label_ar: "○ أمن وسلامة", actionType: 'SEARCH_SUBMIT', params: { query: "Show police stations near me" }, isOption: true },
+        { title: "Utilities", label: "○ Utilities", label_ar: "○ مرافق عامة", actionType: 'SEARCH_SUBMIT', params: { query: "Show petrol stations near me" }, isOption: true }
+      ];
+
+      return { reply, actionCards, suggestions: ["Government", "Transport", "Tourism", "Public Safety", "Utilities"] };
+    }
+  },
+
+  {
+    id: 'VAGUE_WHERE_CAN_I_GO_NEARBY',
+    patterns_en: [
+      'where can i go nearby',
+      'what services are around here',
+      'what is available around this location',
+      'what am i looking at',
+      'tell me about this place'
+    ],
+    patterns_ar: [
+      'أين يمكنني الذهاب بالقرب مني',
+      'ما هي الخدمات المتوفرة هنا',
+      'ما المتاح في هذا الموقع'
+    ],
+    handler: (currentState, isArabic) => {
+      const results = LOCATIONS_DB.slice(0, 4);
+      const reply = isArabic
+        ? "🗺️ **استكشاف المنطقة المحيطة**:\nإليك أبرز المعالم والخدمات المتاحة بالقرب من موقعك الحالي:"
+        : "🗺️ **Spatial Area Overview**:\nHere are key landmarks and public services available around your current location:";
+
+      return { reply, results, suggestions: ["Show on map", "Put this in a table"], activeContext: { activeLocations: results } };
     }
   }
 ];

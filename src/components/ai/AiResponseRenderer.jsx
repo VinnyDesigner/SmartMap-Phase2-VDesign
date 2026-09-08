@@ -12,6 +12,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { CheckCircle2, Bot, Database } from 'lucide-react';
 import { sanitizeMarkdown } from '../../services/mockAiEngine';
 
+import AiTableBlock from './blocks/AiTableBlock';
+
 const DATASET_TRANSLATIONS = {
   'DGE Spatial SDI 2026': 'البنية المكانية لـ SDI 2026',
   'Abu Dhabi Government Facilities Registry': 'سجل المنشآت الحكومية في أبوظبي',
@@ -27,6 +29,7 @@ export default function AiResponseRenderer({
   isLoggedIn = false,
   onToggleFavorite = null,
   onPromptAuth = null,
+  onOpenAnalytics = null,
   savedLocations = [],
   userLocation = null
 }) {
@@ -45,8 +48,17 @@ export default function AiResponseRenderer({
         />
       )}
 
-      {/* Uniform Search Result Cards (Displayed immediately when query returns results) */}
-      {response.results && response.results.length > 0 && (
+      {/* Structured Table Block (Rendered when outputType === 'table') */}
+      {response.outputType === 'table' && response.results && response.results.length > 0 && (
+        <AiTableBlock 
+          results={response.results}
+          onEntityClick={onEntityClick}
+          onActionClick={onActionClick}
+        />
+      )}
+
+      {/* Uniform Search Result Cards (Displayed immediately when query returns results, unless table requested) */}
+      {response.outputType !== 'table' && response.results && response.results.length > 0 && (
         <AiLocationListBlock
           locations={response.results}
           onEntityClick={onEntityClick}
@@ -61,7 +73,7 @@ export default function AiResponseRenderer({
 
       {/* Optional Analytics Blocks (Rendered ONLY when included in AI response upon user request) */}
       {response.kpiGrid && <AiKpiGrid metrics={response.kpiGrid} />}
-      {response.chartData && <AiChartBlock chartData={response.chartData} onEntityClick={onEntityClick} />}
+      {response.chartData && <AiChartBlock chartData={response.chartData} onEntityClick={onEntityClick} onOpenAnalytics={onOpenAnalytics} />}
       {response.riskDecomposition && <AiRiskBreakdown riskData={response.riskDecomposition} />}
       {response.insightData && <AiInsightCard insightData={response.insightData} />}
       {response.whyThisResult && <AiWhyThisResult data={response.whyThisResult} />}

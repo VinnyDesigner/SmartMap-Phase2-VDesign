@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, X, Bookmark, History, MessageSquare } from 'lucide-react';
+import { ArrowLeft, X, Heart, History, MessageSquare } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -80,13 +80,13 @@ export default function MenuSlidePanel({ explorerState, setExplorerState }) {
                              <h4 className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>{item.name}</h4>
                              <p className="text-xs text-slate-400 mt-1">{item.location || item.district}</p>
                           </div>
-                          <Bookmark className={`w-5 h-5 ${isDarkMode ? 'text-amber-400' : 'text-[#3D52A0]'}`} />
+                          <Heart className="w-5 h-5 text-rose-500 fill-current" />
                        </div>
                     ))
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-                        <Bookmark className="w-12 h-12 mb-3 opacity-30" />
-                        <p className="text-sm font-medium">{t('No saved items', 'لا توجد عناصر محفوظة')}</p>
+                        <Heart className="w-12 h-12 mb-3 opacity-30 text-rose-400" />
+                        <p className="text-sm font-medium">{t('No favorite locations saved yet', 'لا توجد مفضلة محفوظة بعد')}</p>
                     </div>
                 )
               )}

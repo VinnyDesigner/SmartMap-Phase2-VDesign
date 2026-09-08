@@ -6,6 +6,7 @@ import MapControlsSidebar from './MapControlsSidebar';
 import BottomDataPanel from './BottomDataPanel';
 import MapLegendPanel from './MapLegendPanel';
 import DetailSlidePanel from './DetailSlidePanel';
+import SearchResultsList from './SearchResultsList';
 
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -32,9 +33,9 @@ export default function DataExplorerLayout({
 
   const [chatWidth, setChatWidth] = useState(() => {
     if (typeof window !== 'undefined') {
-      return Math.max(300, Math.round(window.innerWidth * 0.20));
+      return Math.max(300, Math.round(window.innerWidth * 0.25));
     }
-    return 340;
+    return 380;
   });
   const [isResizing, setIsResizing] = useState(false);
 
@@ -97,7 +98,7 @@ export default function DataExplorerLayout({
   }, [isResizing, setExplorerState]);
 
   const handleDoubleClick = () => {
-    const defaultW = Math.max(300, Math.round(window.innerWidth * 0.20));
+    const defaultW = Math.max(300, Math.round(window.innerWidth * 0.25));
     setChatWidth(defaultW);
     if (setExplorerState) {
       setExplorerState(prev => ({ ...prev, resizeTrigger: Date.now() }));
@@ -134,6 +135,27 @@ export default function DataExplorerLayout({
           explorerState={explorerState}
           setExplorerState={setExplorerState}
         />
+
+        {/* Floating Search Results Panel (Wireframe Page 03 & 04) */}
+        <AnimatePresence>
+          {explorerState?.showSearchResults !== false && explorerState?.activeResults?.length > 0 && !explorerState?.selectedDetail && (
+            <SearchResultsList 
+              explorerState={explorerState}
+              setExplorerState={setExplorerState}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Floating Location Details Card Panel (Wireframe Page 05) */}
+        <AnimatePresence>
+          {explorerState?.selectedDetail && (
+            <DetailSlidePanel 
+              explorerState={explorerState}
+              setExplorerState={setExplorerState}
+            />
+          )}
+        </AnimatePresence>
+
         <AnimatePresence>
           {explorerState?.activeMenu === 'legend' && (
             <MapLegendPanel 
@@ -187,9 +209,6 @@ export default function DataExplorerLayout({
           onNavigate={onNavigate}
         />
       </div>
-
-      {/* Detail Slide-out Panel */}
-      <DetailSlidePanel explorerState={explorerState} setExplorerState={setExplorerState} />
 
       {/* Stakeholder Demo Journey Switcher */}
       <DemoScenarioSwitcher onLaunchScenario={handleLaunchScenario} />

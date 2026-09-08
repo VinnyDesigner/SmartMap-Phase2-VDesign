@@ -4,11 +4,13 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate }
 import AiChatInterface from './AiChatInterface';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { GIS_CATEGORIES_DATA } from './GisCategoriesPanel';
+import { useProject } from '../../contexts/ProjectContext';
+import { getRotatedPromptSuggestions } from '../../services/ai/promptLibrary';
 
 export default function BottomDataPanel({ explorerState, setExplorerState, onNavigate }) {
   const { t, isArabic } = useLanguage();
   const { isDarkMode } = useTheme();
+  const { activeProject } = useProject();
   const containerRef = useRef(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -25,24 +27,24 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
     mouseY.set(e.clientY - rect.top);
   };
 
-  // Resolve selected GIS subcategory pills
+  // Resolve selected GIS subcategory pills dynamically from activeProject
   const selectedSubcategoryIds = explorerState?.selectedGisSubcategories || [];
   const activeCategoryPills = useMemo(() => {
     const pills = [];
-    GIS_CATEGORIES_DATA.forEach(cat => {
+    const categories = activeProject.categories || [];
+    categories.forEach(cat => {
       cat.subcategories.forEach(sub => {
         if (selectedSubcategoryIds.includes(sub.id)) {
           pills.push({
             id: sub.id,
             label: isArabic ? sub.label_ar : sub.label,
-            categoryTitle: isArabic ? cat.title_ar : cat.title,
-            Icon: cat.icon
+            categoryTitle: isArabic ? cat.title_ar : cat.title
           });
         }
       });
     });
     return pills;
-  }, [selectedSubcategoryIds, isArabic]);
+  }, [selectedSubcategoryIds, isArabic, activeProject]);
 
   const handleRemoveSubcategoryPill = (subId) => {
     setExplorerState(prev => ({
@@ -80,11 +82,9 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
         id: Date.now(),
         role: 'assistant',
         content: isArabic 
-          ? "مرحباً! بدأت محادثة جديدة. أنا منصة القرار الذكي للمعلومات المكانية أبوظبي GeoAI. عما تبحث؟" 
-          : "Hello! Started a new AI conversation. I'm your Abu Dhabi Conversational GeoAI Workspace. What are you looking for?",
-        suggestions: isArabic 
-          ? ["عرض منشآت التصنيع عالية الخطورة في أبوظبي", "مقارنة الانبعاثات بين مصفح وكيزاد", "لماذا هذه المنشأة عالية الخطورة؟"] 
-          : ["Show high-risk manufacturing facilities in Abu Dhabi", "Compare emissions between Mussafah and KIZAD", "Why is this facility high risk?"]
+          ? "مرحباً! أنا مساعد الخريطة المكانية الذكية لإمارة أبوظبي.\n\nيمكنني مساعدتك في استكشاف المرافق الحكومية، المتاحف، المتنزهات، وشبكات النقل وتصفية الاستعلامات المكانية. كيف يمكنني مساعدتك اليوم؟"
+          : "Welcome to SmartMap AI Assistant! I can help you explore Abu Dhabi spatial data, government facilities, tourism landmarks, public transit, and environmental layers. What would you like to analyze today?",
+        suggestions: getRotatedPromptSuggestions(isArabic, Date.now())
       };
 
       return {
@@ -96,6 +96,7 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
       };
     });
   };
+
 
   return (
     <div className={`w-full h-full flex flex-col overflow-hidden pointer-events-auto transition-colors duration-300 relative ${
