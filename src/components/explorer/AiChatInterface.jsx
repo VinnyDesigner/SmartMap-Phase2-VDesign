@@ -18,7 +18,7 @@ import { getRotatedPromptSuggestions } from '../../services/ai/promptLibrary';
 import AuthPromptModal from '../common/AuthPromptModal';
 
 // Seed initial saved favorites
-const SEED_FAVORITES = [
+export const SEED_FAVORITES = [
   {
     id: 'FAC-AD-001',
     name: 'Louvre Abu Dhabi',
