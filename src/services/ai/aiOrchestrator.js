@@ -233,108 +233,108 @@ export const aiOrchestrator = {
     }
 
     // ==========================================
-    // CATEGORY LIST QUERY: PARKS & GREEN SPACES
+    // CATEGORY LIST QUERY: TOURISM & CULTURE
     // ==========================================
-    if (q.includes('park') || q.includes('parks') || q.includes('green') || q.includes('recreation')) {
-      const parks = ALL_FACILITIES.filter(f => f.facilityType === 'PARK');
-      const topPark = parks[0] || ALL_FACILITIES[6];
+    if (q.includes('tourism') || q.includes('museum') || q.includes('culture') || q.includes('attraction') || q.includes('palace')) {
+      const tourismList = ALL_FACILITIES.filter(f => f.facilityType === 'TOURISM');
+      const topTourism = tourismList[0] || ALL_FACILITIES[0];
 
       actions.push(
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { facilityType: 'PARK' }, matchingResults: parks } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topPark.lat, lng: topPark.lng, zoom: 14 } }
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { facilityType: 'TOURISM' }, matchingResults: tourismList } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topTourism.lat, lng: topTourism.lng, zoom: 14 } }
       );
 
       blocks = [
         {
           type: 'TEXT',
           content: isArabic 
-            ? `تم عرض **${parks.length} حدائق ومحميات بيئية** في أبوظبي على الخريطة.`
-            : `Showing **${parks.length} public parks and environmental preserves** in Abu Dhabi on the map.`
+            ? `تم عرض **${tourismList.length} معالم سياحية وثقافية بارزة** في أبوظبي على الخريطة.`
+            : `Showing **${tourismList.length} primary cultural & tourism landmarks** in Abu Dhabi on the map.`
         },
         {
           type: 'LOCATION_LIST',
-          locations: parks
+          locations: tourismList
         },
         {
           type: 'ACTION_SUGGESTIONS',
-          suggestions: isArabic ? ["عرض المستشفيات", "عرض المدارس", "عرض الانبعاثات"] : ["Show hospitals", "Show schools", "Show emissions"]
+          suggestions: isArabic ? ["عرض المراكز الحكومية", "عرض البنية التحتية", "عرض وسائل النقل"] : ["Show government centers", "Show infrastructure", "Show transport hubs"]
         }
       ];
 
-      return { reply: blocks[0].content, blocks, actions, results: parks, executionLogs };
+      return { reply: blocks[0].content, blocks, actions, results: tourismList, executionLogs };
     }
 
     // ==========================================
-    // CATEGORY LIST QUERY: HOSPITALS & HEALTHCARE
+    // CATEGORY LIST QUERY: GOVERNMENT FACILITIES
     // ==========================================
-    if (q.includes('hospital') || q.includes('hospitals') || q.includes('clinic') || q.includes('health')) {
-      const hospitals = ALL_FACILITIES.filter(f => f.facilityType === 'HOSPITAL');
-      const topHosp = hospitals[0];
+    if (q.includes('government') || q.includes('tamm') || q.includes('civic') || q.includes('municipality') || q.includes('ministry')) {
+      const govtList = ALL_FACILITIES.filter(f => f.facilityType === 'GOVERNMENT');
+      const topGovt = govtList[0];
 
       actions.push(
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { facilityType: 'HOSPITAL' }, matchingResults: hospitals } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topHosp.lat, lng: topHosp.lng, zoom: 14 } }
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { facilityType: 'GOVERNMENT' }, matchingResults: govtList } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topGovt.lat, lng: topGovt.lng, zoom: 14 } }
       );
 
       blocks = [
         {
           type: 'TEXT',
           content: isArabic
-            ? `تم تحديد **${hospitals.length} مستشفيات ومراكز طبية تخصصية** عبر قطاع أبوظبي:\n\n1. 🏥 **كليفلاند كلينك أبوظبي** (جزيرة الماريه)\n2. 🏥 **مدينة شخبوط الطبية (SSMC)** (المفرق - سعة 741 سرير)\n\nكيف تود تصفية النتائج الحالية؟`
-            : `Identified **${hospitals.length} specialty hospitals and medical centers** across Abu Dhabi:\n\n1. 🏥 **Cleveland Clinic Abu Dhabi** (Al Maryah Island)\n2. 🏥 **Sheikh Shakhbout Medical City (SSMC)** (Al Mafraq - 741 bed capacity)\n\nHow would you like to refine your spatial search?`
+            ? `تم تحديد **${govtList.length} مقرات حكومية ومراكز خدمات موحدة (تم)** عبر أبوظبي.`
+            : `Identified **${govtList.length} government headquarters and unified TAMM service centers** across Abu Dhabi.`
         },
         {
           type: 'LOCATION_LIST',
-          locations: hospitals
+          locations: govtList
         },
         {
           type: 'ACTION_SUGGESTIONS',
           actionCards: [
-            { label: 'Compare Water Consumption', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART }
+            { label: 'Compare Energy Emissions', actionType: ACTION_TYPES.ANALYTICS_SHOW_CHART }
           ],
-          suggestions: isArabic ? ["لماذا مستشفى شخبوط عالي الخطورة؟", "عرض المدارس"] : ["Why is SSMC high risk?", "Show schools"]
+          suggestions: isArabic ? ["عرض المعالم السياحية", "عرض الحدائق العامة"] : ["Show tourism attractions", "Show public parks"]
         }
       ];
 
-      return { reply: blocks[0].content, blocks, actions, results: hospitals, executionLogs };
+      return { reply: blocks[0].content, blocks, actions, results: govtList, executionLogs };
     }
 
     // ==========================================
-    // CATEGORY LIST QUERY: EDUCATION & UNIVERSITIES
+    // CATEGORY LIST QUERY: CIVIC INFRASTRUCTURE & UTILITIES
     // ==========================================
-    if (q.includes('school') || q.includes('schools') || q.includes('university') || q.includes('education')) {
-      const eduList = ALL_FACILITIES.filter(f => f.facilityType === 'EDUCATION');
-      const topEdu = eduList[0];
+    if (q.includes('infrastructure') || q.includes('utility') || q.includes('desalination') || q.includes('power') || q.includes('water')) {
+      const utilList = ALL_FACILITIES.filter(f => f.facilityType === 'CIVIC_INFRASTRUCTURE' || f.facilityType === 'MANUFACTURING');
+      const topUtil = utilList[0];
 
       actions.push(
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { facilityType: 'EDUCATION' }, matchingResults: eduList } },
-        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topEdu.lat, lng: topEdu.lng, zoom: 14 } }
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { facilityType: 'CIVIC_INFRASTRUCTURE' }, matchingResults: utilList } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topUtil.lat, lng: topUtil.lng, zoom: 13 } }
       );
 
       blocks = [
         {
           type: 'TEXT',
           content: isArabic
-            ? `تم عرض **${eduList.length} مؤسسات تعليمية وجامعات** في أبوظبي.`
-            : `Showing **${eduList.length} higher education campuses** in Abu Dhabi.`
+            ? `تم عرض **${utilList.length} منشآت بنية تحتية ومرافق طاقة ومياه** في أبوظبي.`
+            : `Showing **${utilList.length} civic infrastructure & utility assets** in Abu Dhabi.`
         },
         {
           type: 'LOCATION_LIST',
-          locations: eduList
+          locations: utilList
         },
         {
           type: 'ACTION_SUGGESTIONS',
-          suggestions: isArabic ? ["عرض المستشفيات", "مقارنة السعة"] : ["Show hospitals", "Compare capacity"]
+          suggestions: isArabic ? ["مقارنة الانبعاثات", "عرض وسائل النقل"] : ["Compare emissions", "Show transport hubs"]
         }
       ];
 
-      return { reply: blocks[0].content, blocks, actions, results: eduList, executionLogs };
+      return { reply: blocks[0].content, blocks, actions, results: utilList, executionLogs };
     }
 
     // ==========================================
     // CATEGORY LIST QUERY: TRANSPORT & TRANSIT
     // ==========================================
-    if (q.includes('transport') || q.includes('bus') || q.includes('transit') || q.includes('terminal')) {
+    if (q.includes('transport') || q.includes('bus') || q.includes('transit') || q.includes('terminal') || q.includes('airport')) {
       const transList = ALL_FACILITIES.filter(f => f.facilityType === 'TRANSPORT');
       const topTrans = transList[0];
 
@@ -347,8 +347,8 @@ export const aiOrchestrator = {
         {
           type: 'TEXT',
           content: isArabic
-            ? `تم عرض **${transList.length} محطات حافلات ونقل عام** في أبوظبي.`
-            : `Showing **${transList.length} primary transport hubs** in Abu Dhabi.`
+            ? `تم عرض **${transList.length} محطات نقل عام ومطارات** في أبوظبي.`
+            : `Showing **${transList.length} primary transit & mobility hubs** in Abu Dhabi.`
         },
         {
           type: 'LOCATION_LIST',
@@ -356,7 +356,7 @@ export const aiOrchestrator = {
         },
         {
           type: 'ACTION_SUGGESTIONS',
-          suggestions: isArabic ? ["عرض الانبعاثات", "عرض الحدائق"] : ["Show emissions", "Show parks"]
+          suggestions: isArabic ? ["عرض المعالم السياحية", "عرض الحدائق العامة"] : ["Show tourism attractions", "Show public parks"]
         }
       ];
 

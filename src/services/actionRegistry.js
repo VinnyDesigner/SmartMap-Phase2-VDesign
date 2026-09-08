@@ -27,6 +27,8 @@ export const ACTION_TYPES = {
   // Navigation & Language Actions
   NAVIGATION_SWITCH: 'NAVIGATION_SWITCH',
   LANGUAGE_SET: 'LANGUAGE_SET',
+  CHANGE_THEME: 'CHANGE_THEME',
+  SHOW_DIRECTIONS: 'SHOW_DIRECTIONS',
   
   // Analytics & Visualizations
   ANALYTICS_SHOW_CHART: 'ANALYTICS_SHOW_CHART',
@@ -94,7 +96,7 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
       recordActionHistory(prevState, action.type, action.params);
       setExplorerState(prev => ({
         ...prev,
-        mapFocus: { lat: 24.4539, lng: 54.3773, zoom: 12 },
+        mapFocus: { lat: 24.4839, lng: 54.3773, zoom: 13 },
         activeFilters: {},
         activeMapLayers: [],
         drawnPolygon: null,
@@ -114,6 +116,16 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
         basemap: basemapId
       }));
       return { success: true, message: `Basemap changed to ${basemapId}` };
+    }
+
+    case ACTION_TYPES.CHANGE_THEME: {
+      const { theme } = action.params || {};
+      if (contextHelpers.setTheme) {
+        contextHelpers.setTheme(theme);
+      } else if (contextHelpers.toggleTheme) {
+        contextHelpers.toggleTheme();
+      }
+      return { success: true, message: `Theme changed to ${theme}` };
     }
 
     case ACTION_TYPES.FILTER_SET: {
@@ -149,28 +161,6 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
       return { success: true, message: "Cleared all active filters" };
     }
 
-    case ACTION_TYPES.LAYER_TOGGLE: {
-      recordActionHistory(prevState, action.type, action.params);
-      const { layerId, active } = action.params || {};
-      setExplorerState(prev => {
-        const currentLayers = prev.activeMapLayers || [];
-        const nextLayers = active 
-          ? [...new Set([...currentLayers, layerId])] 
-          : currentLayers.filter(l => l !== layerId);
-        return { ...prev, activeMapLayers: nextLayers };
-      });
-      return { success: true, message: `${active ? 'Enabled' : 'Disabled'} layer: ${layerId}` };
-    }
-
-    case ACTION_TYPES.LAYER_DISABLE_ALL: {
-      recordActionHistory(prevState, action.type, action.params);
-      setExplorerState(prev => ({
-        ...prev,
-        activeMapLayers: []
-      }));
-      return { success: true, message: "Hidden all map overlay layers" };
-    }
-
     case ACTION_TYPES.FACILITY_SELECT:
     case ACTION_TYPES.FACILITY_OPEN_DETAIL: {
       recordActionHistory(prevState, action.type, action.params);
@@ -185,6 +175,20 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
         return { success: true, message: `Selected facility: ${facility.name}` };
       }
       return { success: false, message: "No facility found to select" };
+    }
+
+    case ACTION_TYPES.SHOW_DIRECTIONS: {
+      const { destination } = action.params || {};
+      if (destination && destination.lat && destination.lng) {
+        setExplorerState(prev => ({
+          ...prev,
+          selectedLocation: destination,
+          activeRouteDestination: destination,
+          mapFocus: { lat: destination.lat, lng: destination.lng, zoom: 15 }
+        }));
+        return { success: true, message: `Route calculated to ${destination.name}` };
+      }
+      return { success: false, message: "No destination found for directions" };
     }
 
     case ACTION_TYPES.NAVIGATION_SWITCH: {
@@ -213,11 +217,10 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
 
     case ACTION_TYPES.EXPORT_DATA:
     case ACTION_TYPES.REPORT_GENERATE: {
-      // Create a downloadable blob simulation or trigger export notification
-      const exportMsg = action.params?.format 
-        ? `Generated ${action.params.format.toUpperCase()} report successfully`
-        : "Exported current spatial dataset";
-      return { success: true, message: exportMsg };
+      if (typeof window !== 'undefined') {
+        window.print();
+      }
+      return { success: true, message: "Opened print layout" };
     }
 
     case ACTION_TYPES.UNDO_ACTION: {
@@ -226,7 +229,7 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
         setExplorerState(restoredState);
         return { success: true, message: "Undid the last action and restored previous state" };
       }
-      return { success: false, message: "No previous action to undo" };
+      return { false: true, message: "No previous action to undo" };
     }
 
     case 'ENABLE_LOCATION':

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowRight, GraduationCap, PlusSquare, TreePine, Bus, LayoutGrid, Mic, Sparkles } from 'lucide-react';
+import { Search, ArrowRight, Landmark, Zap, TreePine, Bus, LayoutGrid, Mic, Sparkles } from 'lucide-react';
 import WebGLTextEffect from './WebGLTextEffect';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriter';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -21,22 +21,22 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
 
   const placeholderText = useTypewriterPlaceholder(
     isArabic ? [
-      'البحث عن الأماكن...',
-      'البحث عن مدارس قريبة من جزيرة الريم',
-      'اسأل عن أي شيء حول الأماكن أو الخدمات في أبوظبي...'
+      'البحث عن الأماكن والمعالم...',
+      'البحث عن مراكز تم الحكومية بالقرب من جزيرة الريم',
+      'اسأل عن أي شيء حول السياحة والخدمات والمرافق في أبوظبي...'
     ] : [
-      'Search places...',
-      'Find schools near Al Reem Island',
-      'Ask anything about places, services, or data in Abu Dhabi...'
+      'Search places & assets...',
+      'Find Tamm government centers near Al Reem Island',
+      'Ask anything about tourism, services, or infrastructure in Abu Dhabi...'
     ]
   );
 
   const suggestions = [
-    { icon: <GraduationCap className="w-4 h-4 text-blue-500" />, text: t("Schools near me", "المدارس القريبة مني") },
-    { icon: <PlusSquare className="w-4 h-4 text-red-500" />, text: t("Healthcare facilities", "مرافق الرعاية الصحية") },
-    { icon: <TreePine className="w-4 h-4 text-emerald-500" />, text: t("Public parks", "الحدائق العامة") },
-    { icon: <Bus className="w-4 h-4 text-amber-500" />, text: t("Transport stops", "مواقف النقل") },
-    { icon: <LayoutGrid className="w-4 h-4 text-teal-500" />, text: t("More ideas", "المزيد من الأفكار") }
+    { icon: <Landmark className="w-4 h-4 text-purple-500" />, text: t("Tourism attractions near me", "المعالم السياحية القريبة مني") },
+    { icon: <Sparkles className="w-4 h-4 text-blue-500" />, text: t("Tamm service centers", "مراكز تم الحكومية") },
+    { icon: <Zap className="w-4 h-4 text-amber-500" />, text: t("Power & water utilities", "مرافق الطاقة والمياه") },
+    { icon: <Bus className="w-4 h-4 text-emerald-500" />, text: t("Public transit stops", "مواقف النقل العام") },
+    { icon: <TreePine className="w-4 h-4 text-teal-500" />, text: t("Public parks", "الحدائق العامة") }
   ];
 
   return (

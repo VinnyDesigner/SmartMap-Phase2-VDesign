@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, User, HelpCircle, Menu, X } from 'lucide-react';
+import { Sun, Moon, User, HelpCircle, Menu, X, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dgeLogo from '../assets/dge-logo.png';
 import sdiLogo from '../assets/sdilogo.png';
@@ -49,8 +49,23 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               ? 'bg-transparent border-b border-transparent text-white' 
               : 'bg-transparent border-b border-transparent text-slate-800'
       }`}>
-        {/* Left: Logos */}
+        {/* Left: Back Button & DGE Logo */}
         <div className="flex items-center pointer-events-auto gap-3 md:gap-4 h-full">
+          {currentView !== 'landing' && (
+            <button
+              onClick={() => onNavigate?.('landing')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-bold transition-all cursor-pointer ${
+                isDarkMode 
+                  ? 'bg-[#182645] border-slate-700 text-slate-200 hover:text-white hover:bg-slate-800' 
+                  : 'bg-slate-100 border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-200'
+              }`}
+              title={t("Go back to home", "العودة للرئيسية")}
+            >
+              <ArrowLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+              <span className="hidden sm:inline">{t('Back', 'رجوع')}</span>
+            </button>
+          )}
+
           <img 
             src={dgeLogo} 
             alt="Department of Government Enablement" 
@@ -59,7 +74,7 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
           />
         </div>
 
-        {/* Center: SDI-Style Navigation */}
+        {/* Center: SDI Navigation */}
         <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 top-0 bottom-0 -translate-x-1/2 h-full pointer-events-auto">
           {[
             { id: 'Home', en: 'Home', ar: 'الرئيسية', view: 'landing' },
@@ -79,33 +94,25 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               >
                 {t(item.en, item.ar)}
                 
-                {/* Active Highlight Line exactly on the bottom edge of the top header bar */}
                 {isActive && (
                   <motion.div 
                     layoutId="activeHeaderNav"
-                    className="absolute -bottom-[1px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] rounded-full shadow-[0_-2px_10px_rgba(33,90,158,0.6)] z-10"
+                    className="absolute -bottom-[1px] left-0 right-0 h-[3px] bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#7c3aed] rounded-full shadow-xs z-10"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
-                )}
-
-                {/* Hover Highlight Line for inactive tabs on the bottom edge */}
-                {!isActive && (
-                  <div className="absolute -bottom-[1px] left-0 right-0 h-[2.5px] bg-gradient-to-r from-[#215A9E]/70 to-[#7c3aed]/70 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 )}
               </button>
             );
           })}
         </nav>
 
-        {/* Right: Actions */}
+        {/* Right: Controls & User Authentication */}
         <div className="flex items-center gap-3">
-          {/* SDI Header Brand Logo */}
           <div className="hidden xl:flex items-center me-2">
-            <img src={sdiLogo} alt="Abu Dhabi Spatial Data Infrastructure" className="h-6 md:h-7 w-auto object-contain" />
+            <img src={sdiLogo} alt="Abu Dhabi Spatial Data Infrastructure" className={`h-6 md:h-7 w-auto object-contain ${isDarkMode ? 'brightness-0 invert' : ''}`} />
           </div>
           
           <div className="flex items-center gap-2 md:gap-3">
-            {/* SDI-style Text-Only Language Selector */}
             <div className="hidden md:flex items-center">
               <LanguageSelector isDarkMode={isDarkMode} />
             </div>
@@ -113,22 +120,21 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
             {/* Dark/Light Theme Toggle */}
             <button 
               onClick={toggleTheme}
-              className={`hidden md:flex w-9 h-9 rounded-full items-center justify-center backdrop-blur-md border shadow-sm transition-all ${isDarkMode ? 'bg-[#0f172a]/90 border-slate-800 text-amber-300 hover:bg-slate-800' : 'bg-white/70 border-white/60 text-[#7c3aed] hover:bg-white'}`}
+              className={`hidden md:flex w-9 h-9 rounded-full items-center justify-center backdrop-blur-md border shadow-xs transition-all ${isDarkMode ? 'bg-[#0f172a]/90 border-slate-800 text-amber-300 hover:bg-slate-800' : 'bg-white/70 border-white/60 text-[#7c3aed] hover:bg-white'}`}
               title={isDarkMode ? t("Switch to Light Mode", "التبديل إلى الوضع الفاتح") : t("Switch to Dark Mode", "التبديل إلى الوضع الداكن")}
             >
               {isDarkMode ? <Sun className="w-4 h-4 fill-current" /> : <Moon className="w-4 h-4 fill-current" />}
             </button>
             
-            {/* Help & Documentation Button */}
             <button 
               onClick={() => onNavigate?.('help')}
-              className={`hidden md:flex w-9 h-9 rounded-full items-center justify-center backdrop-blur-md border shadow-sm transition-all ${isDarkMode ? 'bg-[#0f172a]/90 border-slate-800 text-white hover:bg-slate-800' : 'bg-white/70 border-white/60 text-white hover:bg-white'}`}
+              className={`hidden md:flex w-9 h-9 rounded-full items-center justify-center backdrop-blur-md border shadow-xs transition-all ${isDarkMode ? 'bg-[#0f172a]/90 border-slate-800 text-white hover:bg-slate-800' : 'bg-white/70 border-white/60 text-white hover:bg-white'}`}
               title={t("Help & Documentation", "المساعدة والتوثيق")}
             >
               <HelpCircle className={`w-4 h-4 ${isDarkMode ? 'fill-white text-[#0f172a]' : 'fill-[#7c3aed] text-white'}`} />
             </button>
             
-            {/* Authenticated User Profile Pill vs Guest User Status Pill */}
+            {/* Authenticated User Status vs Guest Status */}
             {isLoggedIn ? (
               <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
                 <div className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">
@@ -160,17 +166,17 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
                 </div>
                 <button 
                   onClick={() => onNavigate?.('login')}
-                  className="ms-1.5 h-7 px-3 rounded-full text-white bg-black hover:bg-[#7c3aed] transition-all duration-200 font-bold text-[10.5px] cursor-pointer shadow-2xs transform hover:-translate-y-0.5"
+                  className="ms-1.5 h-7 px-3 rounded-full text-white bg-black hover:bg-[#7c3aed] transition-all duration-200 font-bold text-[10.5px] cursor-pointer shadow-2xs"
                 >
                   {t('Sign In', 'دخول')}
                 </button>
               </div>
             )}
             
-            {/* Mobile Hamburger Menu */}
+            {/* Mobile Hamburger */}
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
-              className={`lg:hidden w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md border shadow-sm transition-all ${isDarkMode ? 'bg-[#132042]/90 border-slate-700/60 text-white' : 'bg-white/70 border-white/60 text-dge-reliable hover:bg-white'}`}
+              className={`lg:hidden w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md border shadow-xs transition-all ${isDarkMode ? 'bg-[#132042]/90 border-slate-700/60 text-white' : 'bg-white/70 border-white/60 text-slate-700 hover:bg-white'}`}
             >
               <Menu className="w-4 h-4" />
             </button>
@@ -178,96 +184,59 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
         </div>
       </header>
 
-    <AnimatePresence onExitComplete={() => {
-      if (pendingLanguage !== null) {
-        setIsArabic(pendingLanguage);
-        setPendingLanguage(null);
-      }
-    }}>
-      {isMobileMenuOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-[100] pointer-events-auto lg:hidden"
-          />
-          {/* Off Canvas Panel */}
-          <motion.div
-            initial={{ x: isArabic ? '100%' : '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: isArabic ? '100%' : '-100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed top-0 bottom-0 start-0 w-[280px] bg-white z-[101] shadow-2xl flex flex-col pointer-events-auto lg:hidden"
-          >
-            <div className="p-5 flex items-center justify-between border-b border-gray-100">
-              <img src={dgeLogo} alt="DGE Logo" className="h-8 object-contain" />
-              <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto py-4 px-4 flex flex-col gap-2">
-              <button 
-                onClick={() => { onNavigate?.('landing'); setIsMobileMenuOpen(false); }}
-                className={`p-4 rounded-xl text-start font-bold text-[15px] transition-colors ${currentView === 'landing' ? 'bg-[#f0f4ff] text-[#3D52A0]' : 'text-slate-600 hover:bg-slate-50'}`}
-              >
-                {t('Home', 'الرئيسية')}
-              </button>
-              <button 
-                onClick={() => { onNavigate?.('explorer'); setIsMobileMenuOpen(false); }}
-                className={`p-4 rounded-xl text-start font-bold text-[15px] transition-colors ${currentView === 'explorer' ? 'bg-[#f0f4ff] text-[#3D52A0]' : 'text-slate-600 hover:bg-slate-50'}`}
-              >
-                {t('Map View', 'عرض الخريطة')}
-              </button>
-              <button 
-                onClick={() => { onNavigate?.('about'); setIsMobileMenuOpen(false); }}
-                className="p-4 rounded-xl text-start font-bold text-[15px] text-slate-600 hover:bg-slate-50 transition-colors"
-              >
-                {t('About Us', 'من نحن')}
-              </button>
-              <div className="h-px bg-gray-100 my-2" />
-              
-              {/* SDI-style Language Selector for Mobile */}
-              <button 
-                onClick={() => { 
-                  setPendingLanguage(!isArabic);
-                  setIsMobileMenuOpen(false);
-                }}
-                className="p-4 rounded-xl flex items-center justify-between text-slate-600 font-bold hover:bg-slate-50 transition-colors cursor-pointer w-full text-start"
-              >
-                <span>{t('Language', 'اللغة')}</span>
-                <span className="text-sm font-semibold text-[#7c3aed]">
-                  {isArabic ? 'English' : 'عربي'}
-                </span>
-              </button>
-              
-              {/* Theme Toggle for Mobile */}
-              <div 
-                onClick={() => { toggleTheme(); setIsMobileMenuOpen(false); }}
-                className="p-4 rounded-xl flex items-center justify-between text-slate-600 font-bold hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <span>{isDarkMode ? t('Switch to Light Mode', 'التبديل إلى الوضع الفاتح') : t('Switch to Dark Mode', 'التبديل إلى الوضع الداكن')}</span>
-                <div className="flex items-center justify-center w-8 h-8 bg-slate-100 rounded-full text-dge-reliable">
-                  {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                </div>
+      {/* Mobile Off-canvas Drawer */}
+      <AnimatePresence onExitComplete={() => {
+        if (pendingLanguage !== null) {
+          setIsArabic(pendingLanguage);
+          setPendingLanguage(null);
+        }
+      }}>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/30 backdrop-blur-xs z-[100] pointer-events-auto lg:hidden"
+            />
+            <motion.div
+              initial={{ x: isArabic ? '100%' : '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: isArabic ? '100%' : '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed top-0 bottom-0 start-0 w-[280px] bg-white dark:bg-[#0c1427] z-[101] shadow-2xl flex flex-col pointer-events-auto lg:hidden"
+            >
+              <div className="p-5 flex items-center justify-between border-b border-gray-100 dark:border-slate-800">
+                <img src={dgeLogo} alt="DGE Logo" className="h-8 object-contain dark:brightness-0 dark:invert" />
+                <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-200">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-
-            </div>
-            <div className="p-4 border-t border-gray-100">
-              <button 
-                onClick={() => { onNavigate?.('login'); setIsMobileMenuOpen(false); }}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-dge-tech to-dge-reliable text-white font-bold text-[15px]"
-              >
-                <User className="w-4 h-4" />
-                {t('Sign In', 'تسجيل الدخول')}
-              </button>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+              <div className="flex-1 overflow-y-auto py-4 px-4 flex flex-col gap-2">
+                <button 
+                  onClick={() => { onNavigate?.('landing'); setIsMobileMenuOpen(false); }}
+                  className={`p-3 rounded-xl text-start font-bold text-sm ${currentView === 'landing' ? 'bg-[#eef3ff] text-[#215A9E]' : 'text-slate-600 dark:text-slate-300'}`}
+                >
+                  {t('Home', 'الرئيسية')}
+                </button>
+                <button 
+                  onClick={() => { onNavigate?.('explorer'); setIsMobileMenuOpen(false); }}
+                  className={`p-3 rounded-xl text-start font-bold text-sm ${currentView === 'explorer' ? 'bg-[#eef3ff] text-[#215A9E]' : 'text-slate-600 dark:text-slate-300'}`}
+                >
+                  {t('Map View', 'عرض الخريطة')}
+                </button>
+                <button 
+                  onClick={() => { onNavigate?.('about'); setIsMobileMenuOpen(false); }}
+                  className="p-3 rounded-xl text-start font-bold text-sm text-slate-600 dark:text-slate-300"
+                >
+                  {t('About Us', 'من نحن')}
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

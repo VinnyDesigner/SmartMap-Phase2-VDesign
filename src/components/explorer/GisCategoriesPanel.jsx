@@ -10,72 +10,58 @@ import { LOCATIONS_DB } from '../../services/mockAiEngine';
 
 export const GIS_CATEGORIES_DATA = [
   {
-    id: 'healthcare',
-    title: 'Healthcare',
-    title_ar: 'الرعاية الصحية',
-    icon: Activity,
+    id: 'tourism',
+    title: 'Tourism & Culture',
+    title_ar: 'السياحة والثقافة',
+    icon: Landmark,
     subcategories: [
-      { id: 'hospitals', label: 'Hospitals', label_ar: 'المستشفيات', count: 32 },
-      { id: 'clinics', label: 'Clinics & Centers', label_ar: 'العيادات والمراكز', count: 38 },
-      { id: 'pharmacies', label: 'Pharmacies', label_ar: 'الصيدليات', count: 14 }
-    ]
-  },
-  {
-    id: 'education',
-    title: 'Education',
-    title_ar: 'التعليم',
-    icon: GraduationCap,
-    subcategories: [
-      { id: 'charter_schools', label: 'Charter Schools', label_ar: 'مدارس الشراكات', count: 18 },
-      { id: 'nurseries', label: 'Nurseries', label_ar: 'الحضانات', count: 35 },
-      { id: 'pod_centers', label: 'POD', label_ar: 'أصحاب الهمم', count: 12 },
-      { id: 'public_schools', label: 'Public Schools', label_ar: 'المدارس الحكومية', count: 42 },
-      { id: 'private_schools', label: 'Private Schools', label_ar: 'المدارس الخاصة', count: 58 },
-      { id: 'universities', label: 'University', label_ar: 'الجامعات', count: 22 }
-    ]
-  },
-  {
-    id: 'transport',
-    title: 'Transport',
-    title_ar: 'النقل والمواصلات',
-    icon: Bus,
-    subcategories: [
-      { id: 'bus_stations', label: 'Bus Stations', label_ar: 'محطات الحافلات', count: 65 },
-      { id: 'taxi_hubs', label: 'Taxi Hubs', label_ar: 'مواقف الأجرة', count: 50 },
-      { id: 'public_parking', label: 'Public Parking', label_ar: 'المواقف العامة', count: 30 }
+      { id: 'museums', label: 'Museums & Galleries', label_ar: 'المتاحف والمعارض', count: 18 },
+      { id: 'heritage', label: 'Cultural Heritage', label_ar: 'التراث الثقافي', count: 24 },
+      { id: 'landmarks', label: 'Landmarks & Monuments', label_ar: 'المعالم البارزة', count: 32 }
     ]
   },
   {
     id: 'government',
-    title: 'Government',
+    title: 'Government Services',
     title_ar: 'الخدمات الحكومية',
     icon: Landmark,
     subcategories: [
       { id: 'tamm_hubs', label: 'TAMM Customer Hubs', label_ar: 'مراكز تم للمتعاملين', count: 24 },
-      { id: 'municipality_offices', label: 'Municipality Offices', label_ar: 'مكاتب البلدية', count: 18 },
-      { id: 'public_registries', label: 'Public Registries', label_ar: 'السجلات العامة', count: 14 }
-    ]
-  },
-  {
-    id: 'parks_recreation',
-    title: 'Parks & Recreation',
-    title_ar: 'الحدائق والترفيه',
-    icon: TreePine,
-    subcategories: [
-      { id: 'public_parks', label: 'Public Parks', label_ar: 'الحدائق العامة', count: 45 },
-      { id: 'sports_fields', label: 'Sports Fields', label_ar: 'الملاعب الرياضية', count: 28 },
-      { id: 'beach_access', label: 'Beach Access Points', label_ar: 'نقاط دخول الشواطئ', count: 19 }
+      { id: 'executive_hq', label: 'Executive Governance', label_ar: 'المقرات الحكومية', count: 18 },
+      { id: 'municipality_offices', label: 'Municipality Offices', label_ar: 'مكاتب البلدية', count: 14 }
     ]
   },
   {
     id: 'utilities',
-    title: 'Utilities & Telecom',
-    title_ar: 'المرافق والاتصالات',
+    title: 'Civic Infrastructure',
+    title_ar: 'البنية التحتية والمرافق',
     icon: Zap,
     subcategories: [
-      { id: 'ev_chargers', label: 'EV Charging Stations', label_ar: 'محطات شحن السيارات الكهربائية', count: 82 },
-      { id: 'substations', label: 'Power Substations', label_ar: 'محطات الكهرباء الفرعية', count: 40 },
-      { id: 'telecom_towers', label: 'Telecom Towers', label_ar: 'أبراج الاتصالات', count: 110 }
+      { id: 'desalination', label: 'Desalination & Water', label_ar: 'تحلية المياه وإمداداتها', count: 12 },
+      { id: 'power_plants', label: 'Power & Solar Stations', label_ar: 'محطات الطاقة والشمسية', count: 28 },
+      { id: 'waste_recycling', label: 'Eco & Recycling Hubs', label_ar: 'مجمعات التدوير البيئي', count: 19 }
+    ]
+  },
+  {
+    id: 'transport',
+    title: 'Mobility & Transit',
+    title_ar: 'النقل والمواصفات',
+    icon: Bus,
+    subcategories: [
+      { id: 'bus_stations', label: 'Bus Terminals', label_ar: 'محطات الحافلات', count: 65 },
+      { id: 'aviation_hubs', label: 'Airports & Aviation', label_ar: 'المطارات والملاحة', count: 6 },
+      { id: 'maritime_ports', label: 'Maritime Ports', label_ar: 'الموانئ البحرية', count: 12 }
+    ]
+  },
+  {
+    id: 'parks_recreation',
+    title: 'Parks & Public Spaces',
+    title_ar: 'الحدائق والمساحات العامة',
+    icon: TreePine,
+    subcategories: [
+      { id: 'public_parks', label: 'Public Parks', label_ar: 'الحدائق العامة', count: 45 },
+      { id: 'botanical', label: 'Botanical Gardens', label_ar: 'الحدائق النباتية', count: 14 },
+      { id: 'sanctuaries', label: 'Environmental Sanctuaries', label_ar: 'المحميات البيئية', count: 19 }
     ]
   }
 ];
@@ -90,17 +76,17 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
 
   const filterLocationsBySubcategories = (subIds) => {
     let filtered = [];
-    const hasHealth = subIds.some(id => ['healthcare', 'hospitals', 'clinics', 'pharmacies'].includes(id));
-    const hasEdu = subIds.some(id => ['education', 'charter_schools', 'public_schools', 'private_schools', 'universities', 'nurseries', 'pod_centers'].includes(id));
-    const hasParks = subIds.some(id => ['parks_recreation', 'public_parks', 'sports_fields', 'beach_access'].includes(id));
-    const hasTransit = subIds.some(id => ['transport', 'bus_stations', 'taxi_hubs', 'public_parking'].includes(id));
-    const hasUtilities = subIds.some(id => ['utilities', 'ev_chargers', 'substations', 'telecom_towers'].includes(id));
+    const hasTourism = subIds.some(id => ['tourism', 'museums', 'heritage', 'landmarks'].includes(id));
+    const hasGovt = subIds.some(id => ['government', 'tamm_hubs', 'executive_hq', 'municipality_offices'].includes(id));
+    const hasUtilities = subIds.some(id => ['utilities', 'desalination', 'power_plants', 'waste_recycling'].includes(id));
+    const hasTransit = subIds.some(id => ['transport', 'bus_stations', 'aviation_hubs', 'maritime_ports'].includes(id));
+    const hasParks = subIds.some(id => ['parks_recreation', 'public_parks', 'botanical', 'sanctuaries'].includes(id));
 
-    if (hasHealth) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'HOSPITAL')];
-    if (hasEdu) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'EDUCATION')];
-    if (hasParks) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'PARK' || l.type === 'ATTRACTION')];
+    if (hasTourism) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'TOURISM')];
+    if (hasGovt) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'GOVERNMENT')];
+    if (hasUtilities) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'CIVIC_INFRASTRUCTURE' || l.type === 'MANUFACTURING')];
     if (hasTransit) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'TRANSPORT')];
-    if (hasUtilities) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'MANUFACTURING')];
+    if (hasParks) filtered = [...filtered, ...LOCATIONS_DB.filter(l => l.type === 'PARK')];
 
     if (filtered.length === 0 && subIds.length === 0) {
       filtered = LOCATIONS_DB;

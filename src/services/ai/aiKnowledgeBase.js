@@ -9,109 +9,107 @@ const fmt = (num) => (num ? num.toLocaleString() : '0');
 
 export const AI_KNOWLEDGE_BASE_ENTRIES = [
   // =========================================================
-  // PRIORITY 1 — 5-STEP REFERENCE RESOLUTION JOURNEY
+  // PRIORITY 1 — 5-STEP REFERENCE RESOLUTION JOURNEY (PHASE 2 THEME DIRECTION)
   // =========================================================
   {
-    id: 'P1_STEP1_HOSPITALS_ABU_DHABI',
+    id: 'P1_STEP1_TOURISM_ABU_DHABI',
     patterns_en: [
-      'show hospitals in abu dhabi',
-      'hospitals in abu dhabi',
-      'find hospitals in abu dhabi',
-      'list hospitals abu dhabi',
-      'hospitals abu dhabi',
-      'get hospitals in abu dhabi'
+      'show tourism attractions in abu dhabi',
+      'tourism attractions in abu dhabi',
+      'find tourism in abu dhabi',
+      'list tourism abu dhabi',
+      'tourism abu dhabi',
+      'get tourism attractions in abu dhabi',
+      'show museums in abu dhabi'
     ],
     patterns_ar: [
-      'اعرض المستشفيات في أبوظبي',
-      'المستشفيات في أبوظبي',
-      'مستشفيات أبوظبي',
-      'أظهر مستشفيات أبوظبي',
-      'البحث عن مستشفيات في أبوظبي'
+      'اعرض المعالم السياحية في أبوظبي',
+      'المعالم السياحية في أبوظبي',
+      'السياحة في أبوظبي',
+      'أظهر معالم أبوظبي',
+      'البحث عن متاحف ومعالم في أبوظبي'
     ],
     handler: (currentState, isArabic) => {
-      const results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL');
+      const results = LOCATIONS_DB.filter(l => l.type === 'TOURISM');
       const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL', district: 'Abu Dhabi Sector' }, matchingResults: results } },
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'TOURISM', district: 'Abu Dhabi Sector' }, matchingResults: results } },
         { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: 24.4839, lng: 54.3773, zoom: 12 } }
       ];
       const reply = isArabic
-        ? `تم التركيز على **قطاع إمارة أبوظبي** وتحديد **${results.length} مستشفيات ومراكز طبية تخصصية** على الخريطة:\n\n1. 🏥 **${results[0].name_ar || results[0].name}** (جزيرة الماريه)\n2. 🏥 **${results[1].name_ar || results[1].name}** (المفرق)\n3. 🏥 **${results[2].name_ar || results[2].name}** (شارع إلكترا)`
-        : `Identified **${results.length} healthcare facilities** across **Abu Dhabi sector**:\n\n1. 🏥 **${results[0].name}** (Al Maryah Island)\n2. 🏥 **${results[1].name}** (Al Mafraq)\n3. 🏥 **${results[2].name}** (Electra Street)`;
+        ? `تم التركيز على **قطاع إمارة أبوظبي** وتحديد **${results.length} معالم سياحية وثقافية** على الخريطة:\n\n1. 🏛️ **${results[0].name_ar || results[0].name}** (المنطقة الثقافية بالسعديات)\n2. 🏛️ **${results[1].name_ar || results[1].name}** (الرأس الأخضر)\n3. 🕌 **${results[2].name_ar || results[2].name}** (الروضة)`
+        : `Identified **${results.length} cultural and tourism landmarks** across **Abu Dhabi sector**:\n\n1. 🏛️ **${results[0].name}** (Saadiyat Cultural District)\n2. 🏛️ **${results[1].name}** (Al Ras Al Akhdar)\n3. 🕌 **${results[2].name}** (Al Rawdah)`;
 
-      const datasetsUsed = ['DGE Spatial SDI 2026', 'DoH Master Healthcare Registry v2.1'];
+      const datasetsUsed = ['DGE Spatial SDI 2026', 'DCT Cultural & Tourism Master Registry'];
       const activeContextTags = [
         { id: 'district', label: isArabic ? 'أبوظبي' : 'Abu Dhabi', icon: '📍' },
-        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
+        { id: 'category', label: isArabic ? 'معالم سياحية' : 'Tourism Assets', icon: '🏛️' },
         { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
       ];
       const suggestions = isArabic 
-        ? ["المستشفيات الحكومية فقط", "ضمن نطاق 5 كم من مدينة زايد الرياضية", "أيها الأقرب لي؟"] 
-        : ["Only government hospitals", "Within 5 km of Zayed Sports City", "Which one is closest?"];
+        ? ["المراكز الحكومية فقط", "ضمن نطاق 5 كم من الكورنيش", "أيها الأقرب لي؟"] 
+        : ["Only government centers", "Within 5 km of Corniche", "Which one is closest?"];
 
       const howThisResultWasFound = {
-        question: isArabic ? "ما هي المستشفيات الموجودة في إمارة أبوظبي؟" : "Show hospitals in Abu Dhabi.",
-        datasets: ['Healthcare Facilities Registry', 'Abu Dhabi Administrative Boundaries'],
-        filters: isArabic ? "جميع مستويات الرعاية الصحية" : "All Healthcare Levels (Primary, Secondary, Tertiary)",
+        question: isArabic ? "ما هي المعالم السياحية في أبوظبي؟" : "Show tourism attractions in Abu Dhabi.",
+        datasets: ['Cultural & Tourism Registry', 'Abu Dhabi Administrative Boundaries'],
+        filters: isArabic ? "جميع المعالم الثقافية والتراثية" : "All Cultural & Heritage Landmarks",
         spatialCondition: isArabic ? "حدود قطاع إمارة أبوظبي" : "Abu Dhabi Administrative Boundary",
         resultCount: `${results.length} facilities`
       };
 
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { category: 'HOSPITAL', district: 'Abu Dhabi', activeLocations: results } };
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { category: 'TOURISM', district: 'Abu Dhabi', activeLocations: results } };
     }
   },
 
   {
-    id: 'P1_STEP2_GOVT_HOSPITALS',
+    id: 'P1_STEP2_GOVT_SERVICES',
     patterns_en: [
-      'only government hospitals',
-      'only government',
-      'government hospitals',
-      'government hospitals only',
-      'government only',
-      'show government hospitals'
+      'only government centers',
+      'only government facilities',
+      'government service centers',
+      'show government centers',
+      'tamm service centers'
     ],
     patterns_ar: [
-      'المستشفيات الحكومية فقط',
-      'حكومي فقط',
-      'المستشفيات الحكومية',
-      'مستشفيات حكومية فقط',
-      'فقط المستشفيات الحكومية'
+      'المراكز الحكومية فقط',
+      'مراكز تم فقط',
+      'الخدمات الحكومية',
+      'مراكز الخدمات الحكومية'
     ],
     handler: (currentState, isArabic) => {
       const prevContext = currentState?.activeContext || {};
       const currentDistrict = prevContext.district || 'Abu Dhabi';
-      const results = LOCATIONS_DB.filter(l => l.type === 'HOSPITAL' && l.tags.includes('government'));
+      const results = LOCATIONS_DB.filter(l => l.type === 'GOVERNMENT');
 
       const actions = [
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'HOSPITAL', district: currentDistrict, ownership: 'Government' }, matchingResults: results } },
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: 'GOVERNMENT', district: currentDistrict }, matchingResults: results } },
         { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: results[0].lat, lng: results[0].lng, zoom: 13 } }
       ];
 
       const reply = isArabic
-        ? `تم تصفية نتائج **${currentDistrict}** لعرض **المستشفيات الحكومية فقط** (تم العثور على **${results.length} مستشفيات حكومية**):\n\n1. 🏛️ **${results[0].name_ar || results[0].name}** (المفرق - سعة 741 سرير)\n2. 🏛️ **${results[1]?.name_ar || results[1]?.name || 'مستشفى العين الحكومي'}** (العين - سعة 412 سرير)`
-        : `Refined active query for **${currentDistrict}** to display **Government Hospitals only** (Found **${results.length} government hospitals**):\n\n1. 🏛️ **${results[0].name}** (Al Mafraq - 741 beds)\n2. 🏛️ **${results[1]?.name || 'Al Ain Government Hospital'}** (Al Ain - 412 beds)`;
+        ? `تم تصفية نتائج **${currentDistrict}** لعرض **المراكز الحكومية ومراكز تم فقط** (تم العثور على **${results.length} مراكز حكومية**):\n\n1. 🏢 **${results[0].name_ar || results[0].name}** (الكورنيش الغربي)\n2. 🏢 **${results[1]?.name_ar || results[1]?.name}** (جزيرة الريم)`
+        : `Refined active query for **${currentDistrict}** to display **Government & TAMM Service Centers only** (Found **${results.length} government hubs**):\n\n1. 🏢 **${results[0].name}** (Corniche West)\n2. 🏢 **${results[1]?.name}** (Al Reem Island)`;
 
-      const datasetsUsed = ['DGE Spatial SDI 2026', 'DoH Government Facility Registry'];
+      const datasetsUsed = ['DGE Spatial SDI 2026', 'TAMM Government Service Registry'];
       const activeContextTags = [
         { id: 'district', label: isArabic ? currentDistrict : currentDistrict, icon: '📍' },
-        { id: 'category', label: isArabic ? 'مستشفيات' : 'Hospitals', icon: '🏥' },
-        { id: 'ownership', label: isArabic ? 'حكومي فقط' : 'Government Only', icon: '🏛️' },
+        { id: 'category', label: isArabic ? 'مراكز حكومية' : 'Government Hubs', icon: '🏢' },
         { id: 'count', label: isArabic ? `${results.length} نتائج` : `${results.length} Results`, icon: '📊' }
       ];
 
       const suggestions = isArabic 
-        ? ["ضمن نطاق 5 كم من مدينة زايد الرياضية", "أيها الأقرب لي؟", "عرض تفاصيلها"] 
-        : ["Within 5 km of Zayed Sports City", "Which one is closest?", "Show its details"];
+        ? ["ضمن نطاق 5 كم من الكورنيش", "أيها الأقرب لي؟", "عرض تفاصيلها"] 
+        : ["Within 5 km of Corniche", "Which one is closest?", "Show its details"];
 
       const howThisResultWasFound = {
-        question: isArabic ? "عرض المستشفيات الحكومية فقط في أبوظبي" : "Only government hospitals.",
-        datasets: ['Healthcare Facilities Registry', 'DoH Ownership Category Layer'],
-        filters: isArabic ? "الملكية = حكومي" : "Ownership = Government",
+        question: isArabic ? "عرض المراكز الحكومية ومراكز تم في أبوظبي" : "Only government centers.",
+        datasets: ['Government Facilities Registry', 'TAMM Service Hubs Layer'],
+        filters: isArabic ? "الفئة = منشآت حكومية ومراكز تم" : "Category = Government & TAMM Centers",
         spatialCondition: isArabic ? "قطاع أبوظبي" : "Abu Dhabi Sector Spatial Limit",
         resultCount: `${results.length} facilities`
       };
 
-      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { ...prevContext, category: 'HOSPITAL', district: currentDistrict, ownership: 'Government', activeLocations: results } };
+      return { reply, results, actions, suggestions, datasetsUsed, activeContextTags, howThisResultWasFound, activeContext: { ...prevContext, category: 'GOVERNMENT', district: currentDistrict, activeLocations: results } };
     }
   },
 

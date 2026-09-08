@@ -1,180 +1,91 @@
-// Query Intent Resolver for GeoVision / SmartMap V2
-// Parses natural language input and current SmartMapSession context into a structured query intent object.
+// Query Intent & Compound Predicate Parser for GeoVision / SmartMap
 
-export const INTENT_TYPES = {
-  PROXIMITY_SEARCH: 'PROXIMITY_SEARCH',
-  CROSS_LAYER: 'CROSS_LAYER',
-  AGGREGATION: 'AGGREGATION',
-  REFINEMENT: 'REFINEMENT',
-  NEAREST: 'NEAREST',
-  REFERENCE_RESOLUTION: 'REFERENCE_RESOLUTION',
-  VALIDATION_REQUIRED: 'VALIDATION_REQUIRED',
-  AMBIGUOUS_LOCATION: 'AMBIGUOUS_LOCATION',
-  LOCATION_PERMISSION: 'LOCATION_PERMISSION',
-  TEMPORAL_FILTER: 'TEMPORAL_FILTER',
-  UNSUPPORTED_DATASET: 'UNSUPPORTED_DATASET',
-  RECOMMENDATION: 'RECOMMENDATION',
-  CLARIFICATION: 'CLARIFICATION',
-  NO_RESULTS: 'NO_RESULTS',
-  DISCOVERY: 'DISCOVERY'
-};
+export function parseQueryIntent(queryText, currentState = null, isArabic = false) {
+  if (!queryText) return null;
+  const q = queryText.toLowerCase().trim();
 
-export const VISUALIZATION_TYPES = {
-  DISCOVERY: 'DISCOVERY',       // Map + result cards
-  PROXIMITY: 'PROXIMITY',       // Map + radius + result list + distances
-  CROSS_LAYER: 'CROSS_LAYER',   // Map + multiple layers + spatial buffer + cross-layer results
-  AGGREGATION: 'AGGREGATION',   // Choropleth/district shading + ranked table + chart + summary card
-  COMPARISON: 'COMPARISON',     // Comparison cards/table + map
-  RECOMMENDATION: 'RECOMMENDATION', // Ranked results + map
-  CLARIFICATION: 'CLARIFICATION', // Clarification UI + suggested choices
-  NO_RESULTS: 'NO_RESULTS',     // Explanation + recovery actions
-  DETAIL_PANEL: 'DETAIL_PANEL'  // Feature detail slide panel
-};
-
-export function resolveQueryIntent(queryText, currentState = null, isArabic = false) {
-  const q = (queryText || '').toLowerCase().trim();
-  const activeContext = currentState?.activeContext || {};
-
-  // 1. FEATURE DETAIL RESOLUTION ("Show its details", "Tell me more about it")
-  if (
-    ['its details', 'show details', 'details of the closest', 'tell me more', 'تفاصيلها', 'عرض التفاصيل', 'أظهر التفاصيل'].some(w => q.includes(w))
-  ) {
-    return {
-      intentType: INTENT_TYPES.REFERENCE_RESOLUTION,
-      referenceTarget: currentState?.selectedLocation || activeContext.activeLocations?.[0] || 'nearest_facility',
-      resultVisualization: VISUALIZATION_TYPES.DETAIL_PANEL,
-      explanation_en: 'Resolved reference "its" to currently selected / nearest facility details.',
-      explanation_ar: 'تم توجيه الضمير "تفاصيلها" إلى المنشأة المحددة/الأقرب وتفعيل لوحة التفاصيل.'
-    };
+  // 1. APP CONTROL INTENTS
+  if (['make it dark', 'change theme to dark', 'dark mode', 'dark theme', 'الوضع الداكن', 'الوضع المظلم'].some(k => q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CHANGE_THEME', params: { theme: 'dark' } };
+  }
+  if (['make it light', 'change theme to light', 'light mode', 'light theme', 'الوضع الفاتح'].some(k => q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CHANGE_THEME', params: { theme: 'light' } };
+  }
+  if (['change basemap', 'switch basemap', 'satellite view', 'satellite map', 'use satellite', 'use abu dhabi basemap', 'show streets', 'تغيير الخريطة', 'خريطة الأقمار الصناعية'].some(k => q.includes(k))) {
+    let basemapId = 'satellite';
+    if (q.includes('dark') || q.includes('مظلمة')) basemapId = 'dark';
+    else if (q.includes('street') || q.includes('شوارع')) basemapId = 'streets';
+    else if (q.includes('dge') || q.includes('abu dhabi') || q.includes('أبوظبي')) basemapId = 'abu-dhabi-dge';
+    return { type: 'APP_CONTROL', action: 'CHANGE_BASEMAP', params: { basemapId } };
+  }
+  if (['switch to arabic', 'show arabic', 'arabic', 'عربي', 'العربية'].some(k => q === k || q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CHANGE_LANGUAGE', params: { lang: 'ar' } };
+  }
+  if (['switch to english', 'show english', 'english', 'إنجليزية'].some(k => q === k || q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CHANGE_LANGUAGE', params: { lang: 'en' } };
+  }
+  if (['about us', 'open about us', 'go to about us', 'من نحن'].some(k => q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'NAVIGATE', params: { view: 'about' } };
+  }
+  if (['print this map', 'print map', 'print current view', 'print', 'طباعة الخريطة'].some(k => q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'PRINT_MAP', params: {} };
   }
 
-  // 2. LOCATION PERMISSION REQUIRED ("vehicle inspection centers near me", "centers near me")
-  if (
-    ['vehicle inspection', 'inspection centers', 'near me', 'مراكز فحص الفني', 'قريب مني'].some(w => q.includes(w)) &&
-    !currentState?.userLocationEnabled
-  ) {
-    return {
-      intentType: INTENT_TYPES.LOCATION_PERMISSION,
-      missingField: 'user_gps_permission',
-      resultVisualization: VISUALIZATION_TYPES.CLARIFICATION,
-      explanation_en: 'Location permission required to determine user proximity.',
-      explanation_ar: 'يتطلب الاستعلام تفعيل تحديد الموقع الجغرافي لربط المسافات.'
-    };
+  // 2. ANALYTICS INTENTS (CHART / TREND / COMPARISON)
+  if (['compare these facilities', 'compare them', 'compare facilities', 'compare emissions', 'مقارنة', 'قارن'].some(k => q.includes(k))) {
+    return { type: 'ANALYTICS', chartType: 'bar', metric: 'emissions' };
+  }
+  if (['show the trend', 'trend', 'show trend', 'الاتجاه', 'عرض الاتجاه'].some(k => q.includes(k))) {
+    return { type: 'ANALYTICS', chartType: 'line', metric: 'water' };
   }
 
-  // 3. AMBIGUOUS LOCATION RESOLUTION ("Show parks near Yas")
-  if (
-    ['near yas', 'in yas', 'حول ياس', 'قريب من ياس'].some(w => q.includes(w)) &&
-    !q.includes('yas island') && !q.includes('bani yas') && !q.includes('جزيرة ياس') && !q.includes('بني ياس')
-  ) {
-    return {
-      intentType: INTENT_TYPES.AMBIGUOUS_LOCATION,
-      searchTerm: 'Yas',
-      ambiguousMatches: ['Yas Island', 'Bani Yas', 'Yasat West Island', 'Al Yasat Island'],
-      resultVisualization: VISUALIZATION_TYPES.CLARIFICATION,
-      explanation_en: 'Ambiguous location "Yas" detected. Requesting user choice.',
-      explanation_ar: 'تم رصد موقع غير محدد "ياس". يرجى توضيح المنطقة المقصودة.'
-    };
+  // 3. PROXIMITY RANK INTENTS ("Which one is closest?")
+  if (['which one is closest', 'which is closest', 'which is nearest', 'closest one', 'أيها الأقرب', 'أيها الأقرب لي'].some(k => q.includes(k))) {
+    return { type: 'PROXIMITY_RANK', rankMode: 'NEAREST' };
   }
 
-  // 4. TEMPORAL / OPEN-NOW FILTER ("How many are open now?", "open now", "مفتوح الآن")
-  if (
-    ['open now', 'how many are open', 'working hours', 'مفتوح الآن', 'كم منها مفتوح'].some(w => q.includes(w))
-  ) {
-    return {
-      intentType: INTENT_TYPES.TEMPORAL_FILTER,
-      filterKey: 'operatingHours',
-      filterValue: 'Open 24/7',
-      resultVisualization: VISUALIZATION_TYPES.DISCOVERY,
-      explanation_en: 'Applied "Open Now" operating hours filter to active result set.',
-      explanation_ar: 'تم تطبيق فلتر ساعات العمل "مفتوح الآن" على قائمة النتائج الحالية.'
-    };
+  // 4. DIRECTIONS / ROUTING INTENTS
+  if (['show me directions', 'give me directions', 'directions', 'route to this facility', 'how do i get there', 'اتجاهات', 'اعرض الاتجاهات'].some(k => q.includes(k))) {
+    return { type: 'DIRECTIONS', target: currentState?.selectedLocation || null };
   }
 
-  // 5. UNSUPPORTED DATASET TOPIC ("Show me the richest areas of Abu Dhabi")
-  if (
-    ['richest areas', 'wealthiest', 'income level', 'الأغنى', 'مستوى الدخل'].some(w => q.includes(w))
-  ) {
-    return {
-      intentType: INTENT_TYPES.UNSUPPORTED_DATASET,
-      requestedTopic: 'Socioeconomic Household Income Index',
-      resultVisualization: VISUALIZATION_TYPES.NO_RESULTS,
-      explanation_en: 'Requested topic is outside loaded GeoVision SDI datasets.',
-      explanation_ar: 'الموضوع المطلوب غير متوفر ضمن طبقات البيانات المكانية الحالية.'
-    };
-  }
+  // 5. COMPOUND SPATIAL SEARCH INTENT & PREDICATE EXTRACTION
+  let category = null;
+  if (q.includes('tourism') || q.includes('museum') || q.includes('culture') || q.includes('attraction') || q.includes('palace') || q.includes('beach') || q.includes('متحف') || q.includes('سياحي') || q.includes('ثقافي')) category = 'TOURISM';
+  else if (q.includes('government') || q.includes('tamm') || q.includes('civic') || q.includes('municipality') || q.includes('ministry') || q.includes('dge') || q.includes('حكومية') || q.includes('حكومي') || q.includes('وزارة') || q.includes('تم')) category = 'GOVERNMENT';
+  else if (q.includes('infrastructure') || q.includes('utility') || q.includes('desalination') || q.includes('water') || q.includes('power') || q.includes('solar') || q.includes('مرافق') || q.includes('طاقة') || q.includes('مياه')) category = 'CIVIC_INFRASTRUCTURE';
+  else if (q.includes('transport') || q.includes('transit') || q.includes('bus') || q.includes('airport') || q.includes('port') || q.includes('حافلات') || q.includes('مطار') || q.includes('ميناء')) category = 'TRANSPORT';
+  else if (q.includes('park') || q.includes('green') || q.includes('recreation') || q.includes('حديقة') || q.includes('منتزه')) category = 'PARK';
+  else if (q.includes('manufacturing') || q.includes('industrial') || q.includes('kizad') || q.includes('mussafah') || q.includes('مصنع') || q.includes('صناعي')) category = 'MANUFACTURING';
 
-  // 6. NEAREST NEIGHBOR INTENT ("Which one is closest?", "Which is nearest to me?")
-  if (
-    ['nearest', 'closest', 'near me', 'الأقرب', 'أقرب واحد', 'أيها أقرب', 'أيها الأقرب'].some(w => q.includes(w)) &&
-    !q.includes('within')
-  ) {
-    return {
-      intentType: INTENT_TYPES.NEAREST,
-      dataset: activeContext.category || 'HOSPITAL',
-      referenceLocation: activeContext.district || 'Zayed Sports City',
-      resultVisualization: VISUALIZATION_TYPES.RECOMMENDATION,
-      explanation_en: 'Identified nearest facility relative to reference location.',
-      explanation_ar: 'تم تحديد المنشأة الأقرب بالنسبة للموقع المرجعي.'
-    };
-  }
+  // Region / District Extraction
+  let region = null;
+  if (q.includes('telangana') || q.includes('تيلانجانا')) region = 'Telangana';
+  else if (q.includes('yas island') || q.includes('جزيرة ياس')) region = 'Yas Island';
+  else if (q.includes('khalifa city') || q.includes('مدينة خليفة')) region = 'Khalifa City';
+  else if (q.includes('al ain') || q.includes('العين')) region = 'Al Ain';
+  else if (q.includes('corniche') || q.includes('الكورنيش')) region = 'Corniche';
+  else if (q.includes('abu dhabi') || q.includes('أبوظبي') || q.includes('near me') || q.includes('قريب')) region = 'Abu Dhabi';
 
-  // 7. CONTEXTUAL FILTER REFINEMENT INTENT ("Only government hospitals", "Within 5 km of Zayed Sports City")
-  if (
-    ['only government', 'government hospitals', 'zayed sports city', 'حكومي فقط', 'المستشفيات الحكومية'].some(w => q.includes(w))
-  ) {
-    return {
-      intentType: INTENT_TYPES.REFINEMENT,
-      dataset: activeContext.category || 'HOSPITAL',
-      location: q.includes('zayed sports city') || q.includes('زايد الرياضية') ? 'Zayed Sports City' : (activeContext.district || 'Abu Dhabi'),
-      resultVisualization: VISUALIZATION_TYPES.DISCOVERY,
-      explanation_en: 'Applied ownership and spatial refinement to active query.',
-      explanation_ar: 'تم تطبيق تصفية الملكية والنطاق المكاني على الاستعلام الحالي.'
-    };
-  }
+  // Risk Level Extraction
+  let riskLevel = null;
+  if (q.includes('critical') || q.includes('حرج')) riskLevel = 'Critical';
+  else if (q.includes('high risk') || q.includes('عالي الخطورة') || q.includes('عالية الخطورة')) riskLevel = 'High';
+  else if (q.includes('moderate') || q.includes('متوسط')) riskLevel = 'Moderate';
 
-  // 8. CROSS-LAYER PROXIMITY INTENT ("Show schools within 2 km of bus stations in Khalifa City")
-  if (
-    (['schools', 'school', 'المدارس', 'مدرسة'].some(w => q.includes(w)) &&
-     ['bus', 'transit', 'hospitals', 'hospital', 'these hospitals', 'الحافلات', 'المستشفيات', 'هذه المستشفيات'].some(w => q.includes(w)) &&
-     ['within', '2 km', '2km', 'نطاق', '2 كم'].some(w => q.includes(w)))
-  ) {
-    const isTargetingActiveHospitals = q.includes('hospitals') || q.includes('المستشفيات');
-    const primaryLayer = 'Schools';
-    const secondaryLayer = isTargetingActiveHospitals ? 'Hospitals' : 'Bus Stations';
+  // Radius Extraction
+  let radiusKm = null;
+  if (q.includes('500m') || q.includes('500 meters') || q.includes('500 متر')) radiusKm = 0.5;
+  else if (q.includes('2 km') || q.includes('2كم') || q.includes('2 كم')) radiusKm = 2;
+  else if (q.includes('5 km') || q.includes('5كم') || q.includes('5 كم')) radiusKm = 5;
+  else if (q.includes('10 km') || q.includes('10كم') || q.includes('10 كم')) radiusKm = 10;
 
-    return {
-      intentType: INTENT_TYPES.CROSS_LAYER,
-      primaryDataset: primaryLayer,
-      secondaryDataset: secondaryLayer,
-      distanceKm: 2.0,
-      spatialRelationship: 'within_2km_buffer',
-      resultVisualization: VISUALIZATION_TYPES.CROSS_LAYER,
-      explanation_en: `Cross-layer spatial analysis: ${primaryLayer} within 2 km buffer of ${secondaryLayer}.`,
-      explanation_ar: `تحليل مكاني متقاطع: ${primaryLayer} ضمن نطاق 2 كم من ${secondaryLayer}.`
-    };
-  }
-
-  // 9. SPATIAL AGGREGATION INTENT ("Which area has the highest number of healthcare facilities?")
-  if (
-    ['highest number', 'most healthcare', 'highest concentration', 'area has the highest', 'أعلى عدد', 'أعلى تركيز', 'أي منطقة تحوي'].some(w => q.includes(w))
-  ) {
-    return {
-      intentType: INTENT_TYPES.AGGREGATION,
-      dataset: 'Healthcare Facilities',
-      groupingMetric: 'Administrative District',
-      resultVisualization: VISUALIZATION_TYPES.AGGREGATION,
-      explanation_en: 'Spatial aggregation analysis: Facility counts grouped by Abu Dhabi administrative districts.',
-      explanation_ar: 'تحليل تجميعي مكاني: حساب أعداد المنشآت موزعة حسب القطاعات الإدارية.'
-    };
-  }
-
-  // DEFAULT INTENT: GENERAL DISCOVERY
   return {
-    intentType: INTENT_TYPES.DISCOVERY,
-    dataset: activeContext.category || 'General SDI Layers',
-    resultVisualization: VISUALIZATION_TYPES.DISCOVERY,
-    explanation_en: 'General spatial discovery & layer inspection.',
-    explanation_ar: 'استكشاف مكاني عام ومعاينة الطبقات الجغرافية.'
+    type: 'SPATIAL_SEARCH',
+    category,
+    region,
+    riskLevel,
+    radiusKm,
+    rawQuery: queryText
   };
 }
