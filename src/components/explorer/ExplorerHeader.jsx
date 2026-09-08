@@ -1,14 +1,3 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Sun, Moon, User, Users, HelpCircle } from 'lucide-react';
-import dgeDarkLogo from '../../assets/dge-dark.webp';
-import dgeLightLogo from '../../assets/dge-light.webp';
-import sdiDarkLogo from '../../assets/sdi-dark.webp';
-import sdiLightLogo from '../../assets/sdi-light.webp';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import LanguageSelector from '../common/LanguageSelector';
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sun, Moon, User, Users, HelpCircle, LogIn, LogOut } from 'lucide-react';
@@ -32,11 +21,11 @@ export default function ExplorerHeader({ onNavigate, currentView, userAuth, onSi
       isDarkMode ? 'bg-[#060a12] border-slate-800/90 text-white' : 'bg-white border-slate-200 text-slate-900'
     }`}>
       {/* Left: Logo */}
-      <div className="flex items-center gap-3 md:gap-5 h-full shrink-0">
+      <div className="flex items-center gap-3 md:gap-5 h-full shrink-0 py-2">
         <img 
           src={isDarkMode ? dgeDarkLogo : dgeLightLogo} 
           alt="Department of Government Enablement" 
-          className="h-8 md:h-9 lg:h-10 w-auto object-contain drop-shadow-sm cursor-pointer transition-all" 
+          className="h-7 md:h-8 lg:h-9 max-h-9 w-auto object-contain drop-shadow-sm cursor-pointer transition-all my-auto" 
           onClick={() => onNavigate?.('landing')} 
         />
       </div>
@@ -78,55 +67,50 @@ export default function ExplorerHeader({ onNavigate, currentView, userAuth, onSi
           {/* SDI-style Text-Only Language Selector */}
           <LanguageSelector isDarkMode={isDarkMode} className="mx-1" />
 
-          {/* 1. Dark / Light Theme Toggle */}
+          {/* 1. Dark / Light Theme Toggle (Icon Only, No Circle) */}
           <button 
             onClick={toggleTheme}
             title={isDarkMode ? t("Switch to Light Mode", "التبديل إلى الوضع الفاتح") : t("Switch to Dark Mode", "التبديل إلى الوضع الداكن")}
-            className={`hidden md:flex p-[2px] rounded-full transition-all duration-200 cursor-pointer group select-none ${
+            className={`hidden md:flex p-2 rounded-xl transition-colors cursor-pointer select-none ${
               isDarkMode 
-                ? 'border border-blue-400/35 hover:border-[#00e5ff]/90 hover:shadow-[0_0_12px_rgba(0,229,255,0.3)]' 
-                : 'border border-slate-300/80 hover:border-[#215A9E]/80 hover:shadow-xs'
+                ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' 
+                : 'text-slate-600 hover:text-[#215A9E] hover:bg-slate-100/80'
             }`}
           >
-            <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors ${
-              isDarkMode ? 'bg-[#0a1730] group-hover:bg-[#112448] text-white' : 'bg-slate-100 group-hover:bg-[#eef3ff] text-[#215A9E]'
-            }`}>
-              {isDarkMode ? <Sun className="w-4.5 h-4.5 stroke-[1.5]" /> : <Moon className="w-4.5 h-4.5 stroke-[1.5]" />}
-            </div>
+            {isDarkMode ? <Sun className="w-5 h-5 stroke-[1.75]" /> : <Moon className="w-5 h-5 stroke-[1.75]" />}
           </button>
 
-          {/* 2. Help/About Button */}
+          {/* 2. Help/About Button (Icon Only, No Circle) */}
           <button 
             onClick={() => onNavigate?.('about')}
             title={t("Help & Documentation", "المساعدة والتوثيق")}
-            className={`hidden md:flex p-[2px] rounded-full transition-all duration-200 cursor-pointer group select-none ${
+            className={`hidden md:flex p-2 rounded-xl transition-colors cursor-pointer select-none ${
               isDarkMode 
-                ? 'border border-blue-400/35 hover:border-[#00e5ff]/90 hover:shadow-[0_0_12px_rgba(0,229,255,0.3)]' 
-                : 'border border-slate-300/80 hover:border-[#215A9E]/80 hover:shadow-xs'
+                ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' 
+                : 'text-slate-600 hover:text-[#215A9E] hover:bg-slate-100/80'
             }`}
           >
-            <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors ${
-              isDarkMode ? 'bg-[#0a1730] group-hover:bg-[#112448] text-white' : 'bg-slate-100 group-hover:bg-[#eef3ff] text-[#215A9E]'
-            }`}>
-              <HelpCircle className="w-4.5 h-4.5 stroke-[1.5]" />
-            </div>
+            <HelpCircle className="w-5 h-5 stroke-[1.75]" />
           </button>
 
-          {/* 3. User Profile / Guest Sign-In Button (Placed AFTER Help) */}
+          {/* 3. User Profile / Guest Sign-In Button (Keeps Circle with Initials "GU" or User Initials) */}
           <div className="relative">
             <button 
               onClick={() => setShowUserMenu(!showUserMenu)}
-              title={isLoggedIn ? `${userAuth.userName} (${t('Click for Account Details', 'تفاصيل الحساب')})` : t("Sign In / User Options", "خيارات المستخدم")}
+              title={isLoggedIn ? `${userAuth.userName} (${t('Click for Account Details', 'تفاصيل الحساب')})` : t("Guest User (Click to Sign In)", "زائر غير مسجل")}
               className={`hidden md:flex p-[2px] rounded-full transition-all duration-200 cursor-pointer group select-none ${
                 isDarkMode 
                   ? 'border border-blue-400/35 hover:border-[#00e5ff]/90 hover:shadow-[0_0_12px_rgba(0,229,255,0.3)]' 
                   : 'border border-slate-300/80 hover:border-[#215A9E]/80 hover:shadow-xs'
               }`}
             >
-              <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors ${
-                isDarkMode ? 'bg-[#0a1730] group-hover:bg-[#112448] text-white' : 'bg-slate-100 group-hover:bg-[#eef3ff] text-[#215A9E]'
+              <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors font-extrabold text-xs md:text-sm tracking-wider ${
+                isDarkMode ? 'bg-[#0a1730] group-hover:bg-[#112448] text-[#00e5ff]' : 'bg-slate-100 group-hover:bg-[#eef3ff] text-[#215A9E]'
               }`}>
-                {isLoggedIn ? <User className="w-4.5 h-4.5 stroke-[1.5]" /> : <Users className="w-4.5 h-4.5 stroke-[1.5]" />}
+                {isLoggedIn 
+                  ? (userAuth?.userName ? userAuth.userName.trim().slice(0, 2).toUpperCase() : 'UA')
+                  : 'GU'
+                }
               </div>
             </button>
 
@@ -162,8 +146,8 @@ export default function ExplorerHeader({ onNavigate, currentView, userAuth, onSi
                 ) : (
                   <>
                     <div className="flex items-center gap-2.5 border-b pb-2.5 border-slate-200 dark:border-slate-800">
-                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-[#215A9E] dark:text-[#00e5ff] flex items-center justify-center shrink-0">
-                        <Users className="w-4 h-4" />
+                      <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-[#215A9E] dark:text-[#00e5ff] flex items-center justify-center font-bold text-xs shrink-0">
+                        GU
                       </div>
                       <div>
                         <h4 className="font-bold text-xs">{t("Guest User", "زائر غير مسجل")}</h4>
@@ -190,11 +174,13 @@ export default function ExplorerHeader({ onNavigate, currentView, userAuth, onSi
           </div>
         </div>
 
-        <img 
-          src={isDarkMode ? sdiDarkLogo : sdiLightLogo} 
-          alt="Abu Dhabi Spatial Data Infrastructure" 
-          className="h-11 md:h-12 lg:h-14 xl:h-16 max-h-16 w-auto object-contain ms-3 hidden md:block transition-all shrink-0" 
-        />
+        <div className="hidden xl:flex items-center ms-3 shrink-0 py-2">
+          <img 
+            src={isDarkMode ? sdiDarkLogo : sdiLightLogo} 
+            alt="Abu Dhabi Spatial Data Infrastructure" 
+            className="h-8 md:h-9 lg:h-10 max-h-10 w-auto object-contain transition-all" 
+          />
+        </div>
       </div>
     </header>
   );

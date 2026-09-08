@@ -24,7 +24,8 @@ export function ProjectProvider({ children }) {
 
         return {
           ...prev,
-          activeResults: targetProject.datasets,
+          activeResults: [],
+          showSearchResults: false,
           selectedLocation: null,
           selectedDetail: null,
           mapFocus: {

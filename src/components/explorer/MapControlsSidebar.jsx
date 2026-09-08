@@ -64,8 +64,8 @@ function DrawOption({ icon: Icon, label, isActive, onClick, isDarkMode }) {
 }
 
 export default function MapControlsSidebar({ explorerState, setExplorerState }) {
-  const [showBasemapMenu, setShowBasemapMenu] = useState(false);
-  const [showCategoriesPanel, setShowCategoriesPanel] = useState(false);
+  const showBasemapMenu = Boolean(explorerState?.showBasemapMenu);
+  const showCategoriesPanel = Boolean(explorerState?.showCategoriesPanel);
   const [isExpanded, setIsExpanded] = useState(false);
   const { t } = useLanguage();
   const { isDarkMode } = useTheme();
@@ -117,11 +117,17 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
         {/* Toggle Search Results List Panel Button */}
         {explorerState?.activeResults?.length > 0 && (
           <button
-            onClick={() => setExplorerState(prev => ({ 
-              ...prev, 
-              showSearchResults: !prev.showSearchResults, 
-              selectedDetail: null 
-            }))}
+            onClick={() => setExplorerState(prev => {
+              const nextVal = prev.showSearchResults === false;
+              return {
+                ...prev,
+                showSearchResults: nextVal,
+                selectedDetail: nextVal ? null : prev.selectedDetail,
+                activeMenu: nextVal ? null : prev.activeMenu,
+                showCategoriesPanel: false,
+                showBasemapMenu: false
+              };
+            })}
             title={explorerState?.showSearchResults === false ? t('Show Search Results List', 'إظهار قائمة النتائج') : t('Hide Search Results List', 'إخفاء قائمة النتائج')}
             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
               explorerState?.showSearchResults !== false && !explorerState?.selectedDetail
@@ -154,10 +160,15 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
         {/* Hamburger Menu Toggle Button */}
         <button
           onClick={() => {
-            setIsExpanded(!isExpanded);
-            if (isExpanded) {
-              setShowBasemapMenu(false);
-              setShowCategoriesPanel(false);
+            const nextExpanded = !isExpanded;
+            setIsExpanded(nextExpanded);
+            if (!nextExpanded) {
+              setExplorerState(prev => ({
+                ...prev,
+                showBasemapMenu: false,
+                showCategoriesPanel: false,
+                activeMenu: null
+              }));
             }
           }}
           title={isExpanded ? t('Collapse Tools', 'إغلاق الأدوات') : t('Expand Tools', 'فتح الأدوات')}
@@ -190,8 +201,17 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
               isActive={showCategoriesPanel}
               isDarkMode={isDarkMode}
               onClick={() => {
-                setShowBasemapMenu(false);
-                setShowCategoriesPanel(!showCategoriesPanel);
+                setExplorerState(prev => {
+                  const nextVal = !prev.showCategoriesPanel;
+                  return {
+                    ...prev,
+                    showCategoriesPanel: nextVal,
+                    showBasemapMenu: false,
+                    showSearchResults: false,
+                    selectedDetail: null,
+                    activeMenu: null
+                  };
+                });
               }} 
             />
 
@@ -203,12 +223,17 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                 isActive={explorerState?.activeMenu === 'draw'}
                 isDarkMode={isDarkMode}
                 onClick={() => {
-                  setShowBasemapMenu(false);
-                  setShowCategoriesPanel(false);
-                  setExplorerState(prev => ({
-                    ...prev,
-                    activeMenu: prev.activeMenu === 'draw' ? null : 'draw'
-                  }));
+                  setExplorerState(prev => {
+                    const nextVal = prev.activeMenu !== 'draw';
+                    return {
+                      ...prev,
+                      activeMenu: nextVal ? 'draw' : null,
+                      showBasemapMenu: false,
+                      showCategoriesPanel: false,
+                      showSearchResults: false,
+                      selectedDetail: null
+                    };
+                  });
                 }} 
               />
 
@@ -257,8 +282,17 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                 isActive={showBasemapMenu}
                 isDarkMode={isDarkMode}
                 onClick={() => {
-                  setShowCategoriesPanel(false);
-                  setShowBasemapMenu(!showBasemapMenu);
+                  setExplorerState(prev => {
+                    const nextVal = !prev.showBasemapMenu;
+                    return {
+                      ...prev,
+                      showBasemapMenu: nextVal,
+                      showCategoriesPanel: false,
+                      showSearchResults: false,
+                      selectedDetail: null,
+                      activeMenu: null
+                    };
+                  });
                 }} 
               />
               
@@ -280,8 +314,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       isOfficial={true}
                       isDarkMode={isDarkMode}
                       onClick={() => { 
-                        setExplorerState(prev => ({ ...prev, activeBasemap: 'abu-dhabi-dge' })); 
-                        setShowBasemapMenu(false); 
+                        setExplorerState(prev => ({ ...prev, activeBasemap: 'abu-dhabi-dge', showBasemapMenu: false })); 
                       }}
                     />
                     <BasemapOption 
@@ -290,8 +323,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       isActive={explorerState?.activeBasemap === 'streets'}
                       isDarkMode={isDarkMode}
                       onClick={() => { 
-                        setExplorerState(prev => ({ ...prev, activeBasemap: 'streets' })); 
-                        setShowBasemapMenu(false); 
+                        setExplorerState(prev => ({ ...prev, activeBasemap: 'streets', showBasemapMenu: false })); 
                       }}
                     />
                     <BasemapOption 
@@ -300,8 +332,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       isActive={explorerState?.activeBasemap === 'satellite'}
                       isDarkMode={isDarkMode}
                       onClick={() => { 
-                        setExplorerState(prev => ({ ...prev, activeBasemap: 'satellite' })); 
-                        setShowBasemapMenu(false); 
+                        setExplorerState(prev => ({ ...prev, activeBasemap: 'satellite', showBasemapMenu: false })); 
                       }}
                     />
                     <BasemapOption 
@@ -310,8 +341,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       isActive={explorerState?.activeBasemap === 'dark'}
                       isDarkMode={isDarkMode}
                       onClick={() => { 
-                        setExplorerState(prev => ({ ...prev, activeBasemap: 'dark' })); 
-                        setShowBasemapMenu(false); 
+                        setExplorerState(prev => ({ ...prev, activeBasemap: 'dark', showBasemapMenu: false })); 
                       }}
                     />
                     <BasemapOption 
@@ -320,8 +350,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                       isActive={explorerState?.activeBasemap === 'topo'}
                       isDarkMode={isDarkMode}
                       onClick={() => { 
-                        setExplorerState(prev => ({ ...prev, activeBasemap: 'topo' })); 
-                        setShowBasemapMenu(false); 
+                        setExplorerState(prev => ({ ...prev, activeBasemap: 'topo', showBasemapMenu: false })); 
                       }}
                     />
                   </motion.div>
@@ -336,12 +365,17 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
               isActive={explorerState?.activeMenu === 'legend'}
               isDarkMode={isDarkMode}
               onClick={() => {
-                setShowBasemapMenu(false);
-                setShowCategoriesPanel(false);
-                setExplorerState(prev => ({
-                  ...prev,
-                  activeMenu: prev.activeMenu === 'legend' ? null : 'legend'
-                }));
+                setExplorerState(prev => {
+                  const nextVal = prev.activeMenu !== 'legend';
+                  return {
+                    ...prev,
+                    activeMenu: nextVal ? 'legend' : null,
+                    showBasemapMenu: false,
+                    showCategoriesPanel: false,
+                    showSearchResults: false,
+                    selectedDetail: null
+                  };
+                });
               }}
             />
 
@@ -376,7 +410,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
         {showCategoriesPanel && (
           <GisCategoriesPanel
             isOpen={showCategoriesPanel}
-            onClose={() => setShowCategoriesPanel(false)}
+            onClose={() => setExplorerState(prev => ({ ...prev, showCategoriesPanel: false }))}
             explorerState={explorerState}
             setExplorerState={setExplorerState}
           />

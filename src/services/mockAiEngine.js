@@ -362,39 +362,18 @@ export const LOCATIONS_DB = [
 
 export const mockAiEngine = {
   async processQuery(queryText, currentState = null, isArabic = false) {
+    const rawQ = queryText || '';
     const activeProject = currentState?.activeProject;
     const activeDataset = activeProject?.datasets || LOCATIONS_DB;
 
-    // 1. Check authoritative AI Knowledge Base dictionary first
-    const kbMatch = matchKnowledgeBaseQuery(queryText, currentState, isArabic);
-    if (kbMatch) {
-      return kbMatch;
-    }
-
-    // 2. Delegate to modular GeoAI Orchestrator for open-ended queries
-    const orchestratorResult = await aiOrchestrator.processUserQuery(queryText, currentState, isArabic, activeDataset);
-    if (orchestratorResult) return orchestratorResult;
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    const rawQ = queryText || '';
-    let actions = [];
-    let actionCards = [];
-    let results = [];
-    let reply = "";
-    let suggestions = [];
-    let chartData = null;
-
-    // Reference location: user location or default project center
-    const userLat = currentState?.userLocation?.lat || activeProject?.defaultCenter?.lat || 24.4839;
-    const userLng = currentState?.userLocation?.lng || activeProject?.defaultCenter?.lng || 54.3773;
-    const userOrigin = { lat: userLat, lng: userLng };
-
-    // Parse query intent & compound predicates
+    // Parse query intent & compound predicates FIRST before fallback search engines
     const parsedIntent = parseQueryIntent(rawQ, currentState, isArabic);
 
     // 1. APP CONTROL COMMANDS
     if (parsedIntent && parsedIntent.type === 'APP_CONTROL') {
+      let actions = [];
+      let reply = "";
+
       if (parsedIntent.action === 'CHANGE_THEME') {
         const theme = parsedIntent.params.theme;
         actions.push({ type: 'CHANGE_THEME', params: { theme } });
@@ -429,10 +408,34 @@ export const mockAiEngine = {
 
       if (parsedIntent.action === 'PRINT_MAP') {
         actions.push({ type: ACTION_TYPES.REPORT_GENERATE, params: { type: 'map-print' } });
-        reply = isArabic ? "جاري فتح نموذج الطباعة المخصص الخريطة والتحليلات... 🖨️" : "Opening map-centric print layout... 🖨️";
+        reply = isArabic ? "جاري فتح نموذج الطباعة المخصص الخريطة والتحليلات... 🖨️" : "Opening print layout... 🖨️";
         return { reply, actions };
       }
     }
+
+    // 2. Check authoritative AI Knowledge Base dictionary
+    const kbMatch = matchKnowledgeBaseQuery(queryText, currentState, isArabic);
+    if (kbMatch) {
+      return kbMatch;
+    }
+
+    // 3. Delegate to modular GeoAI Orchestrator for open-ended spatial queries
+    const orchestratorResult = await aiOrchestrator.processUserQuery(queryText, currentState, isArabic, activeDataset);
+    if (orchestratorResult) return orchestratorResult;
+
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    let actions = [];
+    let actionCards = [];
+    let results = [];
+    let reply = "";
+    let suggestions = [];
+    let chartData = null;
+
+    // Reference location: user location or default project center
+    const userLat = currentState?.userLocation?.lat || activeProject?.defaultCenter?.lat || 24.4839;
+    const userLng = currentState?.userLocation?.lng || activeProject?.defaultCenter?.lng || 54.3773;
+    const userOrigin = { lat: userLat, lng: userLng };
 
     // 2. DIRECTIONS / ROUTING INTERFACE
     if (parsedIntent && parsedIntent.type === 'DIRECTIONS') {

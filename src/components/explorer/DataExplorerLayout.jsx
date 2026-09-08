@@ -138,7 +138,12 @@ export default function DataExplorerLayout({
 
         {/* Floating Search Results Panel (Wireframe Page 03 & 04) */}
         <AnimatePresence>
-          {explorerState?.showSearchResults !== false && explorerState?.activeResults?.length > 0 && !explorerState?.selectedDetail && (
+          {Boolean(explorerState?.showSearchResults) && 
+           explorerState?.activeResults?.length > 0 && 
+           !explorerState?.selectedDetail && 
+           explorerState?.activeMenu !== 'legend' && 
+           !explorerState?.showCategoriesPanel && 
+           !explorerState?.showBasemapMenu && (
             <SearchResultsList 
               explorerState={explorerState}
               setExplorerState={setExplorerState}
@@ -148,7 +153,9 @@ export default function DataExplorerLayout({
 
         {/* Floating Location Details Card Panel (Wireframe Page 05) */}
         <AnimatePresence>
-          {explorerState?.selectedDetail && (
+          {explorerState?.selectedDetail && 
+           !explorerState?.showCategoriesPanel && 
+           !explorerState?.showBasemapMenu && (
             <DetailSlidePanel 
               explorerState={explorerState}
               setExplorerState={setExplorerState}
@@ -156,8 +163,12 @@ export default function DataExplorerLayout({
           )}
         </AnimatePresence>
 
+        {/* Floating Map Legend Panel */}
         <AnimatePresence>
-          {explorerState?.activeMenu === 'legend' && (
+          {explorerState?.activeMenu === 'legend' && 
+           !explorerState?.selectedDetail && 
+           !explorerState?.showCategoriesPanel && 
+           !explorerState?.showBasemapMenu && (
             <MapLegendPanel 
               explorerState={explorerState}
               setExplorerState={setExplorerState}

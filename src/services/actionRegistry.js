@@ -219,7 +219,9 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
     case ACTION_TYPES.EXPORT_DATA:
     case ACTION_TYPES.REPORT_GENERATE: {
       if (typeof window !== 'undefined') {
-        window.print();
+        setTimeout(() => {
+          window.print();
+        }, 300);
       }
       return { success: true, message: "Opened print layout" };
     }

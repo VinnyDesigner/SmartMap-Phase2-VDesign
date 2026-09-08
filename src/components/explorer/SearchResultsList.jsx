@@ -13,7 +13,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
   const { isDarkMode } = useTheme();
   const { activeProject } = useProject();
 
-  const results = explorerState?.activeResults || activeProject.datasets || [];
+  const results = explorerState?.activeResults || [];
   const isLoggedIn = Boolean(explorerState?.userAuth?.isLoggedIn || explorerState?.isLoggedIn);
 
   const [sortBy, setSortBy] = useState('distance'); // 'distance' | 'name' | 'type'
@@ -41,6 +41,11 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
     setExplorerState(prev => ({
       ...prev,
       selectedLocation: item,
+      selectedDetail: item,
+      showSearchResults: false,
+      activeMenu: null,
+      showCategoriesPanel: false,
+      showBasemapMenu: false,
       mapFocus: { lat: item.lat, lng: item.lng, zoom: 17 }
     }));
   };
@@ -51,6 +56,10 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
       ...prev,
       selectedDetail: item,
       selectedLocation: item,
+      showSearchResults: false,
+      activeMenu: null,
+      showCategoriesPanel: false,
+      showBasemapMenu: false,
       mapFocus: { lat: item.lat, lng: item.lng, zoom: 17 }
     }));
   };
@@ -67,10 +76,13 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
     }
     setExplorerState(prev => {
       const current = prev.savedLocations || [];
-      const exists = current.some(fav => fav.id === item.id || fav.name === item.name);
+      const exists = current.some(fav => 
+        (fav.id && item.id && String(fav.id) === String(item.id)) || 
+        (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+      );
       const updated = exists 
-        ? current.filter(fav => fav.id !== item.id && fav.name !== item.name)
-        : [...current, item];
+        ? current.filter(fav => !((fav.id && item.id && String(fav.id) === String(item.id)) || (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())))
+        : [item, ...current];
       return { ...prev, savedLocations: updated };
     });
   };
@@ -85,10 +97,10 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
 
   const displayedList = showAllResults ? sortedResults : sortedResults.slice(0, 5);
 
-  const queryText = explorerState?.lastQuery || (isArabic ? 'المنشآت الحكومية ضمن نطاق 5 كم' : 'government facilities within 5 km');
+  const queryText = explorerState?.lastQuery || (isArabic ? 'نتائج البحث' : 'Search Results');
 
-  // If search results panel is explicitly hidden by user, return null
-  if (explorerState?.showSearchResults === false) {
+  // If search results panel is explicitly hidden by user or no active results, return null
+  if (explorerState?.showSearchResults === false || results.length === 0) {
     return null;
   }
 
@@ -200,7 +212,10 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
       <div className="flex-1 overflow-y-auto p-3 space-y-2 sleek-scrollbar">
         {displayedList.map((item, idx) => {
           const isSelected = explorerState?.selectedLocation?.id === item.id || explorerState?.selectedDetail?.id === item.id;
-          const isFav = (explorerState?.savedLocations || []).some(fav => fav.id === item.id || fav.name === item.name);
+          const isFav = (explorerState?.savedLocations || []).some(fav => 
+            (fav.id && item.id && String(fav.id) === String(item.id)) || 
+            (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+          );
 
           return (
             <div

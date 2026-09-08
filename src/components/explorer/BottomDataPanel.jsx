@@ -91,7 +91,10 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
         ...prev,
         chatHistory: [welcomeMessage],
         savedChatHistory: updatedSaved,
+        activeResults: [],
+        showSearchResults: false,
         selectedLocation: null,
+        selectedDetail: null,
         activeFilters: {}
       };
     });

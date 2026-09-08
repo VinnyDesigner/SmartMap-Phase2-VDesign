@@ -91,15 +91,27 @@ html.theme-dark .leaflet-control-attribution a {
   scrollbar-width: none; /* Firefox */
 }
 
-/* Media Print Rules - Captures exact live app screen (Map, Right Panel, Header, Active Layers) */
+/* Media Print Rules - Captures Multi-Page Executive PDF Layout */
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm;
+  }
+
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
 
-  /* Ensure transient cursor, toasts, and background overlays do not obscure printed view */
+  body, html, #root {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* Hide live interactive screen elements during print */
   .custom-cursor,
   .toast-container,
   .idle-popup,
@@ -107,15 +119,14 @@ html.theme-dark .leaflet-control-attribution a {
     display: none !important;
   }
 
-  /* Maintain layout proportions and map display */
-  .leaflet-container {
-    width: 100% !important;
-    height: 100% !important;
+  .page-break-before-always {
+    break-before: page !important;
+    page-break-before: always !important;
   }
 
-  /* Prevent page breaks inside panels */
-  header, main, section, .glass-panel {
-    page-break-inside: avoid;
+  .page-break-after-always {
+    break-after: page !important;
+    page-break-after: always !important;
   }
 }
 

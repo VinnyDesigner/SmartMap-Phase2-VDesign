@@ -17,6 +17,8 @@ import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
 import { useProject } from './contexts/ProjectContext';
 
+import { SEED_FAVORITES } from './components/explorer/AiChatInterface';
+
 function App() {
   const { isDarkMode } = useTheme();
   const { isArabic } = useLanguage();
@@ -102,15 +104,15 @@ function App() {
       lng: activeProject.defaultCenter.lng,
       zoom: activeProject.defaultZoom
     },
-    activeResults: activeProject.datasets,
-    showSearchResults: true,
+    activeResults: [],
+    showSearchResults: false,
     selectedDetail: null,
-    selectedLocation: activeProject.datasets[1] || activeProject.datasets[0],
+    selectedLocation: null,
     basemap: activeProject.mapConfig.defaultBasemap,
     activeBasemap: activeProject.mapConfig.defaultBasemap,
     isDrawingMode: false,
     chatHistory: [],
-    savedLocations: [],
+    savedLocations: SEED_FAVORITES,
     savedChatHistory: [],
     userAuth: { isLoggedIn: false },
     isLoggedIn: false,
@@ -157,68 +159,70 @@ function App() {
   }
 
   return (
-    <div className={`h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] dark:bg-[#060a12] transition-colors duration-300 ${isArabic ? 'rtl' : 'ltr'}`} dir={isArabic ? 'rtl' : 'ltr'}>
-      <BrandHeader onNavigate={handleNavigate} currentView={currentView} userAuth={userAuth} onSignOut={handleSignOut} onSignIn={handleSignIn} setExplorerState={setExplorerState} />
-      
-      {currentView === 'landing' && (
-        <>
-          <div className="absolute inset-0 z-0 pointer-events-none">
-            <WebGLFluidReveal mouseX={smoothMouseX} mouseY={smoothMouseY} isDarkMode={isDarkMode} />
-          </div>
-          <CustomCursor 
-            isSearchFocused={isSearchFocused} 
+    <>
+      <div className={`no-print h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] dark:bg-[#060a12] transition-colors duration-300 ${isArabic ? 'rtl' : 'ltr'}`} dir={isArabic ? 'rtl' : 'ltr'}>
+        <BrandHeader onNavigate={handleNavigate} currentView={currentView} userAuth={userAuth} onSignOut={handleSignOut} onSignIn={handleSignIn} setExplorerState={setExplorerState} />
+        
+        {currentView === 'landing' && (
+          <>
+            <div className="absolute inset-0 z-0 pointer-events-none">
+              <WebGLFluidReveal mouseX={smoothMouseX} mouseY={smoothMouseY} isDarkMode={isDarkMode} />
+            </div>
+            <CustomCursor 
+              isSearchFocused={isSearchFocused} 
+            />
+          </>
+        )}
+        
+        {currentView === 'landing' ? (
+          <SearchInterface 
+            isFocused={isSearchFocused}
+            setIsFocused={setIsSearchFocused}
+            onSearch={(query) => {
+              setCurrentView('explorer');
+              setSelectedLocation(null);
+              if (query && query.trim() !== '') {
+                setExplorerState(prev => ({
+                  ...prev,
+                  pendingQuery: query
+                }));
+              }
+            }}
           />
-        </>
-      )}
-      
-      {currentView === 'landing' ? (
-        <SearchInterface 
-          isFocused={isSearchFocused}
-          setIsFocused={setIsSearchFocused}
-          onSearch={(query) => {
-            setCurrentView('explorer');
-            setSelectedLocation(null);
-            if (query && query.trim() !== '') {
-              setExplorerState(prev => ({
-                ...prev,
-                pendingQuery: query
-              }));
-            }
-          }}
-        />
-      ) : currentView === 'explorer' ? (
-        <DataExplorerLayout 
-          onNavigate={handleNavigate} 
-          explorerState={explorerState}
-          setExplorerState={setExplorerState}
-          mouseX={mouseX} 
-          mouseY={mouseY} 
-          isSearchFocused={isSearchFocused} 
-          selectedLocation={selectedLocation}
-        />
-      ) : currentView === 'help' ? (
-        <HelpPage 
-          onNavigate={handleNavigate} 
-          explorerState={explorerState}
-          setExplorerState={setExplorerState}
-          userAuth={explorerState.userAuth}
-          setUserAuth={(auth) => setExplorerState(prev => ({ ...prev, userAuth: auth }))}
-        />
-      ) : (
-        <AboutUsPage onNavigate={handleNavigate} />
-      )}
-      
-      {/* Map-Centric Dedicated Print Layout Container */}
-      <MapPrintTemplate explorerState={explorerState} />
+        ) : currentView === 'explorer' ? (
+          <DataExplorerLayout 
+            onNavigate={handleNavigate} 
+            explorerState={explorerState}
+            setExplorerState={setExplorerState}
+            mouseX={mouseX} 
+            mouseY={mouseY} 
+            isSearchFocused={isSearchFocused} 
+            selectedLocation={selectedLocation}
+          />
+        ) : currentView === 'help' ? (
+          <HelpPage 
+            onNavigate={handleNavigate} 
+            explorerState={explorerState}
+            setExplorerState={setExplorerState}
+            userAuth={explorerState.userAuth}
+            setUserAuth={(auth) => setExplorerState(prev => ({ ...prev, userAuth: auth }))}
+          />
+        ) : (
+          <AboutUsPage onNavigate={handleNavigate} />
+        )}
 
-      {/* On-Demand Analytics Modal (Wireframe Page 6) */}
-      <AnalyticsModal
-        isOpen={Boolean(explorerState?.showAnalyticsModal)}
-        onClose={() => setExplorerState(prev => ({ ...prev, showAnalyticsModal: false }))}
-        title={explorerState?.analyticsTitle}
-        results={explorerState?.activeResults}
-      />
-    </div>
+        {/* On-Demand Analytics Modal (Wireframe Page 6) */}
+        <AnalyticsModal
+          isOpen={Boolean(explorerState?.showAnalyticsModal)}
+          onClose={() => setExplorerState(prev => ({ ...prev, showAnalyticsModal: false }))}
+          title={explorerState?.analyticsTitle}
+          results={explorerState?.activeResults}
+        />
+      </div>
+
+      {/* Map-Centric Dedicated Multi-Page Executive Print Layout */}
+      <MapPrintTemplate explorerState={explorerState} />
+    </>
   );
 }
 

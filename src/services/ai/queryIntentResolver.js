@@ -5,12 +5,48 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
   const q = queryText.toLowerCase().trim();
 
   // 1. APP CONTROL INTENTS
-  if (['make it dark', 'change theme to dark', 'dark mode', 'dark theme', 'الوضع الداكن', 'الوضع المظلم'].some(k => q.includes(k))) {
-    return { type: 'APP_CONTROL', action: 'CHANGE_THEME', params: { theme: 'dark' } };
-  }
-  if (['make it light', 'change theme to light', 'light mode', 'light theme', 'الوضع الفاتح'].some(k => q.includes(k))) {
-    return { type: 'APP_CONTROL', action: 'CHANGE_THEME', params: { theme: 'light' } };
-  }
+
+  // 1A. Dark Theme Triggers
+  const darkThemeTriggers = [
+    'make it dark', 'change theme to dark', 'change to dark', 'change to dark theme', 
+    'change to dark mode', 'change theme dark', 'switch to dark', 'switch to dark theme', 
+    'switch to dark mode', 'switch theme to dark', 'set theme to dark', 'set to dark', 
+    'dark mode', 'dark theme', 'enable dark mode', 'enable dark theme', 'turn on dark mode', 
+    'turn on dark theme', 'الوضع الداكن', 'الوضع المظلم', 'الداكن', 'تغيير المظهر إلى الداكن', 
+    'تغير المظهر الى الداكن', 'تحويل إلى الوضع الداكن', 'تفعيل الوضع الداكن'
+  ];
+
+  // 1B. Light Theme Triggers
+  const lightThemeTriggers = [
+    'make it light', 'change theme to light', 'change to light', 'change to light theme', 
+    'change to light mode', 'change theme light', 'switch to light', 'switch to light theme', 
+    'switch to light mode', 'switch theme to light', 'set theme to light', 'set to light', 
+    'light mode', 'light theme', 'enable light mode', 'enable light theme', 'turn on light mode', 
+    'turn on light theme', 'الوضع الفاتح', 'الفاتح', 'تغيير المظهر إلى الفاتح', 
+    'تغير المظهر الى الفاتح', 'تحويل إلى الوضع الفاتح', 'تفعيل الوضع الفاتح'
+  ];
+
+  // 1C. Arabic Language Triggers
+  const arabicLangTriggers = [
+    'change language to arabic', 'change to arabic', 'change to arabic language', 
+    'switch language to arabic', 'switch to arabic', 'switch to arabic language', 
+    'set language to arabic', 'set to arabic', 'arabic language', 'arabic version', 
+    'enable arabic', 'enable arabic version', 'show arabic', 'use arabic', 'عربي', 
+    'العربية', 'النسخة العربية', 'تغيير اللغة إلى العربية', 'تغيير اللغة للعربية', 
+    'تغير اللغة الى العربية', 'التحويل إلى العربية', 'تفعيل اللغة العربية', 'اللغة العربية'
+  ];
+
+  // 1D. English Language Triggers
+  const englishLangTriggers = [
+    'change language to english', 'change to english', 'change to english language', 
+    'switch language to english', 'switch to english', 'switch to english language', 
+    'set language to english', 'set to english', 'english language', 'english version', 
+    'enable english', 'enable english version', 'show english', 'use english', 'إنجليزية', 
+    'الانجليزية', 'النسخة الإنجليزية', 'تغيير اللغة إلى الإنجليزية', 'تغيير اللغة للإنجليزية', 
+    'تغير اللغة الى الانجليزية', 'التحويل إلى الإنجليزية', 'تفعيل اللغة الإنجليزية', 'اللغة الإنجليزية'
+  ];
+
+  // Check Basemap change if explicitly mentioning basemap or map style
   if (['change basemap', 'switch basemap', 'satellite view', 'satellite map', 'use satellite', 'use abu dhabi basemap', 'show streets', 'تغيير الخريطة', 'خريطة الأقمار الصناعية'].some(k => q.includes(k))) {
     let basemapId = 'satellite';
     if (q.includes('dark') || q.includes('مظلمة')) basemapId = 'dark';
@@ -18,16 +54,26 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
     else if (q.includes('dge') || q.includes('abu dhabi') || q.includes('أبوظبي')) basemapId = 'abu-dhabi-dge';
     return { type: 'APP_CONTROL', action: 'CHANGE_BASEMAP', params: { basemapId } };
   }
-  if (['switch to arabic', 'show arabic', 'arabic', 'عربي', 'العربية'].some(k => q === k || q.includes(k))) {
+
+  // Theme Controls
+  if (darkThemeTriggers.some(k => q === k || q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CHANGE_THEME', params: { theme: 'dark' } };
+  }
+  if (lightThemeTriggers.some(k => q === k || q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CHANGE_THEME', params: { theme: 'light' } };
+  }
+
+  // Language Controls
+  if (arabicLangTriggers.some(k => q === k || (k !== 'arabic' && q.includes(k))) || q === 'arabic') {
     return { type: 'APP_CONTROL', action: 'CHANGE_LANGUAGE', params: { lang: 'ar' } };
   }
-  if (['switch to english', 'show english', 'english', 'إنجليزية'].some(k => q === k || q.includes(k))) {
+  if (englishLangTriggers.some(k => q === k || (k !== 'english' && q.includes(k))) || q === 'english') {
     return { type: 'APP_CONTROL', action: 'CHANGE_LANGUAGE', params: { lang: 'en' } };
   }
   if (['about us', 'open about us', 'go to about us', 'من نحن'].some(k => q.includes(k))) {
     return { type: 'APP_CONTROL', action: 'NAVIGATE', params: { view: 'about' } };
   }
-  if (['print this map', 'print map', 'print current view', 'print', 'طباعة الخريطة'].some(k => q.includes(k))) {
+  if (['print this map', 'print map', 'print current view', 'print screen', 'print the screen', 'print view', 'print page', 'print report', 'print', 'طباعة الخريطة', 'طباعة الشاشة', 'طباعة التقرير', 'طباعة'].some(k => q.includes(k))) {
     return { type: 'APP_CONTROL', action: 'PRINT_MAP', params: {} };
   }
 

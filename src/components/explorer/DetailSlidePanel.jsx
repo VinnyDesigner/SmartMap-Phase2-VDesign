@@ -49,15 +49,21 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
     }
     setExplorerState(prev => {
       const current = prev.savedLocations || [];
-      const exists = current.some(item => item.id === detail?.id);
+      const exists = current.some(item => 
+        (item.id && detail?.id && String(item.id) === String(detail.id)) || 
+        (item.name && detail?.name && item.name.trim().toLowerCase() === detail.name.trim().toLowerCase())
+      );
       const updated = exists 
-        ? current.filter(item => item.id !== detail?.id)
-        : [...current, detail];
+        ? current.filter(item => !((item.id && detail?.id && String(item.id) === String(detail.id)) || (item.name && detail?.name && item.name.trim().toLowerCase() === detail.name.trim().toLowerCase())))
+        : [detail, ...current];
       return { ...prev, savedLocations: updated };
     });
   };
 
-  const isFavorite = Boolean((explorerState?.savedLocations || []).some(item => item.id === detail?.id));
+  const isFavorite = Boolean((explorerState?.savedLocations || []).some(item => 
+    (item.id && detail?.id && String(item.id) === String(detail.id)) || 
+    (item.name && detail?.name && item.name.trim().toLowerCase() === detail.name.trim().toLowerCase())
+  ));
 
   const facilityName = isArabic && detail.name_ar ? detail.name_ar : (detail.name || 'DGE Headquarters');
   const facilityType = isArabic && detail.type_ar ? detail.type_ar : (detail.facilityType || detail.type || 'Government Facility');

@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Bot, User, MapPin, Heart, History, MessageSquare, 
-  Trash2, ArrowRight, Pencil, Check, Pin, Sparkles
+  Trash2, ArrowRight, Pencil, Check, Pin, Sparkles, Bookmark,
+  Printer, BarChart3
 } from 'lucide-react';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine, sanitizeMarkdown } from '../../services/mockAiEngine';
@@ -171,11 +172,17 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }
 
     setExplorerState(prev => {
-      const currentFavs = prev.savedLocations || SEED_FAVORITES;
-      const exists = currentFavs.some(f => f.id === item.id || f.name === item.name);
+      const currentFavs = prev.savedLocations || [];
+      const exists = currentFavs.some(f => 
+        (f.id && item.id && String(f.id) === String(item.id)) || 
+        (f.name && item.name && f.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+      );
       let updated;
       if (exists) {
-        updated = currentFavs.filter(f => f.id !== item.id && f.name !== item.name);
+        updated = currentFavs.filter(f => 
+          !((f.id && item.id && String(f.id) === String(item.id)) || 
+            (f.name && item.name && f.name.trim().toLowerCase() === item.name.trim().toLowerCase()))
+        );
       } else {
         updated = [item, ...currentFavs];
       }
@@ -249,6 +256,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     
     setExplorerState(prev => ({
       ...prev,
+      lastQuery: queryToProcess,
       chatHistory: [...(prev.chatHistory || []), userMsg]
     }));
 
@@ -289,7 +297,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
       setExplorerState(prev => ({
         ...prev,
-        activeResults: aiResponse.results || prev.activeResults,
+        activeResults: aiResponse.results || [],
+        showSearchResults: Boolean(aiResponse.results && aiResponse.results.length > 0),
         chatHistory: [...(prev.chatHistory || []), assistantMsg]
       }));
 
@@ -328,7 +337,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   };
 
   const savedLocations = isLoggedIn 
-    ? (explorerState?.savedLocations?.length > 0 ? explorerState.savedLocations : SEED_FAVORITES) 
+    ? (explorerState?.savedLocations || []) 
     : [];
 
   const historySessions = isLoggedIn 
@@ -521,20 +530,56 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         userLocation={explorerState?.userLocation}
                       />
 
-                      {/* Pin Query Action Line for User Bubbles (Registered Users Only) */}
-                      {isLoggedIn && idx > 0 && msg.role === 'assistant' && (
-                        <div className="mt-2 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-end">
+                      {/* Small Non-Prominent Action Toolbar (Print PDF, Analytics, Pin Query) */}
+                      {msg.role === 'assistant' && (
+                        <div className="mt-2.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-end gap-1.5 flex-wrap">
                           <button
                             type="button"
-                            onClick={() => handlePinQuery(messages[idx - 1]?.content || msg.content)}
-                            className={`flex items-center gap-1 text-[10px] font-bold transition-all cursor-pointer ${
-                              isDarkMode ? 'text-slate-400 hover:text-[#00e5ff]' : 'text-slate-500 hover:text-[#215A9E]'
+                            onClick={() => window.print()}
+                            className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 opacity-70 hover:opacity-100 ${
+                              isDarkMode 
+                                ? 'bg-[#182645]/60 border-slate-700/60 text-slate-300 hover:text-white hover:bg-[#182645]' 
+                                : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
                             }`}
-                            title={t("Pin this query to History", "تثبيت هذا البحث في السجل")}
+                            title={t("Print Map Report PDF", "طباعة تقرير الخريطة PDF")}
                           >
-                            <Pin className="w-3 h-3" />
-                            <span>{t("Pin Query", "تثبيت البحث")}</span>
+                            <Printer className="w-3 h-3 text-slate-400" />
+                            <span>{t("Print PDF", "طباعة PDF")}</span>
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setExplorerState(prev => ({
+                              ...prev,
+                              showAnalyticsModal: true,
+                              analyticsTitle: isArabic ? 'تحليل المنشآت والبيانات' : 'Government Facilities Analysis'
+                            }))}
+                            className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 opacity-70 hover:opacity-100 ${
+                              isDarkMode 
+                                ? 'bg-[#182645]/60 border-slate-700/60 text-slate-300 hover:text-white hover:bg-[#182645]' 
+                                : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                            }`}
+                            title={t("Open Spatial Analytics Dashboard", "فتح لوحة التحليلات المكانية")}
+                          >
+                            <BarChart3 className="w-3 h-3 text-indigo-400" />
+                            <span>{t("Analytics", "التحليلات")}</span>
+                          </button>
+
+                          {isLoggedIn && idx > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => handlePinQuery(messages[idx - 1]?.content || msg.content)}
+                              className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 opacity-70 hover:opacity-100 ${
+                                isDarkMode 
+                                  ? 'bg-[#182645]/60 border-slate-700/60 text-slate-300 hover:text-[#00e5ff] hover:bg-[#182645]' 
+                                  : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-[#215A9E] hover:bg-slate-200'
+                              }`}
+                              title={t("Pin this query to History", "تثبيت هذا البحث في السجل")}
+                            >
+                              <Pin className="w-3 h-3 text-amber-500" />
+                              <span>{t("Pin Query", "تثبيت البحث")}</span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </>

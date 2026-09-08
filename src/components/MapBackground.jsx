@@ -332,10 +332,13 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
                         onClick={() => {
                           setExplorerState(prev => {
                             const current = prev.savedLocations || [];
-                            const exists = current.some(fav => fav.id === item.id || fav.name === item.name);
+                            const exists = current.some(fav => 
+                              (fav.id && item.id && String(fav.id) === String(item.id)) || 
+                              (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+                            );
                             const updated = exists 
-                              ? current.filter(fav => fav.id !== item.id && fav.name !== item.name)
-                              : [...current, item];
+                              ? current.filter(fav => !((fav.id && item.id && String(fav.id) === String(item.id)) || (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())))
+                              : [item, ...current];
                             return { ...prev, savedLocations: updated };
                           });
                         }}
