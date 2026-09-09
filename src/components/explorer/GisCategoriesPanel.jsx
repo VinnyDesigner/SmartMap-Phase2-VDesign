@@ -1,12 +1,41 @@
 import React, { useState } from 'react';
-import { 
-  X, Search, ChevronDown, ChevronUp, Layers, RotateCcw, 
-  Activity, GraduationCap, Bus, Landmark, TreePine, Zap
-} from 'lucide-react';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
+import RestartAltOutlinedIcon from '@mui/icons-material/RestartAltOutlined';
+import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined';
+
+import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import LocalHospitalOutlinedIcon from '@mui/icons-material/LocalHospitalOutlined';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import ParkOutlinedIcon from '@mui/icons-material/ParkOutlined';
+import DirectionsBusOutlinedIcon from '@mui/icons-material/DirectionsBusOutlined';
+import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
+import ElectricBoltOutlinedIcon from '@mui/icons-material/ElectricBoltOutlined';
+import AgricultureOutlinedIcon from '@mui/icons-material/AgricultureOutlined';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useProject } from '../../contexts/ProjectContext';
+
+const ICON_MAP = {
+  Building: AccountBalanceOutlinedIcon,
+  Building2: BusinessOutlinedIcon,
+  Users: AccountBalanceOutlinedIcon,
+  Activity: LocalHospitalOutlinedIcon,
+  GraduationCap: SchoolOutlinedIcon,
+  Bus: DirectionsBusOutlinedIcon,
+  Plane: ExploreOutlinedIcon,
+  Landmark: ExploreOutlinedIcon,
+  Sparkles: ExploreOutlinedIcon,
+  TreePine: ParkOutlinedIcon,
+  Trees: ParkOutlinedIcon,
+  Recycle: ParkOutlinedIcon,
+  Zap: ElectricBoltOutlinedIcon
+};
 
 export default function GisCategoriesPanel({ isOpen, onClose, explorerState, setExplorerState }) {
 
@@ -107,7 +136,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
           <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
             isDarkMode ? 'bg-[#111c34] text-[#00e5ff] border border-cyan-500/30' : 'bg-[#3D52A0]/10 text-[#3D52A0]'
           }`}>
-            <Layers className="w-3.5 h-3.5" />
+            <LayersOutlinedIcon style={{ fontSize: 16 }} />
           </div>
           <h3 className={`font-bold text-sm tracking-tight ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
             {t('GIS CATEGORIES', 'تصنيفات نظم المعلومات الجغرافية')}
@@ -120,7 +149,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
             isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-700'
           }`}
         >
-          <X className="w-4 h-4" />
+          <CloseOutlinedIcon style={{ fontSize: 18 }} />
         </button>
       </div>
 
@@ -138,7 +167,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
             isDarkMode ? 'text-[#00e5ff] hover:text-white' : 'text-[#3D52A0] hover:text-[#2d3e7d]'
           }`}
         >
-          <RotateCcw className="w-3 h-3" />
+          <RestartAltOutlinedIcon style={{ fontSize: 14 }} />
           <span>{t('Clear All', 'مسح الكل')}</span>
         </button>
       </div>
@@ -146,7 +175,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
       {/* Search Input Bar */}
       <div className={`px-3.5 py-1.5 shrink-0 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
         <div className="relative flex items-center">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute start-3 pointer-events-none" />
+          <SearchOutlinedIcon style={{ fontSize: 16 }} className="text-slate-400 absolute start-3 pointer-events-none" />
           <input
             type="text"
             value={searchTerm}
@@ -163,7 +192,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
               onClick={() => setSearchTerm('')} 
               className="absolute end-3 text-slate-400 hover:text-slate-200 cursor-pointer"
             >
-              <X className="w-3.5 h-3.5" />
+              <CloseOutlinedIcon style={{ fontSize: 14 }} />
             </button>
           )}
         </div>
@@ -172,7 +201,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
       {/* Scrollable Categories List */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5 sleek-scrollbar">
         {categoriesData.map((cat) => {
-          const CatIcon = cat.icon || Layers;
+          const CatIcon = ICON_MAP[cat.iconName] || ICON_MAP[cat.icon] || AccountBalanceOutlinedIcon;
 
           const isCollapsed = collapsedCategories[cat.id];
           
@@ -207,7 +236,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
                   <div className={`w-6.5 h-6.5 rounded-lg flex items-center justify-center shadow-2xs transition-colors ${
                     isDarkMode ? 'bg-[#215A9E] text-white' : 'bg-[#3D52A0] text-white group-hover:bg-[#2d3e7d]'
                   }`}>
-                    <CatIcon className="w-3.5 h-3.5" />
+                    <CatIcon style={{ fontSize: 16 }} />
                   </div>
                   <h4 className={`font-bold text-xs tracking-tight transition-colors ${
                     isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#3D52A0]'
@@ -230,7 +259,7 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
                     onClick={() => toggleCategoryCollapse(cat.id)}
                     className="text-slate-400 hover:text-slate-200 cursor-pointer"
                   >
-                    {isCollapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+                    {isCollapsed ? <KeyboardArrowDownOutlinedIcon style={{ fontSize: 16 }} /> : <KeyboardArrowUpOutlinedIcon style={{ fontSize: 16 }} />}
                   </button>
                 </div>
               </div>

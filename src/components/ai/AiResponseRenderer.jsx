@@ -2,17 +2,20 @@ import React from 'react';
 import AiTextBlock from './blocks/AiTextBlock';
 import AiKpiGrid from './blocks/AiKpiGrid';
 import AiChartBlock from './blocks/AiChartBlock';
+import AiComparisonBlock from './blocks/AiComparisonBlock';
 import AiRiskBreakdown from './blocks/AiRiskBreakdown';
+import AiTrendBlock from './blocks/AiTrendBlock';
 import AiInsightCard from './blocks/AiInsightCard';
-import AiWhyThisResult from './blocks/AiWhyThisResult';
+import AiRecommendationCard from './blocks/AiRecommendationCard';
+import AiDataQualityCard from './blocks/AiDataQualityCard';
 import AiExecutionTrace from './blocks/AiExecutionTrace';
+import AiWhyThisResult from './blocks/AiWhyThisResult';
 import AiActionSuggestions from './blocks/AiActionSuggestions';
 import AiLocationListBlock from './blocks/AiLocationListBlock';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { CheckCircle2, Bot, Database } from 'lucide-react';
-import { sanitizeMarkdown } from '../../services/mockAiEngine';
-
 import AiTableBlock from './blocks/AiTableBlock';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { CheckCircle2, Bot, Database, AlertCircle } from 'lucide-react';
+import { sanitizeMarkdown } from '../../services/mockAiEngine';
 
 const DATASET_TRANSLATIONS = {
   'DGE Spatial SDI 2026': 'البنية المكانية لـ SDI 2026',
@@ -31,7 +34,8 @@ export default function AiResponseRenderer({
   onPromptAuth = null,
   onOpenAnalytics = null,
   savedLocations = [],
-  userLocation = null
+  userLocation = null,
+  activeExpandedCardId = null
 }) {
   const { isArabic } = useLanguage();
   if (!response) return null;
@@ -40,44 +44,167 @@ export default function AiResponseRenderer({
 
   return (
     <div className="space-y-2.5">
-      {/* Primary Text Content */}
-      {response.content && (
-        <AiTextBlock 
-          content={sanitizeMarkdown(isArabic ? (response.content_ar || response.content) : response.content)} 
-          onEntityClick={onEntityClick} 
-        />
-      )}
+      {/* Dynamic Block Dispatcher */}
+      {blocks.length > 0 ? (
+        blocks.map((block, index) => {
+          if (!block || !block.type) return null;
+          const key = `block-${block.type}-${index}`;
 
-      {/* Structured Table Block (Rendered when outputType === 'table') */}
-      {response.outputType === 'table' && response.results && response.results.length > 0 && (
-        <AiTableBlock 
-          results={response.results}
-          onEntityClick={onEntityClick}
-          onActionClick={onActionClick}
-        />
-      )}
+          switch (block.type) {
+            case 'TEXT':
+              return (
+                <AiTextBlock 
+                  key={key}
+                  content={sanitizeMarkdown(isArabic ? (block.content_ar || block.content) : block.content)} 
+                  onEntityClick={onEntityClick} 
+                />
+              );
 
-      {/* Uniform Search Result Cards (Displayed immediately when query returns results, unless table requested) */}
-      {response.outputType !== 'table' && response.results && response.results.length > 0 && (
-        <AiLocationListBlock
-          locations={response.results}
-          onEntityClick={onEntityClick}
-          onActionClick={onActionClick}
-          isLoggedIn={isLoggedIn}
-          userLocation={userLocation}
-          savedLocations={savedLocations}
-          onToggleFavorite={onToggleFavorite}
-          onPromptAuth={onPromptAuth}
-        />
-      )}
+            case 'KPI_GRID':
+              return <AiKpiGrid key={key} metrics={block.metrics || block.data} />;
 
-      {/* Optional Analytics Blocks (Rendered ONLY when included in AI response upon user request) */}
-      {response.kpiGrid && <AiKpiGrid metrics={response.kpiGrid} />}
-      {response.chartData && <AiChartBlock chartData={response.chartData} onEntityClick={onEntityClick} onOpenAnalytics={onOpenAnalytics} />}
-      {response.riskDecomposition && <AiRiskBreakdown riskData={response.riskDecomposition} />}
-      {response.insightData && <AiInsightCard insightData={response.insightData} />}
-      {response.whyThisResult && <AiWhyThisResult data={response.whyThisResult} />}
-      {response.executionLogs && <AiExecutionTrace logs={response.executionLogs} />}
+            case 'CHART':
+              return (
+                <AiChartBlock 
+                  key={key} 
+                  chartData={block.data || block} 
+                  onEntityClick={onEntityClick} 
+                  onOpenAnalytics={onOpenAnalytics} 
+                />
+              );
+
+            case 'COMPARISON':
+              return (
+                <AiComparisonBlock 
+                  key={key} 
+                  data={block.data || block} 
+                  onEntityClick={onEntityClick} 
+                />
+              );
+
+            case 'RISK_BREAKDOWN':
+              return <AiRiskBreakdown key={key} riskData={block.data || block} />;
+
+            case 'TREND':
+              return (
+                <AiTrendBlock 
+                  key={key} 
+                  data={block.data || block} 
+                  onEntityClick={onEntityClick}
+                  onOpenAnalytics={onOpenAnalytics}
+                />
+              );
+
+            case 'INSIGHT':
+              return <AiInsightCard key={key} insightData={block.data || block} />;
+
+            case 'RECOMMENDATION':
+              return <AiRecommendationCard key={key} data={block.data || block} />;
+
+            case 'DATA_QUALITY':
+              return <AiDataQualityCard key={key} data={block.data || block} />;
+
+            case 'EXECUTION_TRACE':
+              return <AiExecutionTrace key={key} logs={block.data || block.logs} />;
+
+            case 'WHY_THIS_RESULT':
+              return <AiWhyThisResult key={key} data={block.data || block} />;
+
+            case 'LOCATION_LIST':
+              return (
+                <AiLocationListBlock
+                  key={key}
+                  locations={block.locations || block.results || []}
+                  onEntityClick={onEntityClick}
+                  onActionClick={onActionClick}
+                  isLoggedIn={isLoggedIn}
+                  userLocation={userLocation}
+                  savedLocations={savedLocations}
+                  onToggleFavorite={onToggleFavorite}
+                  onPromptAuth={onPromptAuth}
+                  activeExpandedCardId={activeExpandedCardId}
+                />
+              );
+
+            case 'TABLE':
+              return (
+                <AiTableBlock
+                  key={key}
+                  results={block.results || block.data || []}
+                  onEntityClick={onEntityClick}
+                  onActionClick={onActionClick}
+                />
+              );
+
+            case 'ACTION_SUGGESTIONS':
+              return (
+                <AiActionSuggestions 
+                  key={key}
+                  actionCards={block.actionCards || block.actions} 
+                  suggestions={block.suggestions} 
+                  onActionClick={onActionClick}
+                  onSuggestionClick={onSuggestionClick}
+                  isLoggedIn={isLoggedIn}
+                />
+              );
+
+            case 'DATA_INSUFFICIENT':
+              return (
+                <div key={key} className="border border-amber-500/40 bg-amber-50/80 dark:bg-amber-950/40 rounded-2xl p-3 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-600 dark:text-amber-400">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{isArabic ? 'بيانات غير كافية' : 'DATA INSUFFICIENT'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-700 dark:text-slate-300">
+                    {block.message || (isArabic ? 'بيانات الاستعلام التاريخي غير كافية لإنشاء الرسم البياني.' : 'Insufficient historical data points available to generate a visualization.')}
+                  </p>
+                </div>
+              );
+
+            default:
+              return null;
+          }
+        })
+      ) : (
+        /* Legacy Response Format Fallback */
+        <>
+          {response.content && (
+            <AiTextBlock 
+              content={sanitizeMarkdown(isArabic ? (response.content_ar || response.content) : response.content)} 
+              onEntityClick={onEntityClick} 
+            />
+          )}
+
+          {response.outputType === 'table' && response.results && response.results.length > 0 && (
+            <AiTableBlock 
+              results={response.results}
+              onEntityClick={onEntityClick}
+              onActionClick={onActionClick}
+            />
+          )}
+
+          {response.outputType !== 'table' && response.results && response.results.length > 0 && (
+            <AiLocationListBlock
+              locations={response.results}
+              onEntityClick={onEntityClick}
+              onActionClick={onActionClick}
+              isLoggedIn={isLoggedIn}
+              userLocation={userLocation}
+              savedLocations={savedLocations}
+              onToggleFavorite={onToggleFavorite}
+              onPromptAuth={onPromptAuth}
+              activeExpandedCardId={activeExpandedCardId}
+            />
+          )}
+
+          {response.kpiGrid && <AiKpiGrid metrics={response.kpiGrid} />}
+          {response.chartData && <AiChartBlock chartData={response.chartData} onEntityClick={onEntityClick} onOpenAnalytics={onOpenAnalytics} />}
+          {response.riskDecomposition && <AiRiskBreakdown riskData={response.riskDecomposition} />}
+          {response.insightData && <AiInsightCard insightData={response.insightData} />}
+          {response.whyThisResult && <AiWhyThisResult data={response.whyThisResult} />}
+          {response.executionLogs && <AiExecutionTrace logs={response.executionLogs} />}
+        </>
+      )}
 
       {/* Expandable "HOW THIS RESULT WAS FOUND" Provenance Box */}
       {(response.howThisResultWasFound || response.datasetsUsed) && (
@@ -111,8 +238,8 @@ export default function AiResponseRenderer({
         </details>
       )}
 
-      {/* Action Suggestions & Chips */}
-      {(response.actionCards || response.suggestions) && (
+      {/* Action Suggestions & Chips (If not already rendered in blocks) */}
+      {!blocks.some(b => b.type === 'ACTION_SUGGESTIONS') && (response.actionCards || response.suggestions) && (
         <AiActionSuggestions 
           actionCards={response.actionCards} 
           suggestions={response.suggestions} 

@@ -2,12 +2,13 @@ import React, { useRef, useMemo } from 'react';
 import { Sparkles, SquarePen, X, Filter } from 'lucide-react';
 import { motion, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import AiChatInterface from './AiChatInterface';
+import GeoLogoIcon from '../common/GeoLogoIcon';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useProject } from '../../contexts/ProjectContext';
 import { getRotatedPromptSuggestions } from '../../services/ai/promptLibrary';
 
-export default function BottomDataPanel({ explorerState, setExplorerState, onNavigate }) {
+export default function BottomDataPanel({ explorerState, setExplorerState, onNavigate, onClosePanel }) {
   const { t, isArabic } = useLanguage();
   const { isDarkMode } = useTheme();
   const { activeProject } = useProject();
@@ -128,10 +129,8 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
           isDarkMode ? 'bg-[#0f1932]/95 border-slate-800/90' : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-full border flex items-center justify-center shadow-xs ${
-              isDarkMode ? 'bg-[#182645] border-slate-700/80 text-[#c084fc]' : 'bg-gradient-to-br from-blue-50 to-[#eef3ff] border-blue-100/60 text-[#215A9E]'
-            }`}>
-              <Sparkles className="w-4 h-4" />
+            <div className="shrink-0 flex items-center justify-center">
+              <GeoLogoIcon className="w-6 h-6 text-[#7c3aed] dark:text-[#c084fc]" />
             </div>
             <div>
               <h2 className={`font-bold text-[14px] tracking-tight leading-tight ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
@@ -146,19 +145,35 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
             </div>
           </div>
 
-          {/* New Chat Icon Text (No button box) */}
-          <button
-            onClick={handleNewChat}
-            className={`flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer group shrink-0 px-1 py-0.5 ${
-              isDarkMode 
-                ? 'text-slate-200 hover:text-[#00e5ff]' 
-                : 'text-slate-800 hover:text-[#215A9E]'
-            }`}
-            title={t("Start New Conversation", "بدء محادثة جديدة")}
-          >
-            <SquarePen className="w-4 h-4 transition-transform group-hover:scale-110" />
-            <span>{t('New chat', 'محادثة جديدة')}</span>
-          </button>
+          {/* Controls: New Chat & X Close Panel */}
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleNewChat}
+              className={`flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer group shrink-0 px-2 py-1 rounded-lg ${
+                isDarkMode 
+                  ? 'text-slate-200 hover:text-[#00e5ff] hover:bg-slate-800/80' 
+                  : 'text-slate-800 hover:text-[#215A9E] hover:bg-slate-100'
+              }`}
+              title={t("Start New Conversation", "بدء محادثة جديدة")}
+            >
+              <SquarePen className="w-4 h-4 transition-transform group-hover:scale-110" />
+              <span>{t('New chat', 'محادثة جديدة')}</span>
+            </button>
+
+            {onClosePanel && (
+              <button
+                onClick={onClosePanel}
+                className={`p-1.5 rounded-lg transition-colors cursor-pointer flex items-center justify-center ${
+                  isDarkMode 
+                    ? 'text-slate-400 hover:text-white hover:bg-slate-800' 
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+                title={t("Close panel", "إغلاق لوحة التحكم")}
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* ACTIVE GIS CATEGORY FILTER PILLS */}

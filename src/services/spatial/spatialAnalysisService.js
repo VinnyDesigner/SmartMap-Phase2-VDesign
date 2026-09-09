@@ -13,8 +13,25 @@ export function calculateGeodesicDistance(lat1, lon1, lat2, lon2) {
     Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return parseFloat((R * c).toFixed(1));
+  return parseFloat((R * c).toFixed(2));
 }
+
+/**
+ * Format a distance in kilometers into a human-readable string (e.g., 800m, 1.4 km).
+ */
+export function formatDistance(distKm) {
+  if (distKm === undefined || distKm === null || isNaN(distKm)) return '0 m';
+  const val = Number(distKm);
+  if (val < 0.001) return '0 m';
+  if (val < 1) {
+    const meters = Math.round(val * 1000);
+    return `${meters}m`;
+  }
+  const kmFormatted = (Math.round(val * 10) / 10).toFixed(1);
+  const cleanKm = kmFormatted.endsWith('.0') ? kmFormatted.slice(0, -2) : kmFormatted;
+  return `${cleanKm} km`;
+}
+
 
 /**
  * Filter dataset items using strict logical AND semantics across all requested compound predicates.

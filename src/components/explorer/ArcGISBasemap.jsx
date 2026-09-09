@@ -7,9 +7,7 @@ export const BASEMAPS = {
     id: "abu-dhabi-dge",
     name: "Abu Dhabi Official DGE Color Basemap",
     type: "ARCGIS_SERVER",
-    serviceUrl: "https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer",
-    baseTileUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    subTileUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
+    serviceUrl: "https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer"
   },
   STREETS: {
     id: "streets",
@@ -39,27 +37,6 @@ export const BASEMAPS = {
   }
 };
 
-// Background preloader for Abu Dhabi DGE tiles & initial MapServer extent
-function preloadDgeBasemap() {
-  if (typeof window === 'undefined') return;
-
-  const preloadUrls = [
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/13/3516/5053",
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/13/3516/5054",
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/13/3517/5053",
-    "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/13/3517/5054",
-    "https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer/export?bbox=54.2,24.3,54.6,24.6&size=1024,768&format=png32&transparent=true&f=image"
-  ];
-
-  preloadUrls.forEach(url => {
-    const img = new Image();
-    img.src = url;
-  });
-}
-
-// Trigger background preloading immediately on module load
-preloadDgeBasemap();
-
 function EsriMapServerLayer({ url, attribution }) {
   const map = useMap();
 
@@ -68,7 +45,7 @@ function EsriMapServerLayer({ url, attribution }) {
 
     let layer;
     try {
-      // DGE_Color_Basemap_GCS MapServer endpoint with high performance buffer caching
+      // Direct integration with Abu Dhabi DGE_Color_Basemap_GCS MapServer service
       layer = dynamicMapLayer({
         url,
         attribution,
@@ -101,34 +78,11 @@ export default function ArcGISBasemap({ activeBasemapId = 'abu-dhabi-dge' }) {
 
   if (currentBasemap.type === "ARCGIS_SERVER") {
     return (
-      <>
-        {/* Instant Tile Base ensuring ZERO wait time / blank canvas for DGE */}
-        {currentBasemap.baseTileUrl && (
-          <TileLayer
-            key="dge-instant-base-tile-layer"
-            url={currentBasemap.baseTileUrl}
-            maxZoom={19}
-            minZoom={3}
-            opacity={1.0}
-          />
-        )}
-        {currentBasemap.subTileUrl && (
-          <TileLayer
-            key="dge-instant-sub-tile-layer"
-            url={currentBasemap.subTileUrl}
-            maxZoom={19}
-            minZoom={3}
-            opacity={0.85}
-          />
-        )}
-
-        {/* Dynamic DGE MapServer Layer overlaying smoothly on top */}
-        <EsriMapServerLayer
-          key={`esri-server-${currentBasemap.id}`}
-          url={currentBasemap.serviceUrl}
-          attribution='&copy; Abu Dhabi Spatial Data Infrastructure (AD-SDI / DGE)'
-        />
-      </>
+      <EsriMapServerLayer
+        key={`esri-server-${currentBasemap.id}`}
+        url={currentBasemap.serviceUrl}
+        attribution='&copy; Abu Dhabi Spatial Data Infrastructure (AD-SDI / DGE)'
+      />
     );
   }
 

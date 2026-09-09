@@ -92,7 +92,56 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
   },
 
   // =========================================================
-  // 2. TRANSPORTATION & MOBILITY
+  // 2. GOVERNMENT FACILITIES
+  // =========================================================
+  {
+    id: 'GOVERNMENT_FACILITIES_NEARBY',
+    patterns_en: [
+      'show government facilities near me',
+      'government facilities near me',
+      'show government facilities',
+      'government facilities',
+      'find government facilities'
+    ],
+    patterns_ar: [
+      'اعرض المنشآت الحكومية بالقرب مني',
+      'المنشآت الحكومية القريبة مني',
+      'اعرض المنشآت الحكومية',
+      'المنشآت الحكومية'
+    ],
+    handler: (currentState, isArabic) => {
+      const govtList = [
+        { id: 101, name: 'Department of Government Enablement (DGE) HQ', name_ar: 'دائرة التمكين الحكومي - المقر الرئيسي', type: 'GOVERNMENT', category_en: 'Executive Governance', category_ar: 'منشأة حكومية تنفيذية', location: 'Corniche West', location_ar: 'طريق الكورنيش الغربي', district: 'Corniche West', lat: 24.4789, lng: 54.3312, riskLevel: 'Low', riskScore: 18, distanceKm: 1.2, description: 'Headquarters driving Abu Dhabi spatial data infrastructure and digital enablement.' },
+        { id: 102, name: 'TAMM Customer Service Hub - Al Reem', name_ar: 'مركز تم لخدمات المتعاملين - الريم', type: 'GOVERNMENT', category_en: 'Unified Public Services', category_ar: 'خدمات حكومية موحدة', location: 'Al Reem Island', location_ar: 'جزيرة الريم', district: 'Al Reem Island', lat: 24.5028, lng: 54.4056, riskLevel: 'Low', riskScore: 22, distanceKm: 3.5, description: 'Unified Abu Dhabi government customer service center providing smart digital transactions.' },
+        { id: 103, name: 'Abu Dhabi Municipality Service Centre', name_ar: 'مركز بلدية أبوظبي الرئيسي', type: 'GOVERNMENT', category_en: 'Municipal Services', category_ar: 'خدمات بلدية', location: 'Al Zahiyah', location_ar: 'الزاهية', district: 'Al Zahiyah', lat: 24.4920, lng: 54.3735, riskLevel: 'Low', riskScore: 24, distanceKm: 2.4, description: 'Central municipal hub managing urban planning, building permits, and public land GIS registries.' }
+      ];
+
+      const actions = [
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { facilityType: 'GOVERNMENT' }, matchingResults: govtList } },
+        { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: govtList[0].lat, lng: govtList[0].lng, zoom: 14 } }
+      ];
+
+      const reply = isArabic
+        ? `تم تحديد **${govtList.length} مقرات حكومية ومراكز خدمات موحدة (تم)** بالقرب من موقعك:`
+        : `Identified **${govtList.length} official government facilities and unified TAMM hubs** near your location:`;
+
+      const suggestions = isArabic
+        ? ["مقارنة انبعاثات الطاقة", "عرض المعالم السياحية", "عرض الحدائق العامة"]
+        : ["Compare Energy Emissions", "Show tourism attractions", "Show public parks"];
+
+      return {
+        reply,
+        results: govtList,
+        actions,
+        suggestions,
+        datasetsUsed: ['DGE Spatial SDI 2026', 'Government Facilities Layer v2.1'],
+        activeContext: { category: 'GOVERNMENT', activeLocations: govtList }
+      };
+    }
+  },
+
+  // =========================================================
+  // 3. TRANSPORTATION & MOBILITY
   // =========================================================
   {
     id: 'TRANSPORT_BUS_STOPS',
@@ -160,7 +209,7 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
   },
 
   // =========================================================
-  // 3. ENVIRONMENT & PROTECTED AREAS
+  // 4. ENVIRONMENT & PROTECTED AREAS
   // =========================================================
   {
     id: 'ENVIRONMENT_PROTECTED_AREAS',
@@ -200,216 +249,12 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
     }
   },
 
-  {
-    id: 'ENVIRONMENT_OVERLAPPING_COMMUNITIES',
-    patterns_en: [
-      'which communities overlap them',
-      'which communities overlap protected areas',
-      'communities overlap protected areas',
-      'show development projects near these areas'
-    ],
-    patterns_ar: [
-      'أيها المناطق التي تتقاطع معها',
-      'المناطق المتقاطعة مع المحميات',
-      'المشاريع العمرانية القريبة من المحميات'
-    ],
-    handler: (currentState, isArabic) => {
-      const results = [
-        { id: 610, name: 'Al Reem & Eastern Mangrove Interface Zone', name_ar: 'منطقة تقاطع الريم والقرم الشرقي', type: 'URBAN', category_en: 'Intersecting Community', category_ar: 'منطقة تقاطع بيئي', location: 'Al Reem / Mangrove', location_ar: 'الريم / القرم', lat: 24.4550, lng: 54.4250, distanceKm: 3.5, description: 'Urban community sector adjacent to protected mangrove buffer.' },
-        { id: 611, name: 'Saadiyat Cultural Eco-Development Project', name_ar: 'مشروع التطوير البيئي بالسعديات', type: 'URBAN', category_en: 'Eco-Development', category_ar: 'مشروع تطوير بيئي', location: 'Saadiyat Island', location_ar: 'جزيرة السعديات', lat: 24.5410, lng: 54.4350, distanceKm: 10.5, description: 'Sustainable urban project under strict eco-compliance zoning.' }
-      ];
-
-      const reply = isArabic
-        ? `تحليل التقاطع المكاني: تم رصد **2 مناطق ومشاريع عمرانية** تتقاطع مباشرة مع حدود المحميات الطبيعية:`
-        : `Spatial Intersection Analysis: Found **2 communities/projects** intersecting protected environmental boundaries:`;
-
-      const suggestions = isArabic
-        ? ["استبعاد المحميات الطبيعية", "مقارنة المشاريع", "عرض الرسم البياني"]
-        : ["Exclude protected areas", "Compare projects", "Show a chart"];
-
-      return { reply, results, suggestions, activeContext: { ...currentState?.activeContext, activeLocations: results } };
-    }
-  },
-
   // =========================================================
-  // 4. CROSS-THEME & MULTI-LAYER SPATIAL ANALYSIS
-  // =========================================================
-  {
-    id: 'CROSS_THEME_SCHOOLS_HOSPITALS_PARKS',
-    patterns_en: [
-      'which communities have schools, hospitals and parks nearby',
-      'communities with schools hospitals and parks',
-      'schools hospitals and parks'
-    ],
-    patterns_ar: [
-      'أيها المناطق التي تتواجد فيها مدارس ومستشفيات وحدائق',
-      'مناطق فيها مدارس ومستشفيات وحدائق'
-    ],
-    handler: (currentState, isArabic) => {
-      const results = [
-        { id: 701, name: 'Al Reem Island Central District', name_ar: 'قطاع جزيرة الريم المركزي', type: 'ADMINISTRATIVE', category_en: 'Integrated Community', category_ar: 'مجتمع متكامل', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.5000, lng: 54.4050, distanceKm: 2.1, schoolsCount: 4, hospitalsCount: 2, parksCount: 3 },
-        { id: 702, name: 'Khalifa City Sector A', name_ar: 'مدينة خليفة - القطاع أ', type: 'ADMINISTRATIVE', category_en: 'Integrated Community', category_ar: 'مجتمع متكامل', location: 'Khalifa City', location_ar: 'مدينة خليفة', lat: 24.4200, lng: 54.5800, distanceKm: 12.4, schoolsCount: 6, hospitalsCount: 3, parksCount: 5 }
-      ];
-
-      const reply = isArabic
-        ? `نتائج التحليل المكاني المتعدد الطبقات:\nتم العثور على **مجموعتين مجتمعيتين تتوفر فيهما المدارس والمستشفيات والحدائق معاً**:\n\n1. 🏙️ **${results[0].name_ar}** (مدارس: 4 | مستشفيات: 2 | حدائق: 3)\n2. 🏙️ **${results[1].name_ar}** (مدارس: 6 | مستشفيات: 3 | حدائق: 5)`
-        : `Multi-Layer Spatial Overlay Analysis:\nIdentified **2 communities with nearby Schools, Hospitals, and Parks**:\n\n1. 🏙️ **${results[0].name}** (Schools: 4 | Hospitals: 2 | Parks: 3)\n2. 🏙️ **${results[1].name}** (Schools: 6 | Hospitals: 3 | Parks: 5)`;
-
-      const suggestions = isArabic
-        ? ["قارن بينها في رسم بياني", "عرض في جدول", "عرض على الخريطة"]
-        : ["Compare them in a chart", "Put this in a table", "Show on the map"];
-
-      return { reply, results, suggestions, activeContext: { category: 'CROSS_THEME', activeLocations: results } };
-    }
-  },
-
-  {
-    id: 'CROSS_THEME_SCHOOLS_NEAR_BUS_STOPS',
-    patterns_en: [
-      'find schools within 500 m of bus stops',
-      'schools within 500 m of bus stops',
-      'schools near bus stops'
-    ],
-    patterns_ar: [
-      'البحث عن المدارس الواقعة ضمن 500 متر من محطات الحافلات',
-      'مدارس قريب من محطات الحافلات'
-    ],
-    handler: (currentState, isArabic) => {
-      const results = [
-        { id: 710, name: 'Cranleigh Abu Dhabi International School', name_ar: 'مدرسة كرانلي أبوظبي الدولية', type: 'EDUCATION', category_en: 'School', category_ar: 'مدرسة', location: 'Saadiyat Cultural District', location_ar: 'السعديات', lat: 24.5310, lng: 54.4080, distanceKm: 0.2, busStopsNearby: 3 },
-        { id: 711, name: 'GEMS World Academy - Abu Dhabi', name_ar: 'أكاديمية جيمس العالمية', type: 'EDUCATION', category_en: 'School', category_ar: 'مدرسة', location: 'Al Reem Island', location_ar: 'جزيرة الريم', lat: 24.4960, lng: 54.4020, distanceKm: 0.35, busStopsNearby: 2 }
-      ];
-
-      const reply = isArabic
-        ? `تم إجراء تراكب الطبقات المكانية: تم العثور على **${results.length} مدارس تقع ضمن نطاق 500م من محطات الحافلات**:`
-        : `Executed Spatial Buffer Overlay: Identified **${results.length} schools within 500m of public bus stops**:`;
-
-      const suggestions = isArabic
-        ? ["أيها التي تحوي أكثر عدد محطات؟", "اعرض الأقرب", "عرض في جدول"]
-        : ["Which one has the most bus stops nearby?", "Which is closest?", "Put this in a table"];
-
-      return { reply, results, suggestions, activeContext: { category: 'CROSS_THEME', activeLocations: results } };
-    }
-  },
-
-  // =========================================================
-  // 5. OUTPUT PRESENTATION CONTROLS (Table, Chart, Explanation)
-  // =========================================================
-  {
-    id: 'OUTPUT_TABLE_REQUEST',
-    patterns_en: [
-      'put this in a table',
-      'give me a table',
-      'show in a table',
-      'show in table',
-      'table view',
-      'format as table'
-    ],
-    patterns_ar: [
-      'ضع هذا في جدول',
-      'اعرض في جدول',
-      'عرض الجدول',
-      'جدول البيانات'
-    ],
-    handler: (currentState, isArabic) => {
-      const activeList = currentState?.activeContext?.activeLocations || LOCATIONS_DB.slice(0, 5);
-      const reply = isArabic
-        ? `تم تغيير نمط العرض إلى **جدول البيانات المكانية المنظمة**:`
-        : `Switched presentation mode to **Structured Spatial Data Table**:`;
-
-      return { reply, results: activeList, outputType: 'table', activeContext: currentState?.activeContext };
-    }
-  },
-
-  {
-    id: 'OUTPUT_CHART_REQUEST',
-    patterns_en: [
-      'compare them in a chart',
-      'show a chart',
-      'compare in a chart',
-      'generate a chart',
-      'chart view'
-    ],
-    patterns_ar: [
-      'قارن بينها في رسم بياني',
-      'اعرض رسم بياني',
-      'مخطط بياني'
-    ],
-    handler: (currentState, isArabic) => {
-      const activeList = currentState?.activeContext?.activeLocations || LOCATIONS_DB.slice(0, 5);
-      const chartData = {
-        id: 'user-chart-' + Date.now(),
-        title: isArabic ? "مقارنة السعة والقرب الجغرافي للمنشآت" : "Comparative Spatial Features Metric",
-        type: 'bar',
-        data: activeList.map(item => ({
-          label: isArabic && item.name_ar ? item.name_ar : item.name,
-          name: isArabic && item.name_ar ? item.name_ar : item.name,
-          value: item.capacity || (item.distanceKm ? Math.round(item.distanceKm * 10) : 50),
-          color: '#3b82f6'
-        }))
-      };
-
-      const reply = isArabic
-        ? `تم إنشاء الرسم البياني بناءً على طلبك الصريح:`
-        : `Generated comparative chart graph upon your explicit request:`;
-
-      return { reply, chartData, results: activeList, outputType: 'chart', activeContext: currentState?.activeContext };
-    }
-  },
-
-  {
-    id: 'OUTPUT_EXPLAIN_RESULTS',
-    patterns_en: [
-      'why are you showing me these locations',
-      'why are these results shown',
-      'why these results',
-      'explain results',
-      'why these locations'
-    ],
-    patterns_ar: [
-      'لماذا تعرض لي هذه المواقع',
-      'لماذا هذه النتائج',
-      'تفسير النتائج'
-    ],
-    handler: (currentState, isArabic) => {
-      const reply = isArabic
-        ? "💡 **توضيح النتيجة المكانية**:\nتم اختيار هذه المواقع بناءً على تصنيف المعالم ومطابقتها لاشتراطات النطاق الجغرافي المسجل في البنية المكانية لـ SDI بالنسبة لموقعك الحالي."
-        : "💡 **Spatial Result Explanation**:\nThese locations match your request because they are classified under the requested theme and fall within the calculated proximity radius from your active reference location.";
-
-      return { reply, outputType: 'explanation', activeContext: currentState?.activeContext };
-    }
-  },
-
-  {
-    id: 'OUTPUT_EXPLAIN_CALCULATION',
-    patterns_en: [
-      'how did you calculate this',
-      'how is this calculated',
-      'explain calculation',
-      'explain analysis',
-      'how did you find this'
-    ],
-    patterns_ar: [
-      'كيف قمت بحساب هذا',
-      'كيف تم الحساب',
-      'شرح طريقة الحساب'
-    ],
-    handler: (currentState, isArabic) => {
-      const reply = isArabic
-        ? "📐 **طريقة التحليل الجغرافي**:\nتم حساب النتائج عن طريق إجراء نطاق مكاني (Buffer Proximity) حول الموقع الجغرافي المرجعي، واستعلام مجموعة البيانات المحددة وترتيب المعالم بناءً على صيغة المسافة الجيوديسية الحقيقية."
-        : "📐 **GIS Calculation Method**:\nThe results were calculated by executing a spatial proximity buffer around the reference coordinates, querying the active SDI dataset layer, and ranking features using exact geodesic distance geometry.";
-
-      return { reply, outputType: 'analysis_explanation', activeContext: currentState?.activeContext };
-    }
-  },
-
-  // =========================================================
-  // 6. AMBIGUOUS & VAGUE NATURAL LANGUAGE QUESTIONS
+  // 5. AMBIGUOUS & VAGUE NATURAL LANGUAGE QUESTIONS
   // =========================================================
   {
     id: 'AMBIGUOUS_SHOW_FACILITIES_NEAR_ME',
     patterns_en: [
-      'show facilities near me',
       'facilities near me',
       'show facilities',
       'find facilities'
@@ -424,15 +269,10 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
         ? "❓ **تحديد فئة المنشآت**:\nأيها نوع من المنشآت تود استكشافها بالقرب منك؟"
         : "❓ **Clarification Required**:\nWhat type of facilities would you like to see around your area?";
 
-      const actionCards = [
-        { title: "Government", label: "○ Government", label_ar: "○ حكومية", actionType: 'SEARCH_SUBMIT', params: { query: "Show government facilities near me" }, isOption: true },
-        { title: "Transport", label: "○ Transport", label_ar: "○ وسائل نقل", actionType: 'SEARCH_SUBMIT', params: { query: "Show bus stops near me" }, isOption: true },
-        { title: "Tourism", label: "○ Tourism", label_ar: "○ سياحة ومعالم", actionType: 'SEARCH_SUBMIT', params: { query: "Show tourist attractions near me" }, isOption: true },
-        { title: "Public Safety", label: "○ Public Safety", label_ar: "○ أمن وسلامة", actionType: 'SEARCH_SUBMIT', params: { query: "Show police stations near me" }, isOption: true },
-        { title: "Utilities", label: "○ Utilities", label_ar: "○ مرافق عامة", actionType: 'SEARCH_SUBMIT', params: { query: "Show petrol stations near me" }, isOption: true }
-      ];
+      // Retain ONLY the highlighted suggestions version per design requirement (do not duplicate with actionCards)
+      const suggestions = ["Government", "Transport", "Tourism", "Public Safety", "Utilities"];
 
-      return { reply, actionCards, suggestions: ["Government", "Transport", "Tourism", "Public Safety", "Utilities"] };
+      return { reply, suggestions };
     }
   },
 
@@ -468,6 +308,14 @@ export function matchKnowledgeBaseQuery(queryText, currentState, isArabic = fals
 
   // Evaluate against knowledge base entries
   for (const entry of AI_KNOWLEDGE_BASE_ENTRIES) {
+    // Special guard: If entry is generic ambiguous search, do NOT match if query contains a specific sector/category
+    if (entry.id === 'AMBIGUOUS_SHOW_FACILITIES_NEAR_ME') {
+      const specificKeywords = ['government', 'police', 'bus', 'hospital', 'park', 'parking', 'tourism', 'utility', 'utilities', 'حكومية', 'حكومي', 'شرطة', 'مستشفى', 'حديقة', 'سياحة'];
+      if (specificKeywords.some(k => q.includes(k))) {
+        continue;
+      }
+    }
+
     const patterns = isArabic ? (entry.patterns_ar || entry.patterns_en) : entry.patterns_en;
     
     // Check if query matches any pattern explicitly or via token inclusion

@@ -1,12 +1,62 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, MapPin, GraduationCap, PlusSquare, TreePine, Bus, 
-  ChevronRight, Heart, X, Filter, Navigation, Zap, Target, Info, History, ChevronDown, Check, Globe, BarChart3, Building2, SlidersHorizontal
-} from 'lucide-react';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined';
+import BookmarkOutlinedIcon from '@mui/icons-material/BookmarkOutlined';
+import FavoriteOutlinedIcon from '@mui/icons-material/FavoriteOutlined';
+import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined';
+import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
+import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlined';
+import BusinessOutlinedIcon from '@mui/icons-material/BusinessOutlined';
+import LocalHospitalOutlinedIcon from '@mui/icons-material/LocalHospitalOutlined';
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined';
+import ParkOutlinedIcon from '@mui/icons-material/ParkOutlined';
+import DirectionsBusOutlinedIcon from '@mui/icons-material/DirectionsBusOutlined';
+import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
+import ElectricBoltOutlinedIcon from '@mui/icons-material/ElectricBoltOutlined';
+import AgricultureOutlinedIcon from '@mui/icons-material/AgricultureOutlined';
+import AddOutlinedIcon from '@mui/icons-material/AddOutlined';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useProject } from '../../contexts/ProjectContext';
+import { calculateGeodesicDistance, formatDistance } from '../../services/spatial/spatialAnalysisService';
+import { aiOrchestrator } from '../../services/ai/aiOrchestrator';
+import { triggerViewDetails } from '../../utils/viewDetailsHandler';
+import facilitiesData from '../../data/facilitiesData.json';
+
+const getItemCategoryIcon = (type) => {
+  const tStr = (type || '').toUpperCase();
+  if (tStr.includes('GOVERNMENT') || tStr.includes('MUNICIPAL') || tStr.includes('EXECUTIVE') || tStr.includes('PUBLIC')) {
+    return AccountBalanceOutlinedIcon;
+  }
+  if (tStr.includes('HOSPITAL') || tStr.includes('HEALTHCARE') || tStr.includes('MEDICAL')) {
+    return LocalHospitalOutlinedIcon;
+  }
+  if (tStr.includes('EDUCATION') || tStr.includes('SCHOOL') || tStr.includes('UNIVERSITY')) {
+    return SchoolOutlinedIcon;
+  }
+  if (tStr.includes('PARK') || tStr.includes('ENVIRONMENT') || tStr.includes('GREEN')) {
+    return ParkOutlinedIcon;
+  }
+  if (tStr.includes('TRANSPORT') || tStr.includes('BUS') || tStr.includes('MOBILITY') || tStr.includes('TRANSIT')) {
+    return DirectionsBusOutlinedIcon;
+  }
+  if (tStr.includes('TOURISM') || tStr.includes('HERITAGE') || tStr.includes('MUSEUM')) {
+    return ExploreOutlinedIcon;
+  }
+  if (tStr.includes('UTILITIES') || tStr.includes('POWER') || tStr.includes('ENERGY') || tStr.includes('INFRASTRUCTURE')) {
+    return ElectricBoltOutlinedIcon;
+  }
+  if (tStr.includes('AGRICULTURE') || tStr.includes('AGRICULTURAL') || tStr.includes('FARM')) {
+    return AgricultureOutlinedIcon;
+  }
+  return BusinessOutlinedIcon;
+};
 
 export default function SearchResultsList({ explorerState, setExplorerState }) {
   const { t, isArabic } = useLanguage();
@@ -19,6 +69,60 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
   const [sortBy, setSortBy] = useState('distance'); // 'distance' | 'name' | 'type'
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showAllResults, setShowAllResults] = useState(false);
+  const [searchInput, setSearchInput] = useState(explorerState?.lastQuery || '');
+
+  useEffect(() => {
+    if (explorerState?.lastQuery !== undefined) {
+      setSearchInput(explorerState.lastQuery);
+    }
+  }, [explorerState?.lastQuery]);
+
+  const handleSearchSubmit = async (e) => {
+    if (e) e.preventDefault();
+    if (!searchInput || !searchInput.trim()) return;
+
+    const trimmed = searchInput.trim();
+    const response = await aiOrchestrator.processUserQuery(trimmed, explorerState, isArabic);
+
+    let newResults = [];
+    if (response?.blocks) {
+      const locBlock = response.blocks.find(b => b.type === 'LOCATION_LIST' || b.type === 'FACILITY_LIST');
+      if (locBlock?.locations) {
+        newResults = locBlock.locations;
+      }
+    }
+
+    if (!newResults || newResults.length === 0) {
+      const qLower = trimmed.toLowerCase();
+      newResults = facilitiesData.features.map(f => ({
+        id: f.properties.id,
+        name: f.properties.name,
+        name_ar: f.properties.name_ar,
+        location: `${f.properties.district}, ${f.properties.city}`,
+        type: f.properties.facilityType,
+        sector: f.properties.sector,
+        lat: f.geometry.coordinates[1],
+        lng: f.geometry.coordinates[0]
+      })).filter(f => 
+        (f.name && f.name.toLowerCase().includes(qLower)) ||
+        (f.name_ar && f.name_ar.includes(trimmed)) ||
+        (f.location && f.location.toLowerCase().includes(qLower)) ||
+        (f.type && f.type.toLowerCase().includes(qLower))
+      );
+    }
+
+    setExplorerState(prev => ({
+      ...prev,
+      lastQuery: trimmed,
+      activeResults: newResults,
+      showSearchResults: true,
+      chatHistory: [
+        ...(prev.chatHistory || []),
+        { sender: 'user', text: trimmed, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+        { sender: 'ai', text: response.text || `Search results for "${trimmed}"`, blocks: response.blocks, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      ]
+    }));
+  };
 
   const sortRef = useRef(null);
 
@@ -37,31 +141,16 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
     }));
   };
 
-  const handleSelectFacility = (item) => {
-    setExplorerState(prev => ({
-      ...prev,
-      selectedLocation: item,
-      selectedDetail: item,
-      showSearchResults: false,
-      activeMenu: null,
-      showCategoriesPanel: false,
-      showBasemapMenu: false,
-      mapFocus: { lat: item.lat, lng: item.lng, zoom: 17 }
-    }));
+  const handleSelectFacility = (item, e) => {
+    if (e) e.stopPropagation();
+    const rect = e?.currentTarget?.getBoundingClientRect();
+    triggerViewDetails(item, rect, setExplorerState, isArabic);
   };
 
   const handleViewDetails = (item, e) => {
     if (e) e.stopPropagation();
-    setExplorerState(prev => ({
-      ...prev,
-      selectedDetail: item,
-      selectedLocation: item,
-      showSearchResults: false,
-      activeMenu: null,
-      showCategoriesPanel: false,
-      showBasemapMenu: false,
-      mapFocus: { lat: item.lat, lng: item.lng, zoom: 17 }
-    }));
+    const rect = e?.currentTarget?.getBoundingClientRect();
+    triggerViewDetails(item, rect, setExplorerState, isArabic);
   };
 
   const handleToggleFavorite = (item, e) => {
@@ -87,16 +176,32 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
     });
   };
 
-  const sortedResults = [...results].sort((a, b) => {
+  const originLat = explorerState?.userLocation?.lat || activeProject?.defaultCenter?.lat || 24.4839;
+  const originLng = explorerState?.userLocation?.lng || activeProject?.defaultCenter?.lng || 54.3773;
+
+  // Process items with exact geodesic distance from user location
+  const processedResults = results.map(item => {
+    const lat = item.lat || (item.geometry?.coordinates?.[1]);
+    const lng = item.lng || (item.geometry?.coordinates?.[0]);
+    let distKm = item.distanceKm;
+    if (lat && lng) {
+      distKm = calculateGeodesicDistance(originLat, originLng, lat, lng);
+    }
+    return {
+      ...item,
+      lat,
+      lng,
+      distanceKm: distKm !== undefined && distKm !== null ? distKm : 0
+    };
+  });
+
+  const sortedResults = [...processedResults].sort((a, b) => {
     if (sortBy === 'name') return a.name.localeCompare(b.name);
     if (sortBy === 'type') return (a.type || '').localeCompare(b.type || '');
-    const distA = a.distance ? parseFloat(a.distance) : 2.0;
-    const distB = b.distance ? parseFloat(b.distance) : 2.0;
-    return distA - distB;
+    return (a.distanceKm || 0) - (b.distanceKm || 0); // Closest first
   });
 
   const displayedList = showAllResults ? sortedResults : sortedResults.slice(0, 5);
-
   const queryText = explorerState?.lastQuery || (isArabic ? 'نتائج البحث' : 'Search Results');
 
   // If search results panel is explicitly hidden by user or no active results, return null
@@ -138,7 +243,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
               }`}
               title={t('Analytics (On Demand)', 'تحليلات حسب الطلب')}
             >
-              <BarChart3 className="w-4 h-4 text-[#215A9E] dark:text-[#00e5ff]" />
+              <BarChartOutlinedIcon style={{ fontSize: 18 }} />
             </button>
 
             {/* Close Button */}
@@ -148,18 +253,38 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
                 isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-800'
               }`}
             >
-              <X className="w-4 h-4" />
+              <CloseOutlinedIcon style={{ fontSize: 18 }} />
             </button>
           </div>
         </div>
 
-        {/* Query Chip Display (Wireframe Page 03) */}
-        <div className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-2 truncate ${
-          isDarkMode ? 'bg-[#121c38] border-slate-700/70 text-[#00e5ff]' : 'bg-[#eef3ff] border-[#3D52A0]/20 text-[#215A9E]'
-        }`}>
-          <Search className="w-3.5 h-3.5 shrink-0 opacity-70" />
-          <span className="truncate">"{queryText}"</span>
-        </div>
+        {/* Interactive Search Bar Input */}
+        <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+          <SearchOutlinedIcon style={{ fontSize: 16 }} className={`absolute start-3 pointer-events-none z-10 ${
+            isDarkMode ? 'text-[#00e5ff]' : 'text-[#215A9E]'
+          }`} />
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={t('Search locations, facilities...', 'ابحث عن المواقع والمنشآت...')}
+            className={`w-full ps-8 pe-8 py-1.5 text-xs font-semibold rounded-xl border outline-none transition-all ${
+              isDarkMode 
+                ? 'bg-[#121c38] border-slate-700/80 text-white placeholder:text-slate-500 focus:border-[#00e5ff] focus:ring-1 focus:ring-[#00e5ff]' 
+                : 'bg-[#f4f7fc] border-[#3D52A0]/20 text-[#1e2749] placeholder:text-slate-400 focus:border-[#215A9E] focus:ring-1 focus:ring-[#215A9E] focus:bg-white'
+            }`}
+          />
+          {searchInput && (
+            <button
+              type="button"
+              onClick={() => setSearchInput('')}
+              className="absolute end-2.5 p-0.5 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors cursor-pointer"
+              title={t('Clear search', 'مسح البحث')}
+            >
+              <CloseOutlinedIcon style={{ fontSize: 14 }} />
+            </button>
+          )}
+        </form>
 
         {/* Count & Sort Controls (Wireframe Page 04) */}
         <div className="flex items-center justify-between text-xs font-medium pt-1">
@@ -177,7 +302,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
               }`}
             >
               <span>{t('Sort by: ', 'ترتيب حسب: ')}{sortBy === 'distance' ? t('Distance', 'المسافة') : sortBy === 'name' ? t('Name', 'الاسم') : t('Type', 'النوع')}</span>
-              <ChevronDown className="w-3 h-3" />
+              <KeyboardArrowDownOutlinedIcon style={{ fontSize: 16 }} />
             </button>
 
             {showSortMenu && (
@@ -199,7 +324,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
                     }`}
                   >
                     <span>{t(opt.label_en, opt.label_ar)}</span>
-                    {sortBy === opt.id && <Check className="w-3.5 h-3.5" />}
+                    {sortBy === opt.id && <CheckOutlinedIcon style={{ fontSize: 16 }} />}
                   </button>
                 ))}
               </div>
@@ -216,6 +341,7 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
             (fav.id && item.id && String(fav.id) === String(item.id)) || 
             (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())
           );
+          const CategoryItemIcon = getItemCategoryIcon(item.type || item.facilityType || item.category);
 
           return (
             <div
@@ -227,23 +353,14 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
                   : (isDarkMode ? 'bg-[#0e172e] border-slate-800 hover:bg-[#132145] hover:border-slate-700' : 'bg-slate-50/90 border-slate-200/80 hover:bg-white hover:shadow-xs')
               }`}
             >
-              {/* Number Badge (1, 2, 3, 4, 5...) */}
-              <div className={`w-7 h-7 rounded-xl font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs ${
-                isSelected
-                  ? (isDarkMode ? 'bg-[#00e5ff] text-slate-950' : 'bg-[#215A9E] text-white')
-                  : (isDarkMode ? 'bg-[#182645] text-slate-300 border border-slate-700' : 'bg-white text-slate-600 border border-slate-200')
-              }`}>
-                {idx + 1}
-              </div>
-
-              {/* Building Category Icon */}
+              {/* Category Icon (Left side) */}
               <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                isDarkMode ? 'bg-[#121c38] text-[#00e5ff]' : 'bg-white text-[#215A9E] border border-slate-200/60'
+                isDarkMode ? 'bg-[#121c38] text-[#00e5ff]' : 'bg-[#eef3ff] text-[#215A9E] border border-[#3D52A0]/20'
               }`}>
-                <Building2 className="w-4 h-4" />
+                <CategoryItemIcon style={{ fontSize: 20 }} />
               </div>
 
-              {/* Title & Location details */}
+              {/* Title & Location details (Middle) */}
               <div className="flex-1 min-w-0">
                 <h4 className={`font-bold text-xs truncate transition-colors ${
                   isSelected 
@@ -253,13 +370,21 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
                   {isArabic && item.name_ar ? item.name_ar : item.name}
                 </h4>
                 <p className="text-[11px] font-medium text-slate-400 truncate mt-0.5">
-                  {isArabic && item.location_ar ? item.location_ar : (item.location || item.district || 'Abu Dhabi')} • {item.distance || `${(1.2 + idx * 0.9).toFixed(1)} km`}
+                  {isArabic && item.location_ar ? item.location_ar : (item.location || item.district || 'Abu Dhabi')}
                 </p>
               </div>
 
-              {/* Action buttons on item (Favorite icon hidden for Guests) */}
-              {isLoggedIn && (
-                <div className="flex items-center gap-1 shrink-0">
+              {/* Right Side: Distance Badge & Action Buttons */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className={`px-2.5 py-1 rounded-xl font-bold text-[11px] flex items-center justify-center shrink-0 shadow-2xs whitespace-nowrap border ${
+                  isSelected
+                    ? (isDarkMode ? 'bg-[#00e5ff] text-slate-950 border-[#00e5ff]' : 'bg-[#215A9E] text-white border-[#215A9E]')
+                    : (isDarkMode ? 'bg-[#142347] text-[#00e5ff] border-[#00e5ff]/30' : 'bg-[#f0f4ff] text-[#215A9E] border-[#3D52A0]/20')
+                }`}>
+                  {formatDistance(item.distanceKm)}
+                </div>
+
+                {isLoggedIn && (
                   <button
                     onClick={(e) => handleToggleFavorite(item, e)}
                     className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
@@ -269,10 +394,10 @@ export default function SearchResultsList({ explorerState, setExplorerState }) {
                     }`}
                     title={t('Add to Favorites', 'إضافة للمفضلة')}
                   >
-                    <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
+                    {isFav ? <FavoriteOutlinedIcon style={{ fontSize: 16 }} /> : <FavoriteBorderOutlinedIcon style={{ fontSize: 16 }} />}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           );
         })}

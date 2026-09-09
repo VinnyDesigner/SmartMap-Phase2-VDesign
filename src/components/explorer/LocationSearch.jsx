@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
+import PlaceOutlinedIcon from '@mui/icons-material/PlaceOutlined';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const mockLocations = [
@@ -13,7 +14,7 @@ const mockLocations = [
 ];
 
 export default function LocationSearch({ explorerState, setExplorerState }) {
-  const [query, setQuery] = useState('Al Jimi, Al Ain');
+  const [query, setQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -67,7 +68,7 @@ export default function LocationSearch({ explorerState, setExplorerState }) {
       </div>
 
       <div className="relative flex items-center gap-2 bg-white/95 backdrop-blur-md h-full w-full rounded-[22px] px-[12px]">
-        <Search className="w-5 h-5 text-dge-tech shrink-0" />
+        <SearchOutlinedIcon style={{ fontSize: 20 }} className="text-dge-tech shrink-0" />
         <input 
           type="text"
           value={query}
@@ -95,7 +96,7 @@ export default function LocationSearch({ explorerState, setExplorerState }) {
                 onClick={() => handleSelect(loc)}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-white/50 transition-colors text-left border-b border-transparent last:border-0"
               >
-                <MapPin className="w-4 h-4 text-dge-grey opacity-50" />
+                <PlaceOutlinedIcon style={{ fontSize: 18 }} className="text-dge-grey opacity-50" />
                 <span className="text-[13px] font-medium text-dge-reliable tracking-tight">{loc.name}</span>
               </button>
             ))}

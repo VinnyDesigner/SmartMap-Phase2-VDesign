@@ -35,9 +35,12 @@ export default function AiKpiGrid({ metrics }) {
   const { t, isArabic } = useLanguage();
   if (!metrics || metrics.length === 0) return null;
 
+  // Select the most relevant 3-5 metrics per design guidelines
+  const displayMetrics = metrics.slice(0, 4);
+
   return (
-    <div className="grid grid-cols-2 gap-2 my-2.5">
-      {metrics.map((item, idx) => {
+    <div className={`grid ${displayMetrics.length === 3 ? 'grid-cols-3' : 'grid-cols-2'} gap-2 my-2.5`}>
+      {displayMetrics.map((item, idx) => {
         const IconComponent = ICON_MAP[item.iconType] || Activity;
         const itemLabel = isArabic ? (item.label_ar || KPI_LABEL_MAP[item.label] || item.label) : item.label;
         return (
@@ -55,10 +58,10 @@ export default function AiKpiGrid({ metrics }) {
               </div>
             </div>
             
-            <div className="mt-1 flex items-baseline justify-between">
-              <span className={`text-base font-extrabold tracking-tight ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>{item.value}</span>
+            <div className="mt-1 flex items-baseline justify-between gap-1">
+              <span className={`text-sm md:text-base font-extrabold tracking-tight truncate ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>{item.value}</span>
               {item.change && (
-                <span className={`text-[10px] font-bold flex items-center gap-0.5 ${item.change.startsWith('+') || item.changeType === 'increase' ? 'text-rose-400' : 'text-emerald-400'}`}>
+                <span className={`text-[10px] font-bold flex items-center gap-0.5 shrink-0 ${item.change.startsWith('+') || item.changeType === 'increase' ? 'text-rose-500' : 'text-emerald-500'}`}>
                   {item.change.startsWith('+') ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {item.change}
                 </span>

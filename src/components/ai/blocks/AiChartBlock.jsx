@@ -19,28 +19,52 @@ const CATEGORY_MAP = {
 export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics }) {
   const { isDarkMode } = useTheme();
   const { t, isArabic } = useLanguage();
+
   if (!chartData || !chartData.data) return null;
 
-  const { title, type = 'column', data = [], xKey = 'label', yKey = 'value', unit = '' } = chartData;
+  const {
+    title,
+    chartType = 'column',
+    type = 'column',
+    data = [],
+    xKey = 'label',
+    yKey = 'value',
+    unit = ''
+  } = chartData;
 
+  const activeType = (chartType || type).toLowerCase();
   const displayTitle = isArabic ? (chartData.title_ar || CATEGORY_MAP[title] || title) : title;
   const displayUnit = isArabic ? (unit === 'tCO2e' ? 'طن مكافئ' : unit === 'pts' ? 'نقاط' : unit) : unit;
 
   const categories = data.map(item => {
-    const rawVal = item[xKey] || item.name || item.label;
+    const rawVal = item[xKey] || item.name || item.label || item.district || item.facility;
     return isArabic ? (item.name_ar || CATEGORY_MAP[rawVal] || rawVal) : rawVal;
   });
 
-  const seriesValues = data.map(item => ({
-    y: typeof item[yKey] === 'number' ? item[yKey] : item.value,
-    facilityId: item.id || item.facilityId,
-    facility: item
-  }));
+  const isPieOrDonut = activeType === 'pie' || activeType === 'donut' || activeType === 'doughnut';
+
+  const seriesValues = isPieOrDonut
+    ? data.map(item => ({
+        name: isArabic ? (item.name_ar || item.label) : (item.label || item.name),
+        y: typeof item[yKey] === 'number' ? item[yKey] : (item.value || item.riskScore || 0),
+        color: item.color,
+        facility: item
+      }))
+    : data.map(item => ({
+        y: typeof item[yKey] === 'number' ? item[yKey] : (item.value || item.riskScore || item.emissions || 0),
+        facilityId: item.id || item.facilityId,
+        facility: item
+      }));
+
+  let hChartType = 'column';
+  if (activeType === 'line') hChartType = 'line';
+  else if (activeType === 'bar' || activeType === 'horizontal_bar' || activeType === 'ranked_bar') hChartType = 'bar';
+  else if (isPieOrDonut) hChartType = 'pie';
 
   const options = {
     chart: {
-      type: type === 'line' ? 'line' : type === 'bar' ? 'bar' : 'column',
-      height: 180,
+      type: hChartType,
+      height: 185,
       backgroundColor: 'transparent',
       style: { fontFamily: 'Inter, sans-serif' }
     },
@@ -49,27 +73,32 @@ export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics
       style: { fontSize: '11px', fontWeight: '700', color: isDarkMode ? '#f8fafc' : '#1e2749' }
     },
     credits: { enabled: false },
-    legend: { enabled: false },
-    xAxis: {
+    legend: { enabled: isPieOrDonut },
+    xAxis: isPieOrDonut ? undefined : {
       categories: categories,
       labels: { style: { fontSize: '9px', color: isDarkMode ? '#94a3b8' : '#64748b' } },
       lineColor: isDarkMode ? '#334155' : '#e2e8f0'
     },
-    yAxis: {
+    yAxis: isPieOrDonut ? undefined : {
       title: { text: null },
       labels: { style: { fontSize: '9px', color: isDarkMode ? '#94a3b8' : '#64748b' } },
       gridLineColor: isDarkMode ? '#1e293b' : '#f1f5f9'
     },
     tooltip: {
-      pointFormat: `<b>{point.y} ${unit}</b>`,
+      pointFormat: `<b>{point.y} ${displayUnit}</b>`,
       style: { fontSize: '10px' },
       backgroundColor: isDarkMode ? '#0f1a36' : '#ffffff',
       borderColor: isDarkMode ? '#334155' : '#e2e8f0',
       color: isDarkMode ? '#ffffff' : '#000000'
     },
     plotOptions: {
+      pie: {
+        innerSize: (activeType === 'donut' || activeType === 'doughnut') ? '55%' : '0%',
+        dataLabels: { enabled: false },
+        showInLegend: true
+      },
       series: {
-        borderRadius: type === 'line' ? 0 : 4,
+        borderRadius: hChartType === 'line' ? 0 : 4,
         color: isDarkMode ? '#00e5ff' : '#3D52A0',
         cursor: 'pointer',
         point: {
@@ -84,6 +113,7 @@ export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics
       }
     },
     series: [{
+      name: displayTitle,
       data: seriesValues
     }]
   };

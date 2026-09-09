@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, Marker, Popup, useMap, useMapEvents, Polygon, Circle, Rectangle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { motion } from 'framer-motion';
-import { MapPin, ArrowRight, Sparkles, Navigation, Target } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, Navigation, Target, Copy, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useProject } from '../contexts/ProjectContext';
 import ArcGISBasemap from './explorer/ArcGISBasemap';
 import { getLandmarkThumbnail } from '../utils/landmarkImages';
+import { triggerViewDetails } from '../utils/viewDetailsHandler';
 
 const customPinIcon = L.divIcon({
   className: 'custom-map-pin-container',
@@ -20,14 +22,83 @@ const customPinIcon = L.divIcon({
   iconAnchor: [20, 50]
 });
 
-const createCategoryIcon = (type) => {
+const userLocationPinIcon = L.divIcon({
+  className: 'user-location-pin-container',
+  html: `<div class="relative flex items-center justify-center" style="width: 48px; height: 48px;">
+           <div class="absolute inset-0 rounded-full bg-[#00e5ff]/35 animate-ping"></div>
+           <div class="absolute inset-2 rounded-full bg-[#215A9E]/40 animate-pulse"></div>
+           <div class="relative w-7 h-7 rounded-full bg-gradient-to-tr from-[#063360] via-[#215A9E] to-[#00e5ff] border-2 border-white shadow-[0_4px_14px_rgba(0,229,255,0.8)] flex items-center justify-center">
+             <div class="w-2.5 h-2.5 rounded-full bg-white shadow-inner"></div>
+           </div>
+         </div>`,
+  iconSize: [48, 48],
+  iconAnchor: [24, 24]
+});
+
+const getCategoryColorDetails = (type) => {
   let textColor = 'text-[#215A9E]';
-  if (type === 'GOVERNMENT' || type === 'MUNICIPAL') textColor = 'text-[#063360]';
-  else if (type === 'EDUCATION') textColor = 'text-blue-600';
-  else if (type === 'HOSPITAL' || type === 'HEALTHCARE') textColor = 'text-red-600';
-  else if (type === 'PARK' || type === 'ENVIRONMENT') textColor = 'text-emerald-600';
-  else if (type === 'TRANSPORT') textColor = 'text-purple-600';
-  else if (type === 'TOURISM') textColor = 'text-amber-500';
+  let hexColor = '#215A9E';
+
+  if (type === 'GOVERNMENT' || type === 'MUNICIPAL') {
+    textColor = 'text-[#063360]';
+    hexColor = '#063360';
+  } else if (type === 'EDUCATION') {
+    textColor = 'text-blue-600';
+    hexColor = '#2563eb';
+  } else if (type === 'HOSPITAL' || type === 'HEALTHCARE') {
+    textColor = 'text-red-600';
+    hexColor = '#dc2626';
+  } else if (type === 'PARK' || type === 'ENVIRONMENT') {
+    textColor = 'text-emerald-600';
+    hexColor = '#059669';
+  } else if (type === 'TRANSPORT') {
+    textColor = 'text-purple-600';
+    hexColor = '#9333ea';
+  } else if (type === 'TOURISM') {
+    textColor = 'text-amber-500';
+    hexColor = '#d97706';
+  }
+
+  return { textColor, hexColor };
+};
+
+const createPulsePointerIcon = (type = 'GOVERNMENT') => {
+  const { textColor, hexColor } = getCategoryColorDetails(type);
+  
+  return L.divIcon({
+    className: 'custom-pulse-pointer-container',
+    html: `
+      <div class="relative flex items-center justify-center" style="width: 56px; height: 56px;">
+        <!-- Expanding Pulse Wave 1 -->
+        <div class="absolute inset-0 rounded-full animate-ping opacity-65 pointer-events-none" style="background-color: ${hexColor}40;"></div>
+        <!-- Glowing Pulse Aura 2 -->
+        <div class="absolute inset-1.5 rounded-full animate-pulse opacity-85 pointer-events-none border-2" style="background-color: ${hexColor}25; border-color: ${hexColor}; box-shadow: 0 0 20px ${hexColor};"></div>
+        <!-- Pulse Target Center Core -->
+        <div class="relative w-7 h-7 rounded-full bg-white shadow-[0_0_14px_${hexColor}] flex items-center justify-center border-2 pointer-events-auto" style="border-color: ${hexColor};">
+          <div class="w-3 h-3 rounded-full animate-ping" style="background-color: ${hexColor};"></div>
+          <div class="absolute w-2.5 h-2.5 rounded-full shadow-sm" style="background-color: ${hexColor};"></div>
+        </div>
+        <!-- Floating Animated Pointer Pin above pulse beacon -->
+        <div class="absolute -top-7 ${textColor} animate-bounce flex items-center justify-center pointer-events-none" style="filter: drop-shadow(0 6px 10px ${hexColor}80);">
+          <svg width="32" height="38" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 0C7.163 0 0 7.163 0 16C0 26.667 16 40 16 40C16 40 32 26.667 32 16C32 7.163 24.837 0 16 0Z" fill="currentColor"/>
+            <circle cx="16" cy="16" r="6" fill="white"/>
+            <circle cx="16" cy="16" r="3" fill="currentColor"/>
+          </svg>
+        </div>
+      </div>
+    `,
+    iconSize: [56, 56],
+    iconAnchor: [28, 28]
+  });
+};
+
+const createCategoryIcon = (type, isSelected = false) => {
+  const { textColor } = getCategoryColorDetails(type);
+
+  if (isSelected) {
+    return createPulsePointerIcon(type);
+  }
 
   return L.divIcon({
     className: 'custom-map-pin-container',
@@ -72,10 +143,19 @@ function MapController({ explorerState, setExplorerState, isExplorer }) {
   }, [isExplorer, explorerState?.isDrawingMode, explorerState?.drawingTool, explorerState?.resizeTrigger, map]);
 
   useEffect(() => {
+    if (isExplorer) {
+      const targetLat = explorerState?.mapFocus?.lat || explorerState?.userLocation?.lat || 24.4839;
+      const targetLng = explorerState?.mapFocus?.lng || explorerState?.userLocation?.lng || 54.3773;
+      const targetZoom = explorerState?.mapFocus?.zoom || 16;
+      map.flyTo([targetLat, targetLng], targetZoom, { animate: true, duration: 1.2 });
+    }
+  }, [isExplorer]);
+
+  useEffect(() => {
     if (explorerState?.mapFocus) {
       map.flyTo(
         [explorerState.mapFocus.lat, explorerState.mapFocus.lng], 
-        explorerState.mapFocus.zoom || 15, 
+        explorerState.mapFocus.zoom || 16, 
         { animate: true, duration: 1.2 }
       );
     }
@@ -453,9 +533,258 @@ function getRoadDirectionsWaypoints(startLoc, destLoc) {
   ];
 }
 
+function FacilityMarker({ item, isArabic, isLoggedIn, explorerState, setExplorerState }) {
+  const map = useMap();
+  const { isDarkMode } = useTheme();
+
+  const selectedItem = explorerState?.selectedLocation || explorerState?.selectedDetail;
+  const isSelected = Boolean(
+    selectedItem && (
+      (selectedItem.id && item.id && String(selectedItem.id) === String(item.id)) ||
+      (selectedItem.name && item.name && selectedItem.name.trim().toLowerCase() === item.name.trim().toLowerCase()) ||
+      (selectedItem.lat && selectedItem.lng && Math.abs(item.lat - selectedItem.lat) < 0.0001 && Math.abs(item.lng - selectedItem.lng) < 0.0001)
+    )
+  );
+
+  const handleViewDetailsClick = (e) => {
+    e.stopPropagation();
+    const rect = e.currentTarget.getBoundingClientRect();
+    map.closePopup(); // Immediately close popup on map!
+    triggerViewDetails(item, rect, setExplorerState, isArabic);
+  };
+
+  const handleToggleFavoriteClick = (e) => {
+    e.stopPropagation();
+    setExplorerState(prev => {
+      const current = prev.savedLocations || [];
+      const exists = current.some(fav => 
+        (fav.id && item.id && String(fav.id) === String(item.id)) || 
+        (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+      );
+      const updated = exists 
+        ? current.filter(fav => !((fav.id && item.id && String(fav.id) === String(item.id)) || (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())))
+        : [item, ...current];
+      return { ...prev, savedLocations: updated };
+    });
+  };
+
+  const isFav = (explorerState?.savedLocations || []).some(fav => 
+    (fav.id && item.id && String(fav.id) === String(item.id)) || 
+    (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())
+  );
+
+  return (
+    <Marker 
+      position={[item.lat, item.lng]}
+      icon={createCategoryIcon(item.type || item.facilityType, isSelected)}
+      zIndexOffset={isSelected ? 3000 : 100}
+      eventHandlers={{
+        click: () => {
+          setExplorerState(prev => ({
+            ...prev,
+            selectedLocation: item,
+            selectedDetail: item,
+            mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 }
+          }));
+        }
+      }}
+    >
+      <Popup minWidth={270} maxWidth={300} className="custom-facility-popup">
+        <div className={`p-1 font-sans flex flex-col gap-2 rounded-2xl ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+          <div className={`w-full h-24 rounded-xl overflow-hidden relative ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
+            <img 
+              src={getLandmarkThumbnail(item)} 
+              alt={item.name} 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+
+          <div>
+            <h4 className={`font-extrabold text-xs leading-snug ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
+              {isArabic && item.name_ar ? item.name_ar : item.name}
+            </h4>
+            <p className={`text-[10.5px] font-semibold mt-0.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+              {item.facilityType || item.type || 'Government Facility'}
+            </p>
+            <p className={`text-[10px] font-medium mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+              📍 {isArabic && item.location_ar ? item.location_ar : (item.location || item.district || 'Al Bateen, Abu Dhabi')}
+            </p>
+            <p className={`text-[9.5px] font-medium mt-0.5 ${isDarkMode ? 'text-[#00e5ff]' : 'text-slate-400'}`}>
+              {item.distance || '2.1 km from your location'}
+            </p>
+          </div>
+
+          <div className={`grid ${isLoggedIn ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 pt-1 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}>
+            <button 
+              onClick={handleViewDetailsClick}
+              className="py-1.5 px-2 rounded-xl bg-[#215A9E] hover:bg-[#1a477d] text-white font-bold text-[11px] shadow-2xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+            >
+              View Details
+            </button>
+
+            {isLoggedIn && (
+              <button 
+                onClick={handleToggleFavoriteClick}
+                className={`py-1.5 px-2 rounded-xl border font-bold text-[10.5px] transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                  isFav
+                    ? 'bg-rose-500 text-white border-rose-500'
+                    : (isDarkMode 
+                        ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700' 
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50')
+                }`}
+              >
+                <span>{isFav ? 'In Favorites' : 'Add to Favorites'}</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </Popup>
+    </Marker>
+  );
+}
+
+function MapCoordinatesTracker({ setMapStatus }) {
+  const map = useMapEvents({
+    move: () => {
+      const c = map.getCenter();
+      setMapStatus(prev => ({ ...prev, lat: c.lat, lng: c.lng, zoom: map.getZoom() }));
+    },
+    zoomend: () => {
+      const c = map.getCenter();
+      setMapStatus(prev => ({ ...prev, lat: c.lat, lng: c.lng, zoom: map.getZoom() }));
+    },
+    mousemove: (e) => {
+      setMapStatus(prev => ({ ...prev, mouseLat: e.latlng.lat, mouseLng: e.latlng.lng }));
+    }
+  });
+
+  useEffect(() => {
+    if (map) {
+      const c = map.getCenter();
+      setMapStatus({ lat: c.lat, lng: c.lng, zoom: map.getZoom() });
+    }
+  }, [map, setMapStatus]);
+
+  return null;
+}
+
+function MapStatusBar({ mapStatus, isDarkMode }) {
+  const [copied, setCopied] = useState(false);
+
+  const displayLat = (mapStatus?.mouseLat || mapStatus?.lat || 22.958390).toFixed(6);
+  const displayLng = (mapStatus?.mouseLng || mapStatus?.lng || 51.984460).toFixed(6);
+  const coordString = `${displayLat} ${displayLng} Degree`;
+
+  const handleCopy = (e) => {
+    e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(coordString);
+    } catch {}
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const zoom = mapStatus?.zoom || 16;
+  const lat = mapStatus?.lat || 24.4839;
+
+  const metersPerPx = (156543.03392 * Math.cos((lat * Math.PI) / 180)) / Math.pow(2, zoom);
+  const scaleBarWidthPx = 130;
+  const rawMeters = scaleBarWidthPx * metersPerPx;
+
+  const scaleSteps = [5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000];
+  const maxDist = scaleSteps.find(s => s >= rawMeters) || scaleSteps[scaleSteps.length - 1];
+
+  const isKm = maxDist >= 1000;
+  const unitSuffix = isKm ? 'KM' : 'M';
+  const val = isKm ? maxDist / 1000 : maxDist;
+
+  const tick0 = 0;
+  const tick1 = isKm ? (val * 0.125).toFixed(1).replace(/\.0$/, '') : Math.round(val * 0.125);
+  const tick2 = isKm ? (val * 0.25).toFixed(1).replace(/\.0$/, '') : Math.round(val * 0.25);
+  const tick3 = isKm ? (val * 0.5).toFixed(1).replace(/\.0$/, '') : Math.round(val * 0.5);
+  const tick4 = isKm ? (val * 0.75).toFixed(1).replace(/\.0$/, '') : Math.round(val * 0.75);
+  const tick5 = `${val}${unitSuffix}`;
+
+  return (
+    <div className="absolute bottom-4 start-4 md:start-6 z-[400] flex items-center gap-2.5 pointer-events-auto select-none">
+      {/* 1. Coordinates Pill Box */}
+      <div className={`px-3.5 py-1.5 rounded-[16px] border shadow-lg backdrop-blur-xl flex items-center gap-2 transition-all ${
+        isDarkMode 
+          ? 'bg-[#0f1932]/95 border-slate-700/60 text-slate-100 shadow-[0_6px_24px_rgba(0,0,0,0.4)]' 
+          : 'bg-white/95 border-slate-200/90 text-[#182645] shadow-[0_6px_24px_rgba(0,0,0,0.08)]'
+      }`}>
+        <span className="font-extrabold text-[12.5px] tracking-tight font-sans">
+          {coordString}
+        </span>
+        <button
+          type="button"
+          onClick={handleCopy}
+          title="Copy Coordinates"
+          className={`p-1 rounded-lg transition-colors cursor-pointer flex items-center justify-center ${
+            isDarkMode 
+              ? 'hover:bg-slate-800 text-slate-300 hover:text-white' 
+              : 'hover:bg-slate-100 text-[#182645] hover:text-[#215A9E]'
+          }`}
+        >
+          {copied ? (
+            <Check className="w-3.5 h-3.5 text-emerald-500 stroke-[2.5]" />
+          ) : (
+            <Copy className="w-3.5 h-3.5 stroke-[2]" />
+          )}
+        </button>
+      </div>
+
+      {/* 2. Scale Bar Pill Box */}
+      <div className={`px-3.5 py-1 rounded-[16px] border shadow-lg backdrop-blur-xl flex flex-col items-center justify-center min-w-[170px] transition-all ${
+        isDarkMode 
+          ? 'bg-[#0f1932]/95 border-slate-700/60 text-slate-100 shadow-[0_6px_24px_rgba(0,0,0,0.4)]' 
+          : 'bg-white/95 border-slate-200/90 text-[#182645] shadow-[0_6px_24px_rgba(0,0,0,0.08)]'
+      }`}>
+        {/* Scale Line with Vertical Caps and Alternating Filled Segments */}
+        <div className="relative w-full h-[9px] flex items-center px-0.5 mt-0.5">
+          {/* Left End Vertical Cap */}
+          <div className={`w-[2px] h-[9px] rounded-full ${isDarkMode ? 'bg-slate-100' : 'bg-[#182645]'}`} />
+          
+          {/* Segment Bar */}
+          <div className="flex-1 h-[3px] flex mx-[-1px]">
+            <div className={`w-[12.5%] h-full ${isDarkMode ? 'bg-[#00e5ff]' : 'bg-[#182645]'}`} />
+            <div className="w-[12.5%] h-full bg-transparent" />
+            <div className={`w-[25%] h-full ${isDarkMode ? 'bg-[#00e5ff]' : 'bg-[#182645]'}`} />
+            <div className="w-[25%] h-full bg-transparent" />
+            <div className={`w-[25%] h-full ${isDarkMode ? 'bg-[#00e5ff]' : 'bg-[#182645]'}`} />
+          </div>
+
+          {/* Right End Vertical Cap */}
+          <div className={`w-[2px] h-[9px] rounded-full ${isDarkMode ? 'bg-slate-100' : 'bg-[#182645]'}`} />
+        </div>
+
+        {/* Dynamic Scale Ticks & Numbers */}
+        <div className={`flex justify-between w-full text-[9.5px] font-extrabold tracking-tight mt-0.5 font-sans ${
+          isDarkMode ? 'text-slate-200' : 'text-[#182645]'
+        }`}>
+          <span>{tick0}</span>
+          <span>{tick1}</span>
+          <span>{tick2}</span>
+          <span>{tick3}</span>
+          <span>{tick4}</span>
+          <span>{tick5}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapClick, selectedLocation, isExplorer, explorerState, setExplorerState }) {
   const { isArabic } = useLanguage();
-  const position = [24.4839, 54.3773];
+  const { isDarkMode } = useTheme();
+  const [mapStatus, setMapStatus] = useState({ lat: 24.483910, lng: 54.377320, zoom: 16 });
+  const userLoc = explorerState?.userLocation || { lat: 24.4839, lng: 54.3773 };
+  const initialCenter = [
+    explorerState?.mapFocus?.lat || userLoc.lat,
+    explorerState?.mapFocus?.lng || userLoc.lng
+  ];
+  const initialZoom = explorerState?.mapFocus?.zoom || 16;
+
   const uaeBounds = [
     [22.5, 51.5],
     [26.1, 56.5]
@@ -466,15 +795,14 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
   // Active query result set (map strictly matches only these active results)
   const activeResults = explorerState?.activeResults || [];
   const routeDest = explorerState?.activeRouteDestination;
-  const userLoc = explorerState?.userLocation || { lat: 24.4789, lng: 54.3312 };
 
   const routeWaypoints = routeDest ? getRoadDirectionsWaypoints(userLoc, routeDest) : [];
 
   return (
     <div className="absolute inset-0 z-0 pointer-events-auto w-full h-full">
       <MapContainer 
-        center={position} 
-        zoom={13} 
+        center={initialCenter} 
+        zoom={initialZoom} 
         zoomControl={false}
         scrollWheelZoom={isExplorer}
         doubleClickZoom={isExplorer}
@@ -493,86 +821,49 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
         
         <ArcGISBasemap activeBasemapId={explorerState?.activeBasemap || explorerState?.basemap || 'abu-dhabi-dge'} />
         
+        {/* User Location Marker Pin with radar ring & location popup */}
+        {userLoc && userLoc.lat && userLoc.lng && (
+          <Marker 
+            position={[userLoc.lat, userLoc.lng]} 
+            icon={userLocationPinIcon} 
+            zIndexOffset={1500}
+          >
+            <Popup minWidth={220} maxWidth={260} className="custom-user-location-popup">
+              <div className={`p-1.5 font-sans flex flex-col items-center text-center gap-1 ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-lg border ${
+                  isDarkMode 
+                    ? 'bg-[#182645] text-[#00e5ff] border-[#00e5ff]/30' 
+                    : 'bg-[#215A9E]/10 text-[#215A9E] border-[#215A9E]/20'
+                }`}>
+                  🎯
+                </div>
+                <div>
+                  <h4 className={`font-black text-xs tracking-tight ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
+                    {isArabic ? 'موقعك الحالي' : 'Your Current Location'}
+                  </h4>
+                  <p className={`text-[10px] font-semibold mt-0.5 ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+                    {isArabic ? 'مركز التكبير المحدد' : 'Focused Location'} • Zoom Level 16
+                  </p>
+                  <p className={`text-[9.5px] font-mono mt-0.5 ${isDarkMode ? 'text-sky-400' : 'text-slate-400'}`}>
+                    {userLoc.lat.toFixed(4)}° N, {userLoc.lng.toFixed(4)}° E
+                  </p>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+        
         {/* Strictly render ONLY active query result set markers */}
         {isExplorer && activeResults.map(item => (
           item.lat && item.lng && (
-            <Marker 
-              key={item.id} 
-              position={[item.lat, item.lng]}
-              icon={createCategoryIcon(item.type || item.facilityType)}
-              eventHandlers={{
-                click: () => {
-                  setExplorerState(prev => ({
-                    ...prev,
-                    selectedLocation: item,
-                    mapFocus: { lat: item.lat, lng: item.lng, zoom: 16 }
-                  }));
-                }
-              }}
-            >
-              <Popup minWidth={270} maxWidth={300} className="custom-facility-popup">
-                <div className="p-1 font-sans flex flex-col gap-2">
-                  <div className="w-full h-24 rounded-xl overflow-hidden relative bg-slate-100">
-                    <img 
-                      src={getLandmarkThumbnail(item)} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-
-                  <div>
-                    <h4 className="font-extrabold text-xs text-[#1e2749] leading-snug">
-                      {isArabic && item.name_ar ? item.name_ar : item.name}
-                    </h4>
-                    <p className="text-[10.5px] font-semibold text-slate-500 mt-0.5">
-                      {item.facilityType || item.type || 'Government Facility'}
-                    </p>
-                    <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                      📍 {isArabic && item.location_ar ? item.location_ar : (item.location || item.district || 'Al Bateen, Abu Dhabi')}
-                    </p>
-                    <p className="text-[9.5px] text-slate-400 font-medium mt-0.5">
-                      {item.distance || '2.1 km from your location'}
-                    </p>
-                  </div>
-
-                  <div className={`grid ${isLoggedIn ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 pt-1 border-t border-slate-100`}>
-                    <button 
-                      onClick={() => {
-                        setExplorerState(prev => ({
-                          ...prev,
-                          selectedDetail: item,
-                          selectedLocation: item
-                        }));
-                      }}
-                      className="py-1.5 px-2 rounded-xl bg-[#215A9E] hover:bg-[#1a477d] text-white font-bold text-[11px] shadow-2xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      View Details
-                    </button>
-
-                    {isLoggedIn && (
-                      <button 
-                        onClick={() => {
-                          setExplorerState(prev => {
-                            const current = prev.savedLocations || [];
-                            const exists = current.some(fav => 
-                              (fav.id && item.id && String(fav.id) === String(item.id)) || 
-                              (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())
-                            );
-                            const updated = exists 
-                              ? current.filter(fav => !((fav.id && item.id && String(fav.id) === String(item.id)) || (fav.name && item.name && fav.name.trim().toLowerCase() === item.name.trim().toLowerCase())))
-                              : [item, ...current];
-                            return { ...prev, savedLocations: updated };
-                          });
-                        }}
-                        className="py-1.5 px-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-[10.5px] transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <span>Add to Favorites</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </Popup>
-            </Marker>
+            <FacilityMarker 
+              key={item.id || item.name} 
+              item={item} 
+              isArabic={isArabic} 
+              isLoggedIn={isLoggedIn} 
+              explorerState={explorerState} 
+              setExplorerState={setExplorerState} 
+            />
           )
         ))}
 
@@ -645,18 +936,35 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           />
         )}
 
-        {/* Selected Location Highlight Marker */}
-        {(selectedLocation || explorerState?.selectedDetail) && (
-          <Marker 
-            position={
-              selectedLocation 
-                ? [selectedLocation.lat, selectedLocation.lng] 
-                : [explorerState.selectedDetail.lat, explorerState.selectedDetail.lng]
-            } 
-            icon={customPinIcon} 
-          />
-        )}
+        {/* Selected Location Highlight Marker - Render pulse pointer ONLY if NOT already rendered by FacilityMarker */}
+        {(() => {
+          const targetLoc = selectedLocation || explorerState?.selectedDetail || explorerState?.selectedLocation;
+          if (!targetLoc || !targetLoc.lat || !targetLoc.lng) return null;
+
+          const isAlreadyInActiveResults = isExplorer && activeResults.some(item => 
+            (targetLoc.id && item.id && String(targetLoc.id) === String(item.id)) ||
+            (targetLoc.name && item.name && targetLoc.name.trim().toLowerCase() === item.name.trim().toLowerCase()) ||
+            (Math.abs(item.lat - targetLoc.lat) < 0.0001 && Math.abs(item.lng - targetLoc.lng) < 0.0001)
+          );
+
+          if (isAlreadyInActiveResults) return null;
+
+          const itemType = targetLoc.facilityType || targetLoc.type || 'GOVERNMENT';
+
+          return (
+            <Marker 
+              position={[targetLoc.lat, targetLoc.lng]} 
+              icon={createPulsePointerIcon(itemType)}
+              zIndexOffset={3000}
+            />
+          );
+        })()}
+        {/* Map Coordinates & Scale Live Tracker */}
+        <MapCoordinatesTracker setMapStatus={setMapStatus} />
       </MapContainer>
+
+      {/* Map Bottom Left Coordinates & Scale Bar Pill Widgets */}
+      <MapStatusBar mapStatus={mapStatus} isDarkMode={isDarkMode} />
 
       {/* Floating Drawing Tool Guidance Toast Banner */}
       {isExplorer && explorerState?.drawingTool && (

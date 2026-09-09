@@ -50,6 +50,16 @@ html.theme-dark .leaflet-container {
   background: #0b132b !important;
 }
 
+/* Allow Leaflet custom pulse marker containers to overflow for expanding ping rings */
+.custom-selected-pulse-marker,
+.custom-pulse-pointer-container,
+.custom-map-pin-container,
+.user-location-pin-container {
+  background: transparent !important;
+  border: none !important;
+  overflow: visible !important;
+}
+
 /* Remove Leaflet attribution border/background to make it seamless */
 .leaflet-control-attribution {
   background: transparent !important;
@@ -64,6 +74,51 @@ html.theme-dark .leaflet-control-attribution {
 }
 html.theme-dark .leaflet-control-attribution a {
   color: rgba(255,255,255,0.6) !important;
+}
+
+/* Theme-Aware Leaflet Map Popups (Dark & Light Mode) */
+.leaflet-popup-content-wrapper {
+  border-radius: 1.25rem !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25) !important;
+  padding: 4px !important;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-dark .leaflet-popup-content-wrapper,
+.dark .leaflet-popup-content-wrapper {
+  background-color: #0f1932 !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+}
+
+.theme-dark .leaflet-popup-tip,
+.dark .leaflet-popup-tip {
+  background-color: #0f1932 !important;
+  border: 1px solid rgba(51, 65, 85, 0.8) !important;
+}
+
+.leaflet-popup-close-button {
+  top: 8px !important;
+  right: 10px !important;
+  font-size: 16px !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  transition: all 0.2s ease !important;
+}
+
+.theme-dark .leaflet-popup-close-button,
+.dark .leaflet-popup-close-button {
+  color: #94a3b8 !important;
+}
+
+.theme-dark .leaflet-popup-close-button:hover,
+.dark .leaflet-popup-close-button:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
 }
 
 /* Custom Sleek Scrollbar */

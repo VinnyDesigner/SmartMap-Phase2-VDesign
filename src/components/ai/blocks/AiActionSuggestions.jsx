@@ -111,7 +111,15 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
     (isLoggedIn || !isSaveOrFavoriteItem(sug))
   );
 
-  const hasActions = filteredActionCards.length > 0;
+  // If suggestions are present, suppress duplicate isOption cards to retain ONLY the highlighted version per design requirement
+  const filteredActionCardsClean = filteredActionCards.filter(c => {
+    if (c.isOption && filteredSuggestions.length > 0) {
+      return false;
+    }
+    return true;
+  });
+
+  const hasActions = filteredActionCardsClean.length > 0;
   const hasSuggestions = filteredSuggestions.length > 0;
 
   if (!hasActions && !hasSuggestions) return null;
@@ -119,13 +127,13 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
   return (
     <div className={`space-y-2.5 pt-2.5 border-t my-2.5 ${isDarkMode ? 'border-slate-800/80' : 'border-slate-100'}`}>
       {/* 1. Interactive Choice Cards / Radio Options (e.g. Ambiguous Search: Yas Island, Bani Yas) */}
-      {hasActions && filteredActionCards.some(c => c.isOption) && (
+      {hasActions && filteredActionCardsClean.some(c => c.isOption) && (
         <div className="space-y-1.5 my-2">
           <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ms-1">
             {isArabic ? "اختيار المنطقة المقصودة:" : "Select your intended area:"}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {filteredActionCards.filter(c => c.isOption).map((card, idx) => {
+            {filteredActionCardsClean.filter(c => c.isOption).map((card, idx) => {
               const labelText = isArabic 
                 ? (card.label_ar || ACTION_LABEL_MAP[card.label] || card.title) 
                 : (card.label || REVERSE_LABEL_MAP[card.label_ar] || card.title);

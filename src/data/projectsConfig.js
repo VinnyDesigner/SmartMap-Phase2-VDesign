@@ -222,8 +222,8 @@ export const PROJECTS_CONFIG = [
     },
 
     mapConfig: {
-      defaultBasemap: 'satellite',
-      allowedBasemaps: ['satellite', 'streets', 'dark', 'topo']
+      defaultBasemap: 'abu-dhabi-dge',
+      allowedBasemaps: ['abu-dhabi-dge', 'satellite', 'streets', 'dark', 'topo']
     },
 
     aiContext: {
@@ -408,8 +408,8 @@ export const PROJECTS_CONFIG = [
     },
 
     mapConfig: {
-      defaultBasemap: 'dark',
-      allowedBasemaps: ['dark', 'satellite', 'streets', 'topo']
+      defaultBasemap: 'abu-dhabi-dge',
+      allowedBasemaps: ['abu-dhabi-dge', 'satellite', 'streets', 'dark', 'topo']
     },
 
     aiContext: {
@@ -761,8 +761,8 @@ export const PROJECTS_CONFIG = [
     },
 
     mapConfig: {
-      defaultBasemap: 'streets',
-      allowedBasemaps: ['streets', 'satellite', 'dark', 'topo']
+      defaultBasemap: 'abu-dhabi-dge',
+      allowedBasemaps: ['abu-dhabi-dge', 'satellite', 'streets', 'dark', 'topo']
     },
 
     aiContext: {

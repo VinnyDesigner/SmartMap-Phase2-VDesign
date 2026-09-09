@@ -47,12 +47,42 @@ function App() {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'explorer' | 'about' | 'login' | 'help'
 
+  const requestUserLocation = () => {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          setExplorerState(prev => ({
+            ...prev,
+            userLocationEnabled: true,
+            userLocation: userCoords,
+            mapFocus: { lat: userCoords.lat, lng: userCoords.lng, zoom: 16 }
+          }));
+        },
+        (err) => {
+          console.warn("Browser Geolocation Permission Denied or Timed Out:", err);
+          const defaultCoords = { lat: 24.4839, lng: 54.3773 };
+          setExplorerState(prev => ({
+            ...prev,
+            userLocationEnabled: false,
+            userLocation: defaultCoords,
+            mapFocus: { lat: defaultCoords.lat, lng: defaultCoords.lng, zoom: 14 }
+          }));
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    }
+  };
+
   const handleNavigate = (view) => {
     if (!userAuth.isLoggedIn) {
       setExplorerState(prev => ({
         ...prev,
         chatHistory: [] 
       }));
+    }
+    if (view === 'explorer') {
+      requestUserLocation();
     }
     setCurrentView(view);
   };
@@ -79,6 +109,7 @@ function App() {
       isLoggedIn: true
     }));
 
+    requestUserLocation();
     setCurrentView('explorer');
   };
 
@@ -100,9 +131,9 @@ function App() {
 
   const [explorerState, setExplorerState] = useState({
     mapFocus: {
-      lat: activeProject.defaultCenter.lat,
-      lng: activeProject.defaultCenter.lng,
-      zoom: activeProject.defaultZoom
+      lat: 24.4839,
+      lng: 54.3773,
+      zoom: 16
     },
     activeResults: [],
     showSearchResults: false,
@@ -130,29 +161,12 @@ function App() {
     }));
   }, [userAuth]);
 
-  // Automatic browser geolocation on app launch without intrusive modal popups
+  // Automatic browser geolocation prompt on app launch & map viewer entry
   useEffect(() => {
-    if (typeof navigator !== 'undefined' && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          setExplorerState(prev => ({
-            ...prev,
-            userLocationEnabled: true,
-            userLocation: userCoords
-          }));
-        },
-        (err) => {
-          setExplorerState(prev => ({
-            ...prev,
-            userLocationEnabled: true,
-            userLocation: { lat: 24.4839, lng: 54.3773 }
-          }));
-        },
-        { timeout: 3000 }
-      );
+    if (currentView === 'explorer') {
+      requestUserLocation();
     }
-  }, []);
+  }, [currentView]);
 
   if (currentView === 'login') {
     return <SignInPage onNavigate={handleNavigate} onSignIn={handleSignIn} />;

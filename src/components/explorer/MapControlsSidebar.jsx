@@ -114,33 +114,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
           <Home className="w-4 h-4" />
         </button>
 
-        {/* Toggle Search Results List Panel Button */}
-        {explorerState?.activeResults?.length > 0 && (
-          <button
-            onClick={() => setExplorerState(prev => {
-              const nextVal = prev.showSearchResults === false;
-              return {
-                ...prev,
-                showSearchResults: nextVal,
-                selectedDetail: nextVal ? null : prev.selectedDetail,
-                activeMenu: nextVal ? null : prev.activeMenu,
-                showCategoriesPanel: false,
-                showBasemapMenu: false
-              };
-            })}
-            title={explorerState?.showSearchResults === false ? t('Show Search Results List', 'إظهار قائمة النتائج') : t('Hide Search Results List', 'إخفاء قائمة النتائج')}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all cursor-pointer relative ${
-              explorerState?.showSearchResults !== false && !explorerState?.selectedDetail
-                ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-xs' : 'bg-[#215A9E] text-white shadow-xs')
-                : (isDarkMode ? 'bg-[#182645] text-[#00e5ff] border border-slate-700/80 hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] border border-[#215A9E]/20 hover:bg-[#215A9E] hover:text-white')
-            }`}
-          >
-            <Search className="w-4 h-4" />
-            <span className="absolute -top-1 -end-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-extrabold flex items-center justify-center border-2 border-white dark:border-[#0b132b]">
-              {explorerState.activeResults.length}
-            </span>
-          </button>
-        )}
+
 
         {/* Clear Active Drawing Button */}
         {hasActiveDrawings && (

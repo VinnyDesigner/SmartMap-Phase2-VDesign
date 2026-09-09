@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Send, Bot, User, MapPin, Heart, History, MessageSquare, 
+  Send, User, MapPin, Heart, History, MessageSquare, 
   Trash2, ArrowRight, Pencil, Check, Pin, Sparkles, Bookmark,
   Printer, BarChart3
 } from 'lucide-react';
+import GeoLogoIcon from '../common/GeoLogoIcon';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine, sanitizeMarkdown } from '../../services/mockAiEngine';
 import { executeAppAction, ACTION_TYPES } from '../../services/actionRegistry';
@@ -75,6 +76,17 @@ const SEED_HISTORY_SESSIONS = [
     ]
   }
 ];
+
+const getUserInitials = (userAuth) => {
+  if (!userAuth || !userAuth.isLoggedIn) return 'GU';
+  if (!userAuth.userName) return 'UA';
+  const cleanName = userAuth.userName.replace(/^(H\.E\.|Eng\.|Mr\.|Mrs\.|Dr\.|Prof\.)\s+/ig, '').trim();
+  const parts = cleanName.split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return cleanName.slice(0, 2).toUpperCase();
+};
 
 export default function AiChatInterface({ explorerState, setExplorerState, onNavigate }) {
   const { t, isArabic, setIsArabic } = useLanguage();
@@ -223,6 +235,28 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }
   }, [messages, activeStepText, activeTab]);
 
+  // Synchronize Map Selection -> Chat Context
+  useEffect(() => {
+    const selected = explorerState?.selectedLocation;
+    if (selected && selected.name) {
+      const name = isArabic && selected.name_ar ? selected.name_ar : selected.name;
+      const contextTag = {
+        id: 'selected',
+        label: `Currently analyzing: ${selected.name}`,
+        label_ar: `يتم تحليله حالياً: ${name}`,
+        icon: '📍'
+      };
+
+      setExplorerState(prev => {
+        const existingTags = (prev.activeContextTags || []).filter(t => t.id !== 'selected');
+        return {
+          ...prev,
+          activeContextTags: [contextTag, ...existingTags]
+        };
+      });
+    }
+  }, [explorerState?.selectedLocation, isArabic]);
+
   // Initial Welcome Message with Dynamic Prompt Rotation
   useEffect(() => {
     setExplorerState(prev => {
@@ -261,11 +295,17 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     }));
 
     setIsTyping(true);
+    
+    // Dynamic random thinking delay (1.2s - 3.2s) in random instances to showcase logo animation
+    const randomDelay = Math.random() > 0.3 ? Math.floor(Math.random() * 1400) + 1200 : Math.floor(Math.random() * 600) + 600;
+    const step1Duration = Math.floor(randomDelay * 0.45);
+    const step2Duration = Math.floor(randomDelay * 0.55);
+
     setActiveStepText(isArabic ? "1/3 تحليل الاستعلام والإحداثيات..." : "1/3 Analyzing spatial intent & coordinates...");
-    await new Promise(r => setTimeout(r, 250));
+    await new Promise(r => setTimeout(r, step1Duration));
     
     setActiveStepText(isArabic ? "2/3 استعلام مجموعات البيانات وتصفية المسافات..." : "2/3 Querying SDI datasets & proximity...");
-    await new Promise(r => setTimeout(r, 250));
+    await new Promise(r => setTimeout(r, step2Duration));
 
     try {
       const stateWithProject = { ...explorerState, activeProject };
@@ -301,6 +341,10 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         showSearchResults: Boolean(aiResponse.results && aiResponse.results.length > 0),
         chatHistory: [...(prev.chatHistory || []), assistantMsg]
       }));
+
+      // Delivery phase delay (700ms - 1400ms) so the trim path animation animates while text is delivered
+      const deliveryDelay = Math.floor(Math.random() * 700) + 700;
+      await new Promise(r => setTimeout(r, deliveryDelay));
 
     } catch (err) {
       console.error("AI Assistant Execution Error:", err);
@@ -409,17 +453,12 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         )}
       </div>
 
-      {/* Active Context Chips Bar */}
-      <CurrentContextBar 
-        activeContextTags={explorerState?.activeContextTags} 
-        onRemoveTag={(id) => setExplorerState(prev => ({ ...prev, activeContextTags: (prev.activeContextTags || []).filter(t => t.id !== id) }))} 
-        onClearAllContext={() => setExplorerState(prev => ({ ...prev, activeContextTags: [], activeContext: {} }))} 
-      />
+
 
       {/* 1. CHAT TAB CONTENT */}
       {activeTab === 'chat' && (
         <>
-          <div ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-transparent' : 'bg-white'}`}>
+          <div id="ai-chat-scroll-container" ref={scrollContainerRef} className={`flex-1 overflow-y-auto sleek-scrollbar p-3.5 space-y-3.5 relative ${isDarkMode ? 'bg-transparent' : 'bg-white'}`}>
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center p-6 text-center">
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 shadow-md ${
@@ -430,14 +469,14 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                 <h3 className="font-extrabold text-sm mb-1 text-slate-800 dark:text-white">
                   {t('Welcome to SmartMap AI Assistant', 'مرحباً بك في مساعد الخريطة الذكية')}
                 </h3>
-                <p className="text-[11px] text-slate-400 max-w-xs mb-4 leading-relaxed">
+                <p className="text-[11px] text-slate-400 max-w-md w-full mb-4 leading-relaxed">
                   {t(
                     'Your conversational spatial intelligence partner. Explore government facilities, public safety, transit networks, and environmental data across Abu Dhabi.',
                     'شريكك في الذكاء المكاني الحواري. استكشف المنشآت الحكومية، السلامة العامة، شبكات النقل، والبيانات البيئية في إمارة أبوظبي.'
                   )}
                 </p>
 
-                <div className="w-full max-w-xs space-y-2">
+                <div className="w-full max-w-md space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                     {t('Suggested Spatial Prompts', 'مقترحات الاستعلام المكاني')}
                   </span>
@@ -461,10 +500,11 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
               messages.map((msg, idx) => (
               <div key={msg.id ? `${msg.id}-${idx}` : `msg-${idx}`} className={`flex gap-2.5 group items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'assistant' && (
-                  <div className={`w-7 h-7 rounded-full text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs ${
-                    isDarkMode ? 'bg-[#182645] border border-slate-700/80 text-[#00e5ff]' : 'bg-gradient-to-br from-[#063360] to-[#215A9E]'
-                  }`}>
-                    <Bot className="w-4 h-4" />
+                  <div className="shrink-0 mt-0.5 flex items-center justify-center">
+                    <GeoLogoIcon 
+                      className="w-5 h-5 text-[#7c3aed] dark:text-[#c084fc]" 
+                      animated={isTyping && idx === messages.length - 1} 
+                    />
                   </div>
                 )}
 
@@ -528,6 +568,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         }))}
                         savedLocations={savedLocations}
                         userLocation={explorerState?.userLocation}
+                        activeExpandedCardId={explorerState?.expandedCardId}
                       />
 
                       {/* Small Non-Prominent Action Toolbar (Print PDF, Analytics, Pin Query) */}
@@ -618,8 +659,12 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                 </div>
 
                 {msg.role === 'user' && (
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isDarkMode ? 'bg-[#182645] text-white border border-slate-700' : 'bg-slate-200 text-slate-700'}`}>
-                    <User className="w-4 h-4" />
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-[11px] font-bold tracking-tight select-none shadow-xs border ${
+                    isDarkMode 
+                      ? 'bg-[#182645] text-purple-300 border-purple-500/30' 
+                      : 'bg-purple-100 text-purple-700 border-purple-200'
+                  }`}>
+                    {getUserInitials(explorerState?.userAuth)}
                   </div>
                 )}
               </div>
@@ -628,8 +673,11 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
             {isTyping && (
               <div className="flex gap-2.5 justify-start items-center">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 animate-pulse ${isDarkMode ? 'bg-[#182645] text-[#00e5ff] border border-slate-700' : 'bg-[#215A9E] text-white'}`}>
-                  <Bot className="w-4 h-4" />
+                <div className="shrink-0 flex items-center justify-center">
+                  <GeoLogoIcon 
+                    className="w-5 h-5 text-[#7c3aed] dark:text-[#c084fc]" 
+                    animated={true} 
+                  />
                 </div>
                 <div className={`border rounded-2xl px-3.5 py-2 text-xs font-semibold flex items-center gap-2 ${
                   isDarkMode ? 'bg-[#131d35] border-slate-700/70 text-slate-300' : 'bg-slate-50 border-slate-200/80 text-[#215A9E]'
