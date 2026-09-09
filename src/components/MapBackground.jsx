@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, Marker, Popup, useMap, useMapEvents, Polygon, Circle, Rectangle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { motion } from 'framer-motion';
-import { MapPin, ArrowRight, Sparkles, Navigation, Target, Copy, Check } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, Navigation, Target, Copy, Check, Trash2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -539,11 +539,12 @@ function FacilityMarker({ item, isArabic, isLoggedIn, explorerState, setExplorer
 
   const selectedItem = explorerState?.selectedLocation || explorerState?.selectedDetail;
   const isSelected = Boolean(
-    selectedItem && (
+    (selectedItem && (
       (selectedItem.id && item.id && String(selectedItem.id) === String(item.id)) ||
       (selectedItem.name && item.name && selectedItem.name.trim().toLowerCase() === item.name.trim().toLowerCase()) ||
       (selectedItem.lat && selectedItem.lng && Math.abs(item.lat - selectedItem.lat) < 0.0001 && Math.abs(item.lng - selectedItem.lng) < 0.0001)
-    )
+    )) ||
+    (explorerState?.mapFocus?.lat && explorerState?.mapFocus?.lng && Math.abs(item.lat - explorerState.mapFocus.lat) < 0.0001 && Math.abs(item.lng - explorerState.mapFocus.lng) < 0.0001)
   );
 
   const handleViewDetailsClick = (e) => {
@@ -938,7 +939,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
 
         {/* Selected Location Highlight Marker - Render pulse pointer ONLY if NOT already rendered by FacilityMarker */}
         {(() => {
-          const targetLoc = selectedLocation || explorerState?.selectedDetail || explorerState?.selectedLocation;
+          const targetLoc = selectedLocation || explorerState?.selectedDetail || explorerState?.selectedLocation || explorerState?.mapFocus;
           if (!targetLoc || !targetLoc.lat || !targetLoc.lng) return null;
 
           const isAlreadyInActiveResults = isExplorer && activeResults.some(item => 
@@ -981,6 +982,36 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
             className="ms-2 px-2 py-0.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-[10px] cursor-pointer"
           >
             {isArabic ? 'إلغاء' : 'Cancel'}
+          </button>
+        </div>
+      )}
+
+      {/* Floating Active Spatial Zone Filter Banner with Clear Shape Button */}
+      {isExplorer && ((explorerState?.drawings && explorerState.drawings.length > 0) || explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle) && !explorerState?.drawingTool && (
+        <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[400] px-3.5 py-2 rounded-2xl shadow-xl border flex items-center gap-2.5 backdrop-blur-xl transition-all ${
+          isDarkMode 
+            ? 'bg-[#0f1932]/95 border-purple-500/40 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]' 
+            : 'bg-white/95 border-purple-200 text-slate-800 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+        }`}>
+          <div className="w-2 h-2 rounded-full bg-[#7c3aed] animate-pulse" />
+          <span className="text-xs font-bold">
+            {isArabic ? 'منطقة التحليل المكانية نشطة' : 'Active Spatial Zone Filter'}
+          </span>
+          <button
+            type="button"
+            onClick={() => setExplorerState(prev => ({
+              ...prev,
+              drawings: [],
+              drawnPolygon: null,
+              drawnCircle: null,
+              drawnRectangle: null,
+              activeResults: []
+            }))}
+            className="ms-1 px-2.5 py-1 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-600 hover:text-white dark:text-rose-400 dark:hover:text-white border border-rose-500/30 text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+            title={isArabic ? 'مسح الشكل المكتوب' : 'Clear drawn shape'}
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span>{isArabic ? 'مسح الرسم' : 'Clear Shape'}</span>
           </button>
         </div>
       )}

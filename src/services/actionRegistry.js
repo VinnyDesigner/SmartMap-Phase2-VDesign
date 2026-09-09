@@ -83,10 +83,13 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
   switch (action.type) {
     case ACTION_TYPES.MAP_FLY_TO: {
       recordActionHistory(prevState, action.type, action.params);
-      const { lat, lng, zoom = 16 } = action.params || {};
+      const { lat, lng, zoom = 16, item, location, destination } = action.params || {};
+      const targetItem = item || location || destination || (lat && lng ? { lat, lng, name: action.title || 'Selected Location' } : null);
+
       setExplorerState(prev => ({
         ...prev,
         mapFocus: { lat, lng, zoom },
+        ...(targetItem ? { selectedLocation: targetItem, selectedDetail: targetItem } : {}),
         resizeTrigger: Date.now()
       }));
       return { success: true, message: `Zoomed map to (${lat.toFixed(4)}, ${lng.toFixed(4)})` };

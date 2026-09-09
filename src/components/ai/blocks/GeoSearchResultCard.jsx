@@ -59,13 +59,17 @@ export default function GeoSearchResultCard({
 }) {
   const { isDarkMode } = useTheme();
   const { t, isArabic } = useLanguage();
-  const [internalExpanded, setInternalExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(Boolean(isExpandedProp));
   const [cardTab, setCardTab] = useState('overview'); // 'overview' | 'details' | 'nearby' | 'related'
   const [travelMode, setTravelMode] = useState('driving'); // 'driving' | 'walking' | 'transit' | 'bicycling'
 
-  if (!item) return null;
+  React.useEffect(() => {
+    if (isExpandedProp) {
+      setInternalExpanded(true);
+    }
+  }, [isExpandedProp]);
 
-  const isExpanded = isExpandedProp !== undefined ? isExpandedProp : internalExpanded;
+  const isExpanded = internalExpanded;
 
   const itemCategory = (item.type || item.facilityType || item.category || 'GOVERNMENT').toUpperCase();
   const CategoryIcon = ICON_MAP[itemCategory] || BusinessOutlinedIcon;
@@ -107,19 +111,19 @@ export default function GeoSearchResultCard({
       onActionClick({
         actionType: 'MAP_FLY_TO',
         title: displayName,
-        params: { lat: item.lat, lng: item.lng, zoom: 17 }
+        params: { lat: item.lat, lng: item.lng, zoom: 17, item: item, location: item }
       });
-    } else if (onEntityClick) {
+    }
+    if (onEntityClick) {
       onEntityClick(item);
     }
   };
 
   const handleInfoClick = (e) => {
     e.stopPropagation();
+    setInternalExpanded(prev => !prev);
     if (onToggleExpand) {
       onToggleExpand();
-    } else {
-      setInternalExpanded(prev => !prev);
     }
   };
 
@@ -171,8 +175,8 @@ export default function GeoSearchResultCard({
       onClick={handleFocusClick}
       className={`group relative rounded-2xl p-3 sm:p-3.5 border transition-colors duration-200 cursor-pointer shadow-xs overflow-hidden flex flex-col gap-2.5 ${
         isDarkMode 
-          ? 'bg-[#0f182e] border-slate-800/90 text-slate-100 hover:border-[#7c3aed]/60 hover:bg-[#131e3a]' 
-          : 'bg-white border-slate-200/90 text-slate-800 hover:border-[#215A9E]/40 hover:shadow-md'
+          ? 'bg-[#0f182e] border-slate-800/90 text-slate-100' 
+          : 'bg-white border-slate-200/90 text-slate-800'
       }`}
     >
       {/* Top Header: Icon, Title, Category Badge, Distance */}
@@ -190,8 +194,8 @@ export default function GeoSearchResultCard({
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className={`font-bold text-xs leading-snug truncate transition-colors ${
-                isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#215A9E]'
+              <h4 className={`font-bold text-xs leading-snug truncate ${
+                isDarkMode ? 'text-white' : 'text-[#1e2749]'
               }`}>
                 {displayName}
               </h4>

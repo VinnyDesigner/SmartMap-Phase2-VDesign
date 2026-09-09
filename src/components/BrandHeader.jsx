@@ -125,6 +125,32 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               {isDarkMode ? <Sun className="w-5 h-5 stroke-[1.75]" /> : <Moon className="w-5 h-5 stroke-[1.75]" />}
             </button>
 
+            {/* 2. Share Feedback (Icon Only) */}
+            <button
+              onClick={() => onOpenFeedback?.()}
+              title={t("Share Feedback", "مشاركة الملاحظات")}
+              className={`hidden md:flex p-2 rounded-xl transition-colors cursor-pointer select-none ${
+                isDarkMode 
+                  ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' 
+                  : 'text-slate-600 hover:text-[#215A9E] hover:bg-slate-100/80'
+              }`}
+            >
+              <ShareFeedbackIcon className="w-5 h-5 stroke-[1.75]" />
+            </button>
+
+            {/* 3. Help & Support (Icon Only) */}
+            <button
+              onClick={() => onNavigate?.('help')}
+              title={t("Help & Support", "المساعدة والدعم")}
+              className={`hidden md:flex p-2 rounded-xl transition-colors cursor-pointer select-none ${
+                isDarkMode 
+                  ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' 
+                  : 'text-slate-600 hover:text-[#215A9E] hover:bg-slate-100/80'
+              }`}
+            >
+              <HelpCircle className="w-5 h-5 stroke-[1.75]" />
+            </button>
+
             {/* 2. User Profile / Guest Dropdown Trigger Button */}
             <div className="relative">
               <button 
@@ -189,34 +215,6 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
                           </div>
                         </div>
                       )}
-
-                      {/* 1. Share Feedback */}
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          onOpenFeedback?.();
-                        }}
-                        className={`w-full py-2.5 px-3 rounded-xl font-semibold text-xs md:text-sm transition-colors flex items-center gap-3.5 text-start cursor-pointer ${
-                          isDarkMode ? 'hover:bg-purple-950/40 text-slate-200 hover:text-purple-300' : 'hover:bg-purple-50 text-slate-700 hover:text-[#7c3aed]'
-                        }`}
-                      >
-                        <ShareFeedbackIcon className="w-5 h-5 shrink-0 text-[#7c3aed] dark:text-purple-400" />
-                        <span>{t("Share Feedback", "مشاركة الملاحظات")}</span>
-                      </button>
-
-                      {/* 2. Help & Support */}
-                      <button
-                        onClick={() => {
-                          setShowUserMenu(false);
-                          onNavigate?.('help');
-                        }}
-                        className={`w-full py-2.5 px-3 rounded-xl font-semibold text-xs md:text-sm transition-colors flex items-center gap-3.5 text-start cursor-pointer ${
-                          isDarkMode ? 'hover:bg-purple-950/40 text-slate-200 hover:text-purple-300' : 'hover:bg-purple-50 text-slate-700 hover:text-[#7c3aed]'
-                        }`}
-                      >
-                        <HelpCircle className="w-5 h-5 shrink-0 text-[#7c3aed] dark:text-purple-400 stroke-[1.75]" />
-                        <span>{t("Help & Support", "المساعدة والدعم")}</span>
-                      </button>
 
                       <div className="h-[1px] bg-slate-200 dark:bg-slate-800 my-1" />
 

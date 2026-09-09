@@ -116,19 +116,6 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
 
 
 
-        {/* Clear Active Drawing Button */}
-        {hasActiveDrawings && (
-          <button 
-            onClick={() => setExplorerState(prev => ({ ...prev, drawings: [], drawnPolygon: null, drawnCircle: null, drawnRectangle: null, activeResults: [] }))}
-            title={t('Clear Drawings', 'مسح الرسم')}
-            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
-              isDarkMode ? 'bg-rose-950/50 hover:bg-rose-900/80 text-rose-400' : 'bg-rose-50 hover:bg-rose-100 text-rose-600'
-            }`}
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        )}
-
         <div className={`w-5 h-px my-0.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200/80'}`} />
 
         {/* Hamburger Menu Toggle Button */}
@@ -264,6 +251,28 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                         selectedDetail: null
                       }))}
                     />
+
+                    {hasActiveDrawings && (
+                      <button
+                        type="button"
+                        onClick={() => setExplorerState(prev => ({ 
+                          ...prev, 
+                          drawings: [], 
+                          drawnPolygon: null, 
+                          drawnCircle: null, 
+                          drawnRectangle: null, 
+                          activeResults: [] 
+                        }))}
+                        className={`flex items-center gap-2.5 p-2 mt-1 rounded-xl border transition-all w-full cursor-pointer font-bold ${
+                          isDarkMode 
+                            ? 'border-rose-900/50 bg-rose-950/40 text-rose-300 hover:bg-rose-900/60' 
+                            : 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100'
+                        }`}
+                      >
+                        <Trash2 className="w-4 h-4 text-rose-500" />
+                        <span className="text-[11px]">{t('Clear Drawings', 'مسح الرسم')}</span>
+                      </button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

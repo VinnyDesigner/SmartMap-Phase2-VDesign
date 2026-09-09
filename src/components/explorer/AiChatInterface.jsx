@@ -375,6 +375,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       setExplorerState(prev => ({
         ...prev,
         selectedLocation: facility,
+        selectedDetail: facility,
         mapFocus: { lat: facility.lat, lng: facility.lng, zoom: 16 }
       }));
     }
@@ -736,18 +737,18 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
               {savedLocations.map(item => (
                 <div 
                   key={item.id}
-                  className={`border rounded-2xl p-3 transition-all flex items-center justify-between group ${
+                  className={`border rounded-2xl p-3 flex items-center justify-between group ${
                     isDarkMode 
-                      ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-[#7c3aed]/60' 
-                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-black/30'
+                      ? 'bg-[#131d35] border-slate-700/70 text-white' 
+                      : 'bg-white border-slate-200/90 text-slate-800'
                   }`}
                 >
                   <div 
                     onClick={() => handleEntityClick(item)}
                     className="flex-1 cursor-pointer min-w-0 me-2"
                   >
-                    <h4 className={`font-bold text-xs truncate transition-colors ${
-                      isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#215A9E]'
+                    <h4 className={`font-bold text-xs truncate ${
+                      isDarkMode ? 'text-white' : 'text-[#1e2749]'
                     }`}>
                       {isArabic && item.name_ar ? item.name_ar : item.name}
                     </h4>
@@ -817,10 +818,10 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
               {filteredHistory.map(session => (
                 <div 
                   key={session.id}
-                  className={`border rounded-2xl p-3.5 transition-all flex items-center justify-between group ${
+                  className={`border rounded-2xl p-3.5 flex items-center justify-between group ${
                     isDarkMode 
-                      ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-[#7c3aed]/60' 
-                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-black/30'
+                      ? 'bg-[#131d35] border-slate-700/70 text-white' 
+                      : 'bg-white border-slate-200/90 text-slate-800'
                   }`}
                 >
                   <div 
@@ -841,8 +842,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         </span>
                       )}
                     </div>
-                    <h4 className={`font-bold text-xs truncate transition-colors ${
-                      isDarkMode ? 'text-white group-hover:text-[#00e5ff]' : 'text-[#1e2749] group-hover:text-[#215A9E]'
+                    <h4 className={`font-bold text-xs truncate ${
+                      isDarkMode ? 'text-white' : 'text-[#1e2749]'
                     }`}>
                       {session.title || session.preview}
                     </h4>
