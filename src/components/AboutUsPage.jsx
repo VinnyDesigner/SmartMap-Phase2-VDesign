@@ -102,7 +102,7 @@ export default function AboutUsPage({ onNavigate }) {
                   onClick={() => onNavigate?.('explorer')}
                   className="px-7 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-[#063360] to-[#215A9E] text-white rounded-full font-extrabold text-base hover:shadow-xl hover:scale-[1.02] transition-all flex items-center gap-3 cursor-pointer"
                 >
-                  {t('Explore SmartMap', 'استكشف الخارطة الذكية')} <ArrowRight className="w-5 h-5 rtl:-scale-x-100" />
+                  {t('Explore GeoVision', 'استكشف الخارطة الذكية')} <ArrowRight className="w-5 h-5 rtl:-scale-x-100" />
                 </button>
               </div>
             </div>
