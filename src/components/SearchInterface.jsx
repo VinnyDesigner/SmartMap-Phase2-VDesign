@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowRight, Landmark, Zap, TreePine, Bus, LayoutGrid, Mic, Sparkles, Palmtree, Building2, MapPin, Factory } from 'lucide-react';
+import { Search, ArrowRight, Landmark, Zap, TreePine, Bus, LayoutGrid, Sparkles, Palmtree, Building2, MapPin, Factory } from 'lucide-react';
 import WebGLTextEffect from './WebGLTextEffect';
 import GeoVisionLogoText from './common/GeoVisionLogoText';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriter';
@@ -147,14 +147,6 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
             
             {/* Right Action Button */}
             <div className="flex items-center gap-1 pe-1">
-              <button 
-                type="button" 
-                className={`hidden sm:flex w-10 h-10 items-center justify-center transition-colors rounded-full ${
-                  isDarkMode ? 'text-slate-400 hover:text-[#c084fc] hover:bg-slate-800' : 'text-slate-400 hover:text-[#7c3aed] hover:bg-slate-50'
-                }`}
-              >
-                <Mic className="w-5 h-5" />
-              </button>
               <button 
                 onClick={() => onSearch && onSearch(searchValue)}
                 className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full flex items-center justify-center text-white transition-transform hover:scale-105 active:scale-95 shadow-md relative overflow-hidden group/action ${
