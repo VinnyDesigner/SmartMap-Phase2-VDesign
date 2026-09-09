@@ -97,12 +97,74 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
 
   // 5. COMPOUND SPATIAL SEARCH INTENT & PREDICATE EXTRACTION
   let category = null;
-  if (q.includes('tourism') || q.includes('museum') || q.includes('culture') || q.includes('attraction') || q.includes('palace') || q.includes('beach') || q.includes('متحف') || q.includes('سياحي') || q.includes('ثقافي')) category = 'TOURISM';
-  else if (q.includes('government') || q.includes('tamm') || q.includes('civic') || q.includes('municipality') || q.includes('ministry') || q.includes('dge') || q.includes('حكومية') || q.includes('حكومي') || q.includes('وزارة') || q.includes('تم')) category = 'GOVERNMENT';
-  else if (q.includes('infrastructure') || q.includes('utility') || q.includes('desalination') || q.includes('water') || q.includes('power') || q.includes('solar') || q.includes('مرافق') || q.includes('طاقة') || q.includes('مياه')) category = 'CIVIC_INFRASTRUCTURE';
-  else if (q.includes('transport') || q.includes('transit') || q.includes('bus') || q.includes('airport') || q.includes('port') || q.includes('حافلات') || q.includes('مطار') || q.includes('ميناء')) category = 'TRANSPORT';
-  else if (q.includes('park') || q.includes('green') || q.includes('recreation') || q.includes('حديقة') || q.includes('منتزه')) category = 'PARK';
-  else if (q.includes('manufacturing') || q.includes('industrial') || q.includes('kizad') || q.includes('mussafah') || q.includes('مصنع') || q.includes('صناعي')) category = 'MANUFACTURING';
+  let subType = null; // precise tag-level filter (e.g. "museum", "mosque", "park")
+  let notInDataset = false; // true when user asks for something we don't have data for
+
+  // --- Types NOT in our Abu Dhabi GIS dataset (show helpful not-found message) ---
+  if (q.includes('petrol') || q.includes('gas station') || q.includes('fuel station') || q.includes('filling station') || q.includes('محطة وقود') || q.includes('محطة بنزين')) {
+    notInDataset = true; subType = 'petrol station';
+  } else if (q.includes('restaurant') || q.includes('cafe') || q.includes('coffee') || q.includes('food') || q.includes('eat') || q.includes('dining') || q.includes('مطعم') || q.includes('كافيه') || q.includes('طعام')) {
+    notInDataset = true; subType = 'restaurant';
+  } else if (q.includes('hotel') || q.includes('resort') || q.includes('accommodation') || q.includes('فندق') || q.includes('منتجع')) {
+    notInDataset = true; subType = 'hotel';
+  } else if (q.includes('mall') || q.includes('shopping') || q.includes('shop') || q.includes('store') || q.includes('supermarket') || q.includes('مول') || q.includes('تسوق') || q.includes('سوبرماركت')) {
+    notInDataset = true; subType = 'mall';
+  } else if (q.includes('pharmacy') || q.includes('chemist') || q.includes('drugstore') || q.includes('صيدلية')) {
+    notInDataset = true; subType = 'pharmacy';
+  } else if (q.includes('atm') || q.includes('bank') || q.includes('صراف') || q.includes('بنك') || q.includes('مصرف')) {
+    notInDataset = true; subType = 'bank/ATM';
+  } else if (q.includes('gym') || q.includes('fitness') || q.includes('sport') || q.includes('stadium') || q.includes('صالة رياضية') || q.includes('ملعب')) {
+    notInDataset = true; subType = 'gym/sports facility';
+  } else if (q.includes('cinema') || q.includes('movie') || q.includes('theatre') || q.includes('theater') || q.includes('سينما') || q.includes('مسرح')) {
+    notInDataset = true; subType = 'cinema';
+  } else if (q.includes('salon') || q.includes('spa') || q.includes('barber') || q.includes('صالون') || q.includes('سبا')) {
+    notInDataset = true; subType = 'salon/spa';
+  }
+
+  // --- Specific sub-type keywords for items IN our dataset ---
+  else if (q.includes('museum') || q.includes('متحف')) {
+    category = 'TOURISM'; subType = 'museum';
+  } else if (q.includes('mosque') || q.includes('مسجد') || q.includes('جامع')) {
+    category = 'TOURISM'; subType = 'mosque';
+  } else if (q.includes('palace') || q.includes('قصر')) {
+    category = 'TOURISM'; subType = 'palace';
+  } else if (q.includes('louvre') || q.includes('لوفر')) {
+    category = 'TOURISM'; subType = 'louvre';
+  } else if (q.includes('saadiyat') || q.includes('السعديات')) {
+    category = 'TOURISM'; subType = 'saadiyat';
+  } else if (q.includes('beach') || q.includes('شاطئ')) {
+    category = 'TOURISM'; subType = 'beach';
+  } else if (q.includes('park') || q.includes('garden') || q.includes('حديقة') || q.includes('منتزه')) {
+    category = 'PARK'; subType = 'park';
+  } else if (q.includes('mangrove') || q.includes('قرم')) {
+    category = 'ENVIRONMENT'; subType = 'mangrove';
+  } else if (q.includes('police') || q.includes('police station') || q.includes('شرطة')) {
+    category = 'PUBLIC_SAFETY'; subType = 'police';
+  } else if (q.includes('ambulance') || q.includes('إسعاف') || q.includes('طوارئ')) {
+    category = 'PUBLIC_SAFETY'; subType = 'ambulance';
+  } else if (q.includes('hospital') || q.includes('clinic') || q.includes('مستشفى') || q.includes('عيادة')) {
+    category = 'HOSPITAL'; subType = 'hospital';
+  } else if (q.includes('university') || q.includes('school') || q.includes('college') || q.includes('جامعة') || q.includes('مدرسة')) {
+    category = 'EDUCATION'; subType = 'university';
+  } else if (q.includes('bus') || q.includes('transit') || q.includes('حافلة') || q.includes('حافلات')) {
+    category = 'TRANSPORT'; subType = 'bus';
+  } else if (q.includes('airport') || q.includes('مطار')) {
+    category = 'TRANSPORT'; subType = 'airport';
+  } else if (q.includes('tamm') || q.includes('تم')) {
+    category = 'GOVERNMENT'; subType = 'tamm';
+  } else if (q.includes('municipality') || q.includes('بلدية')) {
+    category = 'GOVERNMENT'; subType = 'municipality';
+  } else if (q.includes('tourism') || q.includes('culture') || q.includes('attraction') || q.includes('landmark') || q.includes('سياحي') || q.includes('ثقافي')) {
+    category = 'TOURISM';
+  } else if (q.includes('government') || q.includes('civic') || q.includes('ministry') || q.includes('dge') || q.includes('حكومية') || q.includes('حكومي') || q.includes('وزارة')) {
+    category = 'GOVERNMENT';
+  } else if (q.includes('infrastructure') || q.includes('utility') || q.includes('desalination') || q.includes('water') || q.includes('power') || q.includes('solar') || q.includes('مرافق') || q.includes('طاقة') || q.includes('مياه')) {
+    category = 'CIVIC_INFRASTRUCTURE';
+  } else if (q.includes('transport') || q.includes('port') || q.includes('ميناء')) {
+    category = 'TRANSPORT';
+  } else if (q.includes('manufacturing') || q.includes('industrial') || q.includes('kizad') || q.includes('mussafah') || q.includes('مصنع') || q.includes('صناعي')) {
+    category = 'MANUFACTURING';
+  }
 
   // Region / District Extraction
   let region = null;
@@ -129,9 +191,13 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
   return {
     type: 'SPATIAL_SEARCH',
     category,
+    subType,
+    notInDataset,
     region,
     riskLevel,
     radiusKm,
     rawQuery: queryText
   };
 }
+
+

@@ -42,42 +42,55 @@ const LANDMARK_IMAGE_MAP = {
   'Mussafah Eco & Waste Recycling Complex': 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=800&q=80'
 };
 
-const DEFAULT_CATEGORY_IMAGES = {
-  TOURISM: 'https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=800&q=80',
-  GOVERNMENT: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80',
-  PUBLIC_SAFETY: 'https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?auto=format&fit=crop&w=800&q=80',
-  TRANSPORT: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80',
-  PARK: 'https://images.unsplash.com/photo-1519331379826-f10be5486c6f?auto=format&fit=crop&w=800&q=80',
-  ENVIRONMENT: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=800&q=80',
-  HOSPITAL: 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
-  EDUCATION: 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
-  CIVIC_INFRASTRUCTURE: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=800&q=80'
-};
+// Neutral "No Photo" placeholder — shown when no specific image is available
+const NO_PHOTO_PLACEHOLDER = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <rect width="800" height="500" fill="#1e2a3a"/>
+  <rect x="320" y="180" width="160" height="140" rx="12" fill="#2a3a52" stroke="#3a4f6e" stroke-width="2"/>
+  <circle cx="400" cy="232" r="28" fill="#3a4f6e"/>
+  <rect x="358" y="270" width="84" height="8" rx="4" fill="#3a4f6e"/>
+  <rect x="372" y="290" width="56" height="6" rx="3" fill="#2e3d52"/>
+  <text x="400" y="358" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="14" fill="#5a7090" letter-spacing="1">No Photo Available</text>
+</svg>
+`)}`;
 
 export function getLandmarkThumbnail(item) {
-  if (!item) return DEFAULT_CATEGORY_IMAGES.GOVERNMENT;
-  
+  if (!item) return NO_PHOTO_PLACEHOLDER;
+
+  // If item has an explicit image that isn't the generic government building fallback
   if (item.image && !item.image.includes('photo-1486406146926-c627a92ad1ab')) {
     return item.image;
   }
 
   const nameKey = item.name || '';
+
+  // 1. Exact name match
   if (LANDMARK_IMAGE_MAP[nameKey]) {
     return LANDMARK_IMAGE_MAP[nameKey];
   }
 
-  // Fallback matching by name tokens
+  // 2. Partial name token match for known landmarks only
   const nameLower = nameKey.toLowerCase();
   if (nameLower.includes('louvre')) return LANDMARK_IMAGE_MAP['Louvre Abu Dhabi'];
-  if (nameLower.includes('watan')) return LANDMARK_IMAGE_MAP['Qasr Al Watan Cultural Palace'];
-  if (nameLower.includes('mosque') || nameLower.includes('zayed grand')) return LANDMARK_IMAGE_MAP['Sheikh Zayed Grand Mosque Center'];
-  if (nameLower.includes('park') || nameLower.includes('emarat')) return LANDMARK_IMAGE_MAP['Umm Al Emarat Park & Eco Hub'];
-  if (nameLower.includes('police')) return LANDMARK_IMAGE_MAP['Abu Dhabi Central Police Station'];
-  if (nameLower.includes('hospital') || nameLower.includes('clinic')) return LANDMARK_IMAGE_MAP['Cleveland Clinic Abu Dhabi'];
-  if (nameLower.includes('university') || nameLower.includes('school')) return LANDMARK_IMAGE_MAP['Khalifa University Main Campus'];
-  if (nameLower.includes('mangrove')) return LANDMARK_IMAGE_MAP['Eastern Mangrove Protected National Park'];
+  if (nameLower.includes('qasr al watan') || nameLower.includes('watan')) return LANDMARK_IMAGE_MAP['Qasr Al Watan Cultural Palace'];
+  if (nameLower.includes('sheikh zayed grand') || nameLower.includes('grand mosque')) return LANDMARK_IMAGE_MAP['Sheikh Zayed Grand Mosque Center'];
+  if (nameLower.includes('umm al emarat') || nameLower.includes('emarat park')) return LANDMARK_IMAGE_MAP['Umm Al Emarat Park & Eco Hub'];
+  if (nameLower.includes('yas gateway park')) return LANDMARK_IMAGE_MAP['Yas Gateway Park North'];
+  if (nameLower.includes('eastern mangrove')) return LANDMARK_IMAGE_MAP['Eastern Mangrove Protected National Park'];
+  if (nameLower.includes('cleveland clinic')) return LANDMARK_IMAGE_MAP['Cleveland Clinic Abu Dhabi'];
+  if (nameLower.includes('sheikh shakhbout') || nameLower.includes('ssmc')) return LANDMARK_IMAGE_MAP['Sheikh Shakhbout Medical City (SSMC)'];
+  if (nameLower.includes('khalifa university')) return LANDMARK_IMAGE_MAP['Khalifa University Main Campus'];
+  if (nameLower.includes('sorbonne')) return LANDMARK_IMAGE_MAP['Sorbonne University Abu Dhabi'];
+  if (nameLower.includes('corniche') && nameLower.includes('transit')) return LANDMARK_IMAGE_MAP['Corniche Waterfront Transit Stop #4'];
+  if (nameLower.includes('zayed international airport') || nameLower.includes('zayed airport')) return LANDMARK_IMAGE_MAP['Zayed International Airport Terminal Hub'];
+  if (nameLower.includes('central ambulance') || nameLower.includes('ambulance station')) return LANDMARK_IMAGE_MAP['Abu Dhabi Central Ambulance Station'];
+  if (nameLower.includes('central police') || (nameLower.includes('abu dhabi') && nameLower.includes('police'))) return LANDMARK_IMAGE_MAP['Abu Dhabi Central Police Station'];
+  if (nameLower.includes('bateen police')) return LANDMARK_IMAGE_MAP['Al Bateen Police Station'];
+  if (nameLower.includes('dge') || nameLower.includes('government enablement')) return LANDMARK_IMAGE_MAP['Department of Government Enablement (DGE) HQ'];
+  if (nameLower.includes('tamm')) return LANDMARK_IMAGE_MAP['TAMM Customer Service Hub - Al Reem'];
+  if (nameLower.includes('al taweelah') || nameLower.includes('desalination')) return LANDMARK_IMAGE_MAP['Al Taweelah Power & Desalination Complex'];
+  if (nameLower.includes('mussafah') && nameLower.includes('waste')) return LANDMARK_IMAGE_MAP['Mussafah Eco & Waste Recycling Complex'];
 
-  // Category fallback
-  const cat = (item.type || item.facilityType || item.category || 'GOVERNMENT').toUpperCase();
-  return DEFAULT_CATEGORY_IMAGES[cat] || DEFAULT_CATEGORY_IMAGES.GOVERNMENT;
+  // 3. No specific match — show placeholder instead of random image
+  return NO_PHOTO_PLACEHOLDER;
 }

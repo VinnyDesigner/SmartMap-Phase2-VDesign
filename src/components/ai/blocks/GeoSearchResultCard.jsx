@@ -173,53 +173,52 @@ export default function GeoSearchResultCard({
     <div 
       id={`chat-card-${item.id || item.name}`}
       onClick={handleFocusClick}
-      className={`group relative rounded-2xl p-3 sm:p-3.5 border transition-colors duration-200 cursor-pointer shadow-xs overflow-hidden flex flex-col gap-2.5 ${
+      className={`group relative w-full rounded-2xl p-3 border transition-colors duration-200 cursor-pointer shadow-xs overflow-hidden flex flex-col gap-2 ${
         isDarkMode 
           ? 'bg-[#0f182e] border-slate-800/90 text-slate-100' 
           : 'bg-white border-slate-200/90 text-slate-800'
       }`}
     >
-      {/* Top Header: Icon, Title, Category Badge, Distance */}
-      <div className="flex items-start justify-between gap-2.5">
-        <div className="flex items-start gap-2.5 min-w-0 flex-1">
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs mt-0.5 ${
-            item.riskLevel === 'Critical'
-              ? (isDarkMode ? 'bg-rose-950/80 text-rose-300 border border-rose-800/60' : 'bg-rose-100 text-rose-700 border border-rose-200')
-              : item.riskLevel === 'High'
-              ? (isDarkMode ? 'bg-amber-950/80 text-amber-300 border border-amber-800/60' : 'bg-amber-100 text-amber-700 border border-amber-200')
-              : (isDarkMode ? 'bg-[#182645] text-[#00e5ff] border border-slate-700/80' : 'bg-[#eef3ff] text-[#215A9E] border border-[#215A9E]/20')
-          }`}>
-            <CategoryIcon className="w-4.5 h-4.5" />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <h4 className={`font-bold text-xs leading-snug truncate ${
-                isDarkMode ? 'text-white' : 'text-[#1e2749]'
-              }`}>
-                {displayName}
-              </h4>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-[10px] text-slate-400 mt-0.5 flex-wrap">
-              <span className="font-semibold text-slate-500 dark:text-slate-400">{displayCategory}</span>
-              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0" />
-              <span className="font-medium text-slate-500 dark:text-slate-400 truncate">{displayLocation}</span>
-            </div>
-          </div>
+      {/* Top Header: Icon, Title, Distance */}
+      <div className="flex items-start gap-2.5 min-w-0">
+        {/* Category Icon */}
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs mt-0.5 ${
+          item.riskLevel === 'Critical'
+            ? (isDarkMode ? 'bg-rose-950/80 text-rose-300 border border-rose-800/60' : 'bg-rose-100 text-rose-700 border border-rose-200')
+            : item.riskLevel === 'High'
+            ? (isDarkMode ? 'bg-amber-950/80 text-amber-300 border border-amber-800/60' : 'bg-amber-100 text-amber-700 border border-amber-200')
+            : (isDarkMode ? 'bg-[#182645] text-[#00e5ff] border border-slate-700/80' : 'bg-[#eef3ff] text-[#215A9E] border border-[#215A9E]/20')
+        }`}>
+          <CategoryIcon className="w-4.5 h-4.5" />
         </div>
 
-        {/* Distance Badge */}
-        {distanceStr && (
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 border flex items-center gap-1 ${
-            isDarkMode 
-              ? 'bg-[#182645] text-[#00e5ff] border-slate-700/80' 
-              : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20'
-          }`}>
-            <PlaceOutlinedIcon style={{ fontSize: 13 }} className="text-amber-500" />
-            <span>{distanceStr}</span>
-          </span>
-        )}
+        {/* Name + Meta + Distance */}
+        <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+          <div className="flex items-start justify-between gap-1.5 min-w-0">
+            <h4 className={`font-bold text-xs leading-snug min-w-0 flex-1 break-words ${
+              isDarkMode ? 'text-white' : 'text-[#1e2749]'
+            }`}>
+              {displayName}
+            </h4>
+            {/* Distance Badge — shrinks to the right of the name */}
+            {distanceStr && (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 border flex items-center gap-1 self-start ${
+                isDarkMode 
+                  ? 'bg-[#182645] text-[#00e5ff] border-slate-700/80' 
+                  : 'bg-[#eef3ff] text-[#215A9E] border-[#215A9E]/20'
+              }`}>
+                <PlaceOutlinedIcon style={{ fontSize: 11 }} className="text-amber-500" />
+                <span className="whitespace-nowrap">{distanceStr}</span>
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 flex-wrap">
+            <span className="font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[120px]">{displayCategory}</span>
+            <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700 shrink-0" />
+            <span className="font-medium text-slate-500 dark:text-slate-400 truncate">{displayLocation}</span>
+          </div>
+        </div>
       </div>
 
       {/* Short Description */}
@@ -229,63 +228,61 @@ export default function GeoSearchResultCard({
         </p>
       )}
 
-      {/* Reusable Uniform Action Button Row */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1.5 text-[10px] flex-wrap">
-        <div className="flex items-center gap-1">
-          {/* Focus on Map */}
-          <button
-            type="button"
-            onClick={handleFocusClick}
-            className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer ${
-              isDarkMode 
-                ? 'bg-[#182645] text-sky-300 hover:bg-[#7c3aed] hover:text-white border border-slate-700/80' 
-                : 'bg-slate-100 text-slate-700 hover:bg-black hover:text-white border border-slate-200'
-            }`}
-            title={t('Focus on map location', 'التركيز على خريطة الموقع')}
-          >
-            <MyLocationOutlinedIcon style={{ fontSize: 14 }} className="text-sky-400" />
-            <span>{t('Focus', 'تركيز')}</span>
-          </button>
+      {/* Action Button Row */}
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-1.5 flex-wrap">
+        {/* Focus on Map */}
+        <button
+          type="button"
+          onClick={handleFocusClick}
+          className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer text-[10px] ${
+            isDarkMode 
+              ? 'bg-[#182645] text-sky-300 hover:bg-[#7c3aed] hover:text-white border border-slate-700/80' 
+              : 'bg-slate-100 text-slate-700 hover:bg-black hover:text-white border border-slate-200'
+          }`}
+          title={t('Focus on map location', 'التركيز على خريطة الموقع')}
+        >
+          <MyLocationOutlinedIcon style={{ fontSize: 14 }} className="text-sky-400" />
+          <span>{t('Focus', 'تركيز')}</span>
+        </button>
 
-          {/* Details Button - Opens Image 2 Accordion */}
-          <button
-            type="button"
-            onClick={handleInfoClick}
-            className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer ${
-              isExpanded
-                ? 'bg-[#3B66AD] text-white font-extrabold shadow-2xs'
-                : (isDarkMode 
-                    ? 'bg-[#182645] text-[#00e5ff] hover:bg-[#00e5ff] hover:text-slate-950 border border-slate-700/80' 
-                    : 'bg-[#eef3ff] text-[#215A9E] hover:bg-[#215A9E] hover:text-white border border-[#215A9E]/20')
-            }`}
-            title={t('Toggle details panel', 'عرض/إخفاء التفاصيل')}
-          >
-            <InfoOutlinedIcon style={{ fontSize: 14 }} />
-            <span>{isExpanded ? t('Hide Details', 'إخفاء التفاصيل') : t('Details', 'التفاصيل')}</span>
-          </button>
+        {/* Details Button */}
+        <button
+          type="button"
+          onClick={handleInfoClick}
+          className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer text-[10px] ${
+            isExpanded
+              ? 'bg-[#3B66AD] text-white font-extrabold shadow-2xs'
+              : (isDarkMode 
+                  ? 'bg-[#182645] text-[#00e5ff] hover:bg-[#00e5ff] hover:text-slate-950 border border-slate-700/80' 
+                  : 'bg-[#eef3ff] text-[#215A9E] hover:bg-[#215A9E] hover:text-white border border-[#215A9E]/20')
+          }`}
+          title={t('Toggle details panel', 'عرض/إخفاء التفاصيل')}
+        >
+          <InfoOutlinedIcon style={{ fontSize: 14 }} />
+          <span>{isExpanded ? t('Hide', 'إخفاء') : t('Details', 'التفاصيل')}</span>
+        </button>
 
-          {/* Directions / Route */}
-          <button
-            type="button"
-            onClick={handleDirectionsClick}
-            className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer ${
-              isDarkMode 
-                ? 'bg-[#182645] text-emerald-400 hover:bg-emerald-600 hover:text-white border border-slate-700/80' 
-                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200'
-            }`}
-            title={t('Get directions', 'الاتجاهات')}
-          >
-            <DirectionsOutlinedIcon style={{ fontSize: 14 }} />
-            <span>{t('Directions', 'الاتجاهات')}</span>
-          </button>
-        </div>
+        {/* Directions */}
+        <button
+          type="button"
+          onClick={handleDirectionsClick}
+          className={`px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1 cursor-pointer text-[10px] ${
+            isDarkMode 
+              ? 'bg-[#182645] text-emerald-400 hover:bg-emerald-600 hover:text-white border border-slate-700/80' 
+              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200'
+          }`}
+          title={t('Get directions', 'الاتجاهات')}
+        >
+          <DirectionsOutlinedIcon style={{ fontSize: 14 }} />
+          <span>{t('Directions', 'الاتجاهات')}</span>
+        </button>
 
-        {/* Favorite (Heart) Button - Enabled for Registered Users Only */}
+        {/* Favorite (Heart) — Logged-in only, pushed to end */}
         {isLoggedIn && (
           <button
             type="button"
             onClick={handleFavoriteClick}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+            className={`ms-auto p-1.5 rounded-lg border transition-colors cursor-pointer ${
               isFavorite 
                 ? 'bg-rose-500 text-white border-rose-500' 
                 : (isDarkMode ? 'text-slate-400 hover:text-rose-400 hover:bg-slate-800 border-slate-700' : 'text-slate-400 hover:text-rose-600 hover:bg-slate-100 border-slate-200')
@@ -529,14 +526,39 @@ export default function GeoSearchResultCard({
                           {t('Surrounding services within 2 km radius:', 'الخدمات والمرافق المجاورة في محيط 2 كم:')}
                         </p>
                         {[
-                          { name: isArabic ? 'محطة حافلات النقل العام' : 'Corniche Transit Stop', type: 'Public Transit', dist: '320 m', icon: Bus, color: 'text-amber-500 bg-amber-500/10' },
-                          { name: isArabic ? 'مواقف السيارات الذكية' : 'Smart Visitor Parking', type: 'Smart Parking', dist: '150 m', icon: Navigation, color: 'text-blue-500 bg-blue-500/10' },
-                          { name: isArabic ? 'مركز شرطة البطين' : 'Al Bateen Safety Hub', type: 'Public Safety', dist: '750 m', icon: ShieldCheck, color: 'text-indigo-500 bg-indigo-500/10' },
-                          { name: isArabic ? 'وحدة الإسعاف الطبية' : 'Paramedic Station', type: 'Healthcare', dist: '1.1 km', icon: PlusSquare, color: 'text-rose-500 bg-rose-500/10' }
+                          { name: isArabic ? 'محطة حافلات النقل العام' : 'Corniche Transit Stop', type: 'Public Transit', dist: '320 m', distKm: 0.32, latOffset: 0.003, lngOffset: 0.001, icon: Bus, color: 'text-amber-500 bg-amber-500/10' },
+                          { name: isArabic ? 'مواقف السيارات الذكية' : 'Smart Visitor Parking', type: 'Smart Parking', dist: '150 m', distKm: 0.15, latOffset: -0.001, lngOffset: 0.002, icon: Navigation, color: 'text-blue-500 bg-blue-500/10' },
+                          { name: isArabic ? 'مركز شرطة البطين' : 'Al Bateen Safety Hub', type: 'Public Safety', dist: '750 m', distKm: 0.75, latOffset: -0.005, lngOffset: -0.003, icon: ShieldCheck, color: 'text-indigo-500 bg-indigo-500/10' },
+                          { name: isArabic ? 'وحدة الإسعاف الطبية' : 'Paramedic Station', type: 'Healthcare', dist: '1.1 km', distKm: 1.1, latOffset: 0.007, lngOffset: -0.004, icon: PlusSquare, color: 'text-rose-500 bg-rose-500/10' }
                         ].map((poi, pIdx) => {
                           const PoiIcon = poi.icon;
+                          const poiLat = item.lat + (poi.latOffset || 0);
+                          const poiLng = item.lng + (poi.lngOffset || 0);
+                          const handlePoiClick = (e) => {
+                            e.stopPropagation();
+                            const poiItem = { ...poi, lat: poiLat, lng: poiLng, type: poi.type, location: poi.type };
+                            if (onActionClick) {
+                              onActionClick({
+                                actionType: 'MAP_FLY_TO',
+                                title: poi.name,
+                                params: { lat: poiLat, lng: poiLng, zoom: 17, item: poiItem, location: poiItem }
+                              });
+                            }
+                            if (onEntityClick) {
+                              onEntityClick(poiItem);
+                            }
+                          };
                           return (
-                            <div key={pIdx} className={`p-2 rounded-xl border flex items-center justify-between gap-2 ${isDarkMode ? 'bg-[#101a35] border-slate-800' : 'bg-white border-slate-200'}`}>
+                            <button
+                              key={pIdx}
+                              type="button"
+                              onClick={handlePoiClick}
+                              className={`w-full p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all duration-150 text-start group/poi ${
+                                isDarkMode
+                                  ? 'bg-[#101a35] border-slate-800 hover:border-[#00e5ff]/40 hover:bg-[#182645]'
+                                  : 'bg-white border-slate-200 hover:border-[#215A9E]/40 hover:bg-[#eef3ff]'
+                              }`}
+                            >
                               <div className="flex items-center gap-2 min-w-0">
                                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${poi.color}`}>
                                   <PoiIcon className="w-3.5 h-3.5" />
@@ -546,9 +568,12 @@ export default function GeoSearchResultCard({
                                   <span className="text-[9.5px] text-slate-400">{poi.type} • <strong className="text-[#215A9E] dark:text-[#00e5ff]">{poi.dist}</strong></span>
                                 </div>
                               </div>
-                            </div>
+                              {/* Focus indicator */}
+                              <MyLocationOutlinedIcon style={{ fontSize: 13 }} className="text-slate-300 dark:text-slate-600 group-hover/poi:text-[#215A9E] dark:group-hover/poi:text-[#00e5ff] shrink-0 transition-colors" />
+                            </button>
                           );
                         })}
+
                       </div>
                     )}
 

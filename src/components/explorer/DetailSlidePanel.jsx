@@ -384,11 +384,18 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
 
               {nearbyPois.map(poi => {
                 const IconComponent = poi.icon;
+                const flyToPoi = () => setExplorerState(prev => ({
+                  ...prev,
+                  mapFocus: { lat: poi.lat, lng: poi.lng, zoom: 17, _ts: Date.now() }
+                }));
                 return (
-                  <div 
+                  <button
                     key={poi.id}
-                    className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
-                      isDarkMode ? 'bg-[#101a35] border-slate-800 hover:border-slate-700' : 'bg-slate-50 border-slate-200 hover:bg-white hover:shadow-xs'
+                    onClick={flyToPoi}
+                    className={`w-full p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer text-start group ${
+                      isDarkMode 
+                        ? 'bg-[#101a35] border-slate-800 hover:border-[#00e5ff]/40 hover:bg-[#152040]' 
+                        : 'bg-slate-50 border-slate-200 hover:bg-white hover:shadow-sm hover:border-[#215A9E]/30'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -405,21 +412,17 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => setExplorerState(prev => ({
-                        ...prev,
-                        mapFocus: { lat: poi.lat, lng: poi.lng, zoom: 16 }
-                      }))}
-                      className={`p-1.5 rounded-lg border text-[10px] font-bold shrink-0 transition-colors cursor-pointer ${
+                    <div
+                      className={`p-1.5 rounded-lg border text-[10px] font-bold shrink-0 transition-colors ${
                         isDarkMode 
-                          ? 'bg-[#182645] border-slate-700 text-[#00e5ff] hover:bg-[#00e5ff] hover:text-slate-950' 
-                          : 'bg-white border-slate-200 text-[#215A9E] hover:bg-[#215A9E] hover:text-white'
+                          ? 'bg-[#182645] border-slate-700 text-[#00e5ff] group-hover:bg-[#00e5ff] group-hover:text-slate-950' 
+                          : 'bg-white border-slate-200 text-[#215A9E] group-hover:bg-[#215A9E] group-hover:text-white'
                       }`}
                       title={t('Focus on map', 'التركيز الخريطة')}
                     >
                       <Target className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                    </div>
+                  </button>
                 );
               })}
             </div>

@@ -68,7 +68,14 @@ export default function MapPrintTemplate({ explorerState }) {
           {/* Header */}
           <div className="flex items-center justify-between border-b-2 border-[#063360] pb-4 mb-6">
             <div className="flex items-center gap-4">
-              <img src={dgeLightLogo} alt="DGE Logo" className="h-10 object-contain" />
+              <a
+                href="https://www.dge.gov.ae/en"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Department of Government Enablement"
+              >
+                <img src={dgeLightLogo} alt="DGE Logo" className="h-10 object-contain" />
+              </a>
               <div>
                 <h1 className="text-2xl font-bold text-[#063360]">
                   {isArabic ? activeProject.name_ar : activeProject.name} — {isArabic ? "تقرير الخريطة الذكية" : "Executive Spatial Map Report"}
@@ -78,7 +85,14 @@ export default function MapPrintTemplate({ explorerState }) {
                 </p>
               </div>
             </div>
-            <img src={sdiLightLogo} alt="SDI Logo" className="h-10 object-contain" />
+            <a
+              href="https://sdi.gov.abudhabi/sdi/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Abu Dhabi Spatial Data Infrastructure"
+            >
+              <img src={sdiLightLogo} alt="SDI Logo" className="h-10 object-contain" />
+            </a>
           </div>
 
           {/* Project & Extent Metadata Card */}
@@ -218,7 +232,14 @@ export default function MapPrintTemplate({ explorerState }) {
           {/* Header Page 2 */}
           <div className="flex items-center justify-between border-b-2 border-[#063360] pb-4 mb-6">
             <div className="flex items-center gap-4">
-              <img src={dgeLightLogo} alt="DGE Logo" className="h-10 object-contain" />
+              <a
+                href="https://www.dge.gov.ae/en"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Department of Government Enablement"
+              >
+                <img src={dgeLightLogo} alt="DGE Logo" className="h-10 object-contain" />
+              </a>
               <div>
                 <h2 className="text-xl font-bold text-[#063360]">
                   {isArabic ? "قسم التحليلات ومؤشرات المخاطر" : "Section 2: Executive Analytics & Spatial Distribution"}
@@ -324,7 +345,14 @@ export default function MapPrintTemplate({ explorerState }) {
           {/* Header Page 3 */}
           <div className="flex items-center justify-between border-b-2 border-[#063360] pb-4 mb-6">
             <div className="flex items-center gap-4">
-              <img src={dgeLightLogo} alt="DGE Logo" className="h-10 object-contain" />
+              <a
+                href="https://www.dge.gov.ae/en"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Department of Government Enablement"
+              >
+                <img src={dgeLightLogo} alt="DGE Logo" className="h-10 object-contain" />
+              </a>
               <div>
                 <h2 className="text-xl font-bold text-[#063360]">
                   {isArabic ? "قسم جدول البيانات التفصيلي" : "Section 3: Complete Spatial Feature Data Index Table"}

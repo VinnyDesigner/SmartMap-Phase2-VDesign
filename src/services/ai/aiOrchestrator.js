@@ -508,25 +508,9 @@ export const aiOrchestrator = {
       return { reply: blocks[0].content, blocks, actions, executionLogs };
     }
 
-    // Fallback search & standard queries sorted strictly by proximity
-    const results = sortFacilitiesByDistance(sortedAllFacilities).slice(0, 4);
-    blocks = [
-      {
-        type: 'TEXT',
-        content: isArabic 
-          ? `تم إجراء الاستعلام المكاني وحصر **${results.length} منشآت ومواقع مرتبة حسب القرب الجغرافي**:` 
-          : `Executed spatial query and retrieved **${results.length} matching locations ordered by proximity from your location**:`
-      },
-      {
-        type: 'LOCATION_LIST',
-        locations: results
-      },
-      {
-        type: 'ACTION_SUGGESTIONS',
-        suggestions: isArabic ? ["عرض الحدائق", "عرض المستشفيات", "مقارنة الانبعاثات"] : ["Show parks", "Show hospitals", "Compare emissions"]
-      }
-    ];
 
-    return { reply: blocks[0].content, blocks, actions: [], results, executionLogs };
+    // For any query the orchestrator doesn't specifically handle, return null
+    // so the mockAiEngine can handle it with a proper response
+    return null;
   }
 };

@@ -285,6 +285,23 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     if (!forcedQuery) setInputValue('');
     setActiveTab('chat');
 
+    // ── Clear visual map state before the new query ──
+    // NOTE: activeContext is intentionally preserved so follow-up queries
+    // like "Which one is closest?" still know what the previous results were.
+    setExplorerState(prev => ({
+      ...prev,
+      selectedLocation: null,
+      selectedDetail: null,
+      activeResults: [],
+      showSearchResults: false,
+      highlightedLocations: [],
+      activeRouteDestination: null,
+      drawnPolygon: null,
+      drawnCircle: null,
+      drawnRectangle: null,
+      activeFilters: {}
+    }));
+
     const userMsgId = `msg-user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const userMsg = { id: userMsgId, role: 'user', content: queryToProcess };
     
@@ -293,6 +310,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       lastQuery: queryToProcess,
       chatHistory: [...(prev.chatHistory || []), userMsg]
     }));
+
 
     setIsTyping(true);
     

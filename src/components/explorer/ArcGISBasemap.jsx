@@ -3,6 +3,13 @@ import { TileLayer, useMap } from 'react-leaflet';
 import { dynamicMapLayer } from 'esri-leaflet';
 
 export const BASEMAPS = {
+  ESRI_VECTOR: {
+    id: "esri-vector",
+    name: "Esri Vector Basemap",
+    type: "TILE_LAYER",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community"
+  },
   ABU_DHABI_DGE: {
     id: "abu-dhabi-dge",
     name: "Abu Dhabi Official DGE Color Basemap",
@@ -73,8 +80,8 @@ function EsriMapServerLayer({ url, attribution }) {
   return null;
 }
 
-export default function ArcGISBasemap({ activeBasemapId = 'abu-dhabi-dge' }) {
-  const currentBasemap = Object.values(BASEMAPS).find(b => b.id === activeBasemapId) || BASEMAPS.ABU_DHABI_DGE;
+export default function ArcGISBasemap({ activeBasemapId = 'esri-vector' }) {
+  const currentBasemap = Object.values(BASEMAPS).find(b => b.id === activeBasemapId) || BASEMAPS.ESRI_VECTOR;
 
   if (currentBasemap.type === "ARCGIS_SERVER") {
     return (

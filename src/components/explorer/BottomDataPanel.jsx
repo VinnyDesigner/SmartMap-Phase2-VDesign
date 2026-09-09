@@ -90,16 +90,34 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
 
       return {
         ...prev,
+        // ── Chat reset ──
         chatHistory: [welcomeMessage],
         savedChatHistory: updatedSaved,
-        activeResults: [],
-        showSearchResults: false,
+        // ── Map markers & selections ──
         selectedLocation: null,
         selectedDetail: null,
-        activeFilters: {}
+        activeResults: [],
+        showSearchResults: false,
+        highlightedLocations: [],
+        // ── Direction line ──
+        activeRouteDestination: null,
+        // ── Drawn shapes ──
+        drawnPolygon: null,
+        drawnCircle: null,
+        drawnRectangle: null,
+        drawings: [],
+        drawingTool: null,
+        // ── AI context & filters ──
+        activeContext: null,
+        activeFilters: {},
+        lastQuery: null,
+        // ── Map view reset ──
+        mapFocus: { lat: 24.4839, lng: 54.3773, zoom: 13 },
+        resizeTrigger: Date.now()
       };
     });
   };
+
 
 
   return (

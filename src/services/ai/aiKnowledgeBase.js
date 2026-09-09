@@ -46,8 +46,8 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
         : `Found **${results.length} police stations** near your current location:`;
 
       const suggestions = isArabic 
-        ? ["أيها الأقرب لي؟", "ما هي محطات الإسعاف القريبة؟", "عرض في جدول"] 
-        : ["Which one is closest?", "What ambulance stations are nearby?", "Put this in a table"];
+        ? ["أيها الأقرب لي؟", "ما هي محطات الإسعاف القريبة؟"] 
+        : ["Which one is closest?", "What ambulance stations are nearby?"];
 
       return { reply, results, actions, suggestions, activeContext: { category: 'PUBLIC_SAFETY', activeLocations: results } };
     }
@@ -242,8 +242,8 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
         : `Identified **${results.length} registered environmental protected areas** in Abu Dhabi:`;
 
       const suggestions = isArabic
-        ? ["أيها المناطق التي تتقاطع معها؟", "عرض المشاريع العمرانية القريبة", "عرض في جدول"]
-        : ["Which communities overlap them?", "Show development projects near these areas", "Put this in a table"];
+        ? ["أيها المناطق التي تتقاطع معها؟", "عرض المشاريع العمرانية القريبة"]
+        : ["Which communities overlap them?", "Show development projects near these areas"];
 
       return { reply, results, actions, suggestions, activeContext: { category: 'ENVIRONMENT', activeLocations: results } };
     }
@@ -296,7 +296,7 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
         ? "🗺️ **استكشاف المنطقة المحيطة**:\nإليك أبرز المعالم والخدمات المتاحة بالقرب من موقعك الحالي:"
         : "🗺️ **Spatial Area Overview**:\nHere are key landmarks and public services available around your current location:";
 
-      return { reply, results, suggestions: ["Show on map", "Put this in a table"], activeContext: { activeLocations: results } };
+      return { reply, results, suggestions: ["Show on map"], activeContext: { activeLocations: results } };
     }
   }
 ];

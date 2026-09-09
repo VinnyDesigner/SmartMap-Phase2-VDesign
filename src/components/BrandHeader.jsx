@@ -65,12 +65,19 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
       }`}>
         {/* Left: DGE Logo */}
         <div className="flex items-center pointer-events-auto gap-3 md:gap-4 h-full shrink-0 py-2">
-          <img 
-            src={isDarkMode ? dgeDarkLogo : dgeLightLogo} 
-            alt="Department of Government Enablement" 
-            className="h-7 md:h-8 lg:h-9 max-h-9 w-auto object-contain drop-shadow-sm cursor-pointer transition-all my-auto" 
-            onClick={() => onNavigate?.('landing')} 
-          />
+          <a
+            href="https://www.dge.gov.ae/en"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Department of Government Enablement"
+            className="flex items-center transition-opacity hover:opacity-85 focus:outline-hidden"
+          >
+            <img 
+              src={isDarkMode ? dgeDarkLogo : dgeLightLogo} 
+              alt="Department of Government Enablement" 
+              className="h-7 md:h-8 lg:h-9 max-h-9 w-auto object-contain drop-shadow-sm cursor-pointer transition-all my-auto" 
+            />
+          </a>
         </div>
 
         {/* Center: SDI Navigation */}
@@ -263,11 +270,19 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
 
           {/* Extreme Right: SDI Logo */}
           <div className="hidden xl:flex items-center ms-3 shrink-0 py-2">
-            <img 
-              src={isDarkMode ? sdiDarkLogo : sdiLightLogo} 
-              alt="Abu Dhabi Spatial Data Infrastructure" 
-              className="h-8 md:h-9 lg:h-10 max-h-10 w-auto object-contain transition-all" 
-            />
+            <a
+              href="https://sdi.gov.abudhabi/sdi/"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Abu Dhabi Spatial Data Infrastructure"
+              className="flex items-center transition-opacity hover:opacity-85 focus:outline-hidden"
+            >
+              <img 
+                src={isDarkMode ? sdiDarkLogo : sdiLightLogo} 
+                alt="Abu Dhabi Spatial Data Infrastructure" 
+                className="h-8 md:h-9 lg:h-10 max-h-10 w-auto object-contain cursor-pointer transition-all" 
+              />
+            </a>
           </div>
         </div>
       </header>
@@ -291,7 +306,15 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               className="fixed top-0 bottom-0 start-0 w-[280px] bg-white dark:bg-[#0c1427] z-[101] shadow-2xl flex flex-col pointer-events-auto lg:hidden"
             >
               <div className="p-5 flex items-center justify-between border-b border-gray-100 dark:border-slate-800">
-                <img src={isDarkMode ? dgeDarkLogo : dgeLightLogo} alt="DGE Logo" className="h-8 object-contain" />
+                <a
+                  href="https://www.dge.gov.ae/en"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Department of Government Enablement"
+                  className="flex items-center transition-opacity hover:opacity-85 focus:outline-hidden"
+                >
+                  <img src={isDarkMode ? dgeDarkLogo : dgeLightLogo} alt="DGE Logo" className="h-8 object-contain cursor-pointer" />
+                </a>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:bg-slate-200">
                   <X className="w-4 h-4" />
                 </button>

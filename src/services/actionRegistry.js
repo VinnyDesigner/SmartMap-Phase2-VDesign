@@ -105,10 +105,18 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
         drawnPolygon: null,
         drawnCircle: null,
         drawnRectangle: null,
+        selectedLocation: null,
+        selectedDetail: null,
+        activeResults: [],
+        showSearchResults: false,
+        activeContext: null,
+        highlightedLocations: [],
+        activeRouteDestination: null,
         resizeTrigger: Date.now()
       }));
-      return { success: true, message: "Map view and filters reset to default" };
+      return { success: true, message: "Map view and all active selections reset to default" };
     }
+
 
     case ACTION_TYPES.MAP_SET_BASEMAP: {
       recordActionHistory(prevState, action.type, action.params);

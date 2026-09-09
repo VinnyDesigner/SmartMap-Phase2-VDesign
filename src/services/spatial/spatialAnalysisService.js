@@ -40,7 +40,7 @@ export function formatDistance(distKm) {
 export function filterByCompoundPredicates(dataset = [], predicates = {}, origin = { lat: 24.4839, lng: 54.3773 }) {
   if (!dataset || !Array.isArray(dataset)) return [];
 
-  const { category, region, riskLevel, radiusKm } = predicates;
+  const { category, subType, region, riskLevel, radiusKm } = predicates;
 
   return dataset.filter(item => {
     // 1. Category Logical Match (AND)
@@ -50,6 +50,13 @@ export function filterByCompoundPredicates(dataset = [], predicates = {}, origin
       const tags = (item.tags || []).map(t => t.toLowerCase());
       const catMatch = itemCat === targetCat || tags.includes(targetCat.toLowerCase()) || (targetCat === 'GOVERNMENT' && tags.includes('government'));
       if (!catMatch) return false;
+
+      // 1b. SubType tag-level filter — if a precise keyword was requested, item MUST have it in tags
+      if (subType) {
+        const subLower = subType.toLowerCase();
+        const hasSubType = tags.some(tag => tag.includes(subLower));
+        if (!hasSubType) return false;
+      }
     }
 
     // 2. Region / Geographic Match (AND)
