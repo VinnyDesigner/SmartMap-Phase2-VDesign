@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, User, Users, HelpCircle, Menu, X, ArrowLeft, LogIn, LogOut } from 'lucide-react';
+import { Sun, Moon, User, Users, HelpCircle, Menu, X, ArrowLeft, LogIn, LogOut, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import dgeDarkLogo from '../assets/dge-dark.webp';
 import dgeLightLogo from '../assets/dge-light.webp';
@@ -10,7 +10,16 @@ import { useTheme } from '../contexts/ThemeContext';
 import LanguageSelector from './common/LanguageSelector';
 import ProjectSelectorDropdown from './common/ProjectSelectorDropdown';
 
-export default function BrandHeader({ onNavigate, currentView, userAuth, onSignOut, onSignIn, setExplorerState }) {
+const ShareFeedbackIcon = ({ className = "w-5 h-5 shrink-0" }) => (
+  <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="5,3 5.7,4.5 7.3,4.7 6.1,5.8 6.4,7.4 5,6.6 3.6,7.4 3.9,5.8 2.7,4.7 4.3,4.5" fill="currentColor" stroke="none" />
+    <polygon points="12,2 12.7,3.5 14.3,3.7 13.1,4.8 13.4,6.4 12,5.6 10.6,6.4 10.9,4.8 9.7,3.7 11.3,3.5" fill="currentColor" stroke="none" />
+    <polygon points="19,3 19.7,4.5 21.3,4.7 20.1,5.8 20.4,7.4 19,6.6 17.6,7.4 17.9,5.8 16.7,4.7 18.3,4.5" fill="currentColor" stroke="none" />
+    <path d="M21 13a2 2 0 0 1-2 2H7l-4 4V11a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+export default function BrandHeader({ onNavigate, currentView, userAuth, onSignOut, onSignIn, setExplorerState, onOpenFeedback }) {
   const { isArabic, setIsArabic, t } = useLanguage();
   const { isDarkMode, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -116,32 +125,19 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               {isDarkMode ? <Sun className="w-5 h-5 stroke-[1.75]" /> : <Moon className="w-5 h-5 stroke-[1.75]" />}
             </button>
 
-            {/* 2. Help/About Button (Icon Only, No Circle) */}
-            <button 
-              onClick={() => onNavigate?.('help')}
-              title={t("Help & Documentation", "المساعدة والتوثيق")}
-              className={`hidden md:flex p-2 rounded-xl transition-colors cursor-pointer select-none ${
-                isDarkMode 
-                  ? 'text-slate-300 hover:text-white hover:bg-slate-800/60' 
-                  : 'text-slate-600 hover:text-[#215A9E] hover:bg-slate-100/80'
-              }`}
-            >
-              <HelpCircle className="w-5 h-5 stroke-[1.75]" />
-            </button>
-
-            {/* 3. User Profile / Guest Dropdown Trigger Button (Keeps Circle with Initials) */}
+            {/* 2. User Profile / Guest Dropdown Trigger Button */}
             <div className="relative">
               <button 
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 title={isLoggedIn ? `${userAuth.userName} (${t('Click for Account Details', 'تفاصيل الحساب')})` : t("Guest User (Click to Sign In)", "زائر غير مسجل")}
                 className={`hidden md:flex p-[2px] rounded-full transition-all duration-200 cursor-pointer group select-none ${
                   isDarkMode 
-                    ? 'border border-blue-400/35 hover:border-[#00e5ff]/90 hover:shadow-[0_0_12px_rgba(0,229,255,0.3)]' 
-                    : 'border border-slate-300/80 hover:border-[#215A9E]/80 hover:shadow-xs'
+                    ? 'border border-purple-500/40 hover:border-purple-400 hover:shadow-[0_0_15px_rgba(124,58,237,0.4)]' 
+                    : 'border border-slate-300/80 hover:border-[#7c3aed]/80 hover:shadow-xs'
                 }`}
               >
                 <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center transition-colors font-extrabold text-xs md:text-sm tracking-wider ${
-                  isDarkMode ? 'bg-[#0a1730] group-hover:bg-[#112448] text-[#00e5ff]' : 'bg-slate-100 group-hover:bg-[#eef3ff] text-[#215A9E]'
+                  isDarkMode ? 'bg-[#0a0c16] group-hover:bg-purple-950/60 text-purple-400' : 'bg-slate-100 group-hover:bg-purple-50 text-[#7c3aed]'
                 }`}>
                   {isLoggedIn 
                     ? (userAuth?.userName ? userAuth.userName.trim().slice(0, 2).toUpperCase() : 'UA')
@@ -151,62 +147,111 @@ export default function BrandHeader({ onNavigate, currentView, userAuth, onSignO
               </button>
 
               {/* User Dropdown Menu */}
-              {showUserMenu && (
-                <div className={`absolute end-0 top-full mt-2 w-64 shadow-2xl border rounded-2xl p-4 z-50 flex flex-col gap-3 backdrop-blur-2xl ${
-                  isDarkMode ? 'bg-[#0d1424]/95 border-slate-700/80 text-white' : 'bg-white/95 border-slate-200 text-slate-800'
-                }`}>
-                  {isLoggedIn ? (
-                    <>
-                      <div className="flex items-center gap-3 border-b pb-3 border-slate-200 dark:border-slate-800">
-                        <div className="w-10 h-10 rounded-full bg-[#215A9E] text-white font-bold flex items-center justify-center text-sm shrink-0">
-                          {userAuth?.userName ? userAuth.userName.slice(0, 2).toUpperCase() : 'UA'}
+              <AnimatePresence>
+                {showUserMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setShowUserMenu(false)} 
+                    />
+                    
+                    <motion.div 
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.15 }}
+                      className={`absolute end-0 top-full mt-2 w-64 shadow-2xl border rounded-2xl p-2.5 z-50 flex flex-col gap-1 backdrop-blur-2xl ${
+                        isDarkMode ? 'bg-[#0d1424]/95 border-slate-700/80 text-white' : 'bg-white/95 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      {/* User Header Summary */}
+                      {isLoggedIn ? (
+                        <div className="flex items-center gap-3 p-2.5 rounded-xl border-b border-slate-200 dark:border-slate-800/80 mb-1">
+                          <div className="w-10 h-10 rounded-full bg-[#7c3aed] text-white font-bold flex items-center justify-center text-sm shrink-0 shadow-xs">
+                            {userAuth?.userName ? userAuth.userName.slice(0, 2).toUpperCase() : 'UA'}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-bold text-xs truncate">{isArabic && userAuth?.userNameAr ? userAuth.userNameAr : (userAuth?.userName || 'Eng. Ahmed')}</h4>
+                            <p className="text-[10px] text-slate-400 truncate mt-0.5">{userAuth?.role || 'Senior Geospatial Officer'}</p>
+                            <p className="text-[9.5px] text-slate-400 truncate">{userAuth?.userEmail}</p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-bold text-xs truncate">{isArabic && userAuth?.userNameAr ? userAuth.userNameAr : (userAuth?.userName || 'Eng. Ahmed')}</h4>
-                          <p className="text-[10px] text-slate-400 truncate mt-0.5">{userAuth?.role || 'Senior Geospatial Officer'}</p>
-                          <p className="text-[9.5px] text-slate-400 truncate">{userAuth?.userEmail}</p>
+                      ) : (
+                        <div className="flex items-center gap-2.5 p-2.5 rounded-xl border-b border-slate-200 dark:border-slate-800/80 mb-1">
+                          <div className="w-8 h-8 rounded-full bg-purple-50 dark:bg-purple-950/60 text-[#7c3aed] dark:text-purple-400 flex items-center justify-center font-bold text-xs shrink-0">
+                            GU
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xs">{t("Guest User", "زائر غير مسجل")}</h4>
+                            <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
+                              {t("Open Data Access & GIS Intelligence", "وصول محدد للبيانات المفتوحة")}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
+                      {/* 1. Share Feedback */}
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
-                          onSignOut?.();
+                          onOpenFeedback?.();
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        className={`w-full py-2.5 px-3 rounded-xl font-semibold text-xs md:text-sm transition-colors flex items-center gap-3.5 text-start cursor-pointer ${
+                          isDarkMode ? 'hover:bg-purple-950/40 text-slate-200 hover:text-purple-300' : 'hover:bg-purple-50 text-slate-700 hover:text-[#7c3aed]'
+                        }`}
                       >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>{t("Sign Out", "تسجيل الخروج")}</span>
+                        <ShareFeedbackIcon className="w-5 h-5 shrink-0 text-[#7c3aed] dark:text-purple-400" />
+                        <span>{t("Share Feedback", "مشاركة الملاحظات")}</span>
                       </button>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2.5 border-b pb-2.5 border-slate-200 dark:border-slate-800">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-[#215A9E] dark:text-[#00e5ff] flex items-center justify-center font-bold text-xs shrink-0">
-                          GU
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-xs">{t("Guest User", "زائر غير مسجل")}</h4>
-                          <p className="text-[10px] text-slate-400 leading-tight mt-0.5">
-                            {t("Sign in to save favorites and view history", "سجل الدخول لحفظ المفضلة وسجل البحث")}
-                          </p>
-                        </div>
-                      </div>
 
+                      {/* 2. Help & Support */}
                       <button
                         onClick={() => {
                           setShowUserMenu(false);
-                          onNavigate?.('login');
+                          onNavigate?.('help');
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-[#215A9E] hover:bg-[#1a477d] text-white font-bold text-xs shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        className={`w-full py-2.5 px-3 rounded-xl font-semibold text-xs md:text-sm transition-colors flex items-center gap-3.5 text-start cursor-pointer ${
+                          isDarkMode ? 'hover:bg-purple-950/40 text-slate-200 hover:text-purple-300' : 'hover:bg-purple-50 text-slate-700 hover:text-[#7c3aed]'
+                        }`}
                       >
-                        <LogIn className="w-3.5 h-3.5" />
-                        <span>{t("Sign In", "تسجيل الدخول")}</span>
+                        <HelpCircle className="w-5 h-5 shrink-0 text-[#7c3aed] dark:text-purple-400 stroke-[1.75]" />
+                        <span>{t("Help & Support", "المساعدة والدعم")}</span>
                       </button>
-                    </>
-                  )}
-                </div>
-              )}
+
+                      <div className="h-[1px] bg-slate-200 dark:bg-slate-800 my-1" />
+
+                      {/* 3. Sign Out / Sign In */}
+                      {isLoggedIn ? (
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            onSignOut?.();
+                          }}
+                          className="w-full py-2.5 px-3 rounded-xl font-semibold text-xs md:text-sm transition-colors flex items-center gap-3.5 text-start text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                        >
+                          <LogOut className="w-5 h-5 shrink-0 stroke-[1.75]" />
+                          <span>{t("Sign Out", "تسجيل الخروج")}</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false);
+                            onNavigate?.('login');
+                          }}
+                          className={`w-full py-2.5 px-3 rounded-xl font-semibold text-xs md:text-sm transition-all flex items-center gap-3.5 text-start cursor-pointer ${
+                            isDarkMode 
+                              ? 'bg-[#7c3aed] hover:bg-[#060a12] text-white' 
+                              : 'bg-[#060a12] hover:bg-[#7c3aed] text-white'
+                          }`}
+                        >
+                          <LogIn className="w-5 h-5 shrink-0 stroke-[1.75]" />
+                          <span>{t("Sign In", "تسجيل الدخول")}</span>
+                        </button>
+                      )}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Mobile Hamburger */}

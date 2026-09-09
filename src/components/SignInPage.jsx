@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import GeoVisionLogoText from './common/GeoVisionLogoText';
 import { motion } from 'framer-motion';
 import { Mail, Lock, ArrowLeft, Eye, EyeOff, ShieldCheck, User } from 'lucide-react';
 import dgeDarkLogo from '../assets/dge-dark.webp';
@@ -62,9 +63,9 @@ export default function SignInPage({ onNavigate, onSignIn }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.8 }}
             >
-              <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6">
-                {t("Discover Your World Through ", "اكتشف عالمك عبر ")}
-                <span className="text-[#7DA1C4]" dir="ltr">GeoVision</span>
+              <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight mb-6 flex flex-wrap items-center gap-2">
+                <span>{t("Discover Your World Through ", "اكتشف عالمك عبر ")}</span>
+                <GeoVisionLogoText sizeClass="text-4xl lg:text-5xl" isDarkModeOverride={true} />
               </h1>
               <p className="text-lg text-slate-200/90 max-w-md leading-relaxed">
                 {t("Access the most comprehensive spatial data infrastructure. Secure, reliable, and intelligent mapping solutions.", "قم بالوصول إلى البنية التحتية الشاملة للبيانات المكانية. حلول خرائط آمنة وموثوقة وذكية.")}
@@ -158,7 +159,11 @@ export default function SignInPage({ onNavigate, onSignIn }) {
             <button
               type="submit"
               onClick={handlePerformSignIn}
-              className="w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs font-bold text-white bg-black hover:bg-[#7c3aed] transition-all duration-300 shadow-sm cursor-pointer"
+              className={`w-full flex justify-center items-center py-3 px-4 rounded-xl text-xs font-bold text-white transition-all duration-300 shadow-sm cursor-pointer ${
+                isDarkMode 
+                  ? 'bg-[#7c3aed] hover:bg-[#060a12] border border-purple-500/30' 
+                  : 'bg-[#060a12] hover:bg-[#7c3aed]'
+              }`}
             >
               {t("Sign In", "تسجيل الدخول")}
             </button>

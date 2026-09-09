@@ -12,6 +12,7 @@ import WebGLFluidReveal from './components/WebGLFluidReveal';
 import LocationPermissionModal from './components/common/LocationPermissionModal';
 import MapPrintTemplate from './components/common/MapPrintTemplate';
 import AnalyticsModal from './components/common/AnalyticsModal';
+import FeedbackModal from './components/common/FeedbackModal';
 
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
@@ -46,6 +47,7 @@ function App() {
   const [isHoveringUI, setIsHoveringUI] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [currentView, setCurrentView] = useState('landing'); // 'landing' | 'explorer' | 'about' | 'login' | 'help'
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const requestUserLocation = () => {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
@@ -175,7 +177,15 @@ function App() {
   return (
     <>
       <div className={`no-print h-[100dvh] w-full font-sans flex flex-col overflow-hidden relative bg-[#F8FAFC] dark:bg-[#060a12] transition-colors duration-300 ${isArabic ? 'rtl' : 'ltr'}`} dir={isArabic ? 'rtl' : 'ltr'}>
-        <BrandHeader onNavigate={handleNavigate} currentView={currentView} userAuth={userAuth} onSignOut={handleSignOut} onSignIn={handleSignIn} setExplorerState={setExplorerState} />
+        <BrandHeader 
+          onNavigate={handleNavigate} 
+          currentView={currentView} 
+          userAuth={userAuth} 
+          onSignOut={handleSignOut} 
+          onSignIn={handleSignIn} 
+          setExplorerState={setExplorerState} 
+          onOpenFeedback={() => setShowFeedbackModal(true)}
+        />
         
         {currentView === 'landing' && (
           <>
@@ -231,6 +241,13 @@ function App() {
           onClose={() => setExplorerState(prev => ({ ...prev, showAnalyticsModal: false }))}
           title={explorerState?.analyticsTitle}
           results={explorerState?.activeResults}
+        />
+
+        {/* User Feedback Modal (Matching Image 1 & 2) */}
+        <FeedbackModal
+          isOpen={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          userAuth={userAuth}
         />
       </div>
 

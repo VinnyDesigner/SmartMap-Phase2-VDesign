@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
+import GeoVisionLogoText from './common/GeoVisionLogoText';
 
 function MetricBadge({ icon: Icon, number, label, isDarkMode }) {
   return (
@@ -87,9 +88,9 @@ export default function AboutUsPage({ onNavigate }) {
                 <span>{t("Abu Dhabi Government GIS Initiative", "مبادرة نظم المعلومات الجغرافية لمنتجات أبوظبي")}</span>
               </div>
 
-              <h1 className={`text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.15] ${isDarkMode ? 'text-white' : 'text-[#063360]'}`}>
-                {t('Discover Abu Dhabi Through ', 'اكتشف إمارة أبوظبي عبر ')}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#215A9E] via-[#3D52A0] to-[#7c3aed] dark:from-[#00e5ff] dark:to-[#c084fc]" dir="ltr">GeoVision</span>
+              <h1 className={`text-4xl sm:text-5xl lg:text-5xl xl:text-6xl font-black tracking-tight leading-[1.15] flex flex-wrap items-center gap-2 ${isDarkMode ? 'text-white' : 'text-[#063360]'}`}>
+                <span>{t('Discover Abu Dhabi Through ', 'اكتشف إمارة أبوظبي عبر ')}</span>
+                <GeoVisionLogoText sizeClass="text-4xl sm:text-5xl lg:text-5xl xl:text-6xl" />
               </h1>
 
               <p className={`text-base sm:text-lg xl:text-xl leading-relaxed ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>

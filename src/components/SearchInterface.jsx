@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ArrowRight, Landmark, Zap, TreePine, Bus, LayoutGrid, Mic, Sparkles, Palmtree, Building2, MapPin, Factory } from 'lucide-react';
 import WebGLTextEffect from './WebGLTextEffect';
+import GeoVisionLogoText from './common/GeoVisionLogoText';
 import { useTypewriterPlaceholder } from '../hooks/useTypewriter';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -58,34 +59,9 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
           animate={{ opacity: isFocused ? 0 : 1, y: isFocused ? -10 : 0 }}
           transition={{ duration: 0.4 }}
         >
-          {/* GeoVision Logo with Pro Dark/Light Gradient */}
+          {/* GeoVision Logo with Animated Looping Geo Icon SVG replacing 'o' in Geo */}
           <div className="flex items-center justify-center mb-3 select-none drop-shadow-sm" dir="ltr">
-            <span className={`text-6xl md:text-[5.5rem] font-black tracking-tighter leading-none bg-clip-text text-transparent ${
-              isDarkMode 
-                ? 'bg-gradient-to-r from-white via-slate-100 to-[#c084fc] drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]' 
-                : 'bg-gradient-to-r from-[#1e2749] to-[#3D52A0]'
-            }`}>
-              Geo
-            </span>
-            <span className={`text-6xl md:text-[5.5rem] font-black tracking-tighter leading-none ms-1 flex items-end bg-clip-text text-transparent ${
-              isDarkMode 
-                ? 'bg-gradient-to-r from-[#9333ea] via-[#a855f7] to-[#c084fc] drop-shadow-[0_0_22px_rgba(168,85,247,0.5)]' 
-                : 'bg-gradient-to-r from-[#3D52A0] to-[#7c3aed]'
-            }`}>
-              Visi
-              <div className="relative inline-flex flex-col items-center justify-end mx-1" style={{ width: '0.85em', height: '1.1em' }}>
-                <svg viewBox="0 0 24 24" className={`w-full h-full relative z-10 ${isDarkMode ? 'text-[#c084fc]' : 'text-[#7c3aed]'}`} fill="currentColor">
-                  <path d="M12 1.5C7.36 1.5 3.5 5.36 3.5 10c0 5.25 8.5 12.5 8.5 12.5s8.5-7.25 8.5-12.5c0-4.64-3.86-8.5-8.5-8.5z" />
-                </svg>
-                {/* Custom inner arrow pointing top-left */}
-                <svg viewBox="0 0 24 24" className="absolute w-[45%] h-[45%] text-white fill-white top-[22%] left-[27%] z-20" style={{ transform: 'rotate(-90deg)' }}>
-                  <polygon points="3 11 22 2 13 21 11 13 3 11" />
-                </svg>
-                {/* Bottom shadow */}
-                <div className={`absolute -bottom-[5%] left-1/2 -translate-x-1/2 w-[60%] h-[10%] rounded-[100%] blur-[4px] z-0 ${isDarkMode ? 'bg-[#c084fc]/60' : 'bg-[#7c3aed]/30'}`}></div>
-              </div>
-              n
-            </span>
+            <GeoVisionLogoText sizeClass="text-6xl md:text-[5.5rem]" />
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-1 md:gap-3 mb-2">
@@ -147,14 +123,9 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
               ? (isFocused ? 'bg-[#0b152c] border border-[#c084fc]/50' : 'bg-[#0b152c]/90 border border-slate-700/70') 
               : (isFocused ? 'bg-white' : 'bg-white/95')
           }`}>
-            {/* Left Search Icon */}
-            <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full flex items-center justify-center text-white shadow-md ms-1 relative overflow-hidden group/btn ${
-              isDarkMode 
-                ? 'bg-gradient-to-r from-[#8b5cf6] to-[#215A9E] shadow-[0_0_15px_rgba(139,92,246,0.5)]' 
-                : 'bg-dge-tech'
-            }`}>
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
-              <Search className="w-4 h-4 md:w-5 md:h-5 relative z-10" />
+            {/* Left Search Icon (Clean icon without circle background) */}
+            <div className="ps-3 md:ps-4 pe-1 flex items-center justify-center shrink-0">
+              <Search className={`w-5 h-5 md:w-6 md:h-6 ${isDarkMode ? 'text-purple-400' : 'text-[#7c3aed]'}`} />
             </div>
             
             <input 

@@ -57,15 +57,16 @@ export default function GeoLogoIcon({
               initial={{ pathLength: 0, fillOpacity: 0, strokeOpacity: 0.2 }}
               animate={{
                 pathLength: [0, 1, 1, 0],
-                fillOpacity: [0, 0.2, 1, 0],
+                fillOpacity: [0, 1, 1, 0],
                 strokeOpacity: [0.2, 1, 1, 0.2]
               }}
               transition={{
-                duration: 3.2,
+                duration: 4.2,
+                times: [0, 0.35, 0.65, 1],
                 ease: "easeInOut",
                 repeat: Infinity,
-                delay: i * 0.15,
-                repeatDelay: 0.4
+                delay: i * 0.1,
+                repeatDelay: 1.2
               }}
             />
           ))}
@@ -81,15 +82,16 @@ export default function GeoLogoIcon({
               initial={{ pathLength: 0, fillOpacity: 0, scale: 0.7 }}
               animate={{
                 pathLength: [0, 1, 1, 0],
-                fillOpacity: [0, 0.2, 1, 0],
+                fillOpacity: [0, 1, 1, 0],
                 scale: [0.7, 1, 1, 0.7]
               }}
               transition={{
-                duration: 3.2,
+                duration: 4.2,
+                times: [0, 0.35, 0.65, 1],
                 ease: "easeInOut",
                 repeat: Infinity,
-                delay: i * 0.15 + 0.08,
-                repeatDelay: 0.4
+                delay: i * 0.1 + 0.05,
+                repeatDelay: 1.2
               }}
             />
           ))}
