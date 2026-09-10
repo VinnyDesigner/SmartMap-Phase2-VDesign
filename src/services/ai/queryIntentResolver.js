@@ -160,6 +160,26 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
     return { type: 'APP_CONTROL', action: 'CLEAR_DIRECTIONS', params: {} };
   }
 
+  // Clear Risk Filter
+  const clearRiskTriggers = [
+    'clear risk filter', 'clear risk', 'remove risk filter', 'remove risk',
+    'reset risk filter', 'reset risk', 'clear the risk filter', 'disable risk filter',
+    'إلغاء تصفية الخطورة', 'مسح تصفية الخطورة', 'إزالة تصفية الخطورة', 'إعادة ضبط الخطورة', 'إلغاء فلتر الخطورة'
+  ];
+  if (clearRiskTriggers.some(k => q === k || q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CLEAR_RISK_FILTER', params: {} };
+  }
+
+  // Expand Search Radius
+  const expandRadiusTriggers = [
+    'expand search radius', 'expand radius', 'expand the search radius', 'wider radius',
+    'increase radius', 'search wider', 'expand search',
+    'توسيع نطاق البحث', 'توسيع النطاق', 'زيادة مسافة البحث', 'توسيع البحث'
+  ];
+  if (expandRadiusTriggers.some(k => q === k || q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'EXPAND_SEARCH_RADIUS', params: { expandedRadiusKm: 25 } };
+  }
+
   // Facility Details Inspection Intent
   if (['show facility details', 'show details', 'facility details', 'show its details', 'view details', 'عرض تفاصيل المنشأة', 'عرض التفاصيل', 'تفاصيل المنشأة'].some(k => q.includes(k))) {
     return { 
@@ -285,12 +305,26 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
   let referenceLocationType = 'user';
   let spatialRelation = null;
 
-  if (q.includes('near this location') || q.includes('near the selected location') || q.includes('near this facility') || q.includes('near selected') || q.includes('بالقرب من هذا الموقع') || q.includes('بالقرب من المنشأة المحددة')) {
+  if (
+    q.includes('near this location') || 
+    q.includes('near the selected location') || 
+    q.includes('near this facility') || 
+    q.includes('near selected') || 
+    q.includes('near here') || 
+    q.includes('around here') || 
+    q.includes('بالقرب من هذا الموقع') || 
+    q.includes('بالقرب من المنشأة المحددة') || 
+    q.includes('حول هذا الموقع') ||
+    q.includes('قريب من هنا')
+  ) {
     referenceLocationType = 'selected';
     spatialRelation = 'near';
-  } else if (geographicArea && (q.includes('around') || q.includes('near') || q.includes('حول') || q.includes('قريب من'))) {
+  } else if (geographicArea && (q.includes('around') || q.includes('near') || q.includes('nearby') || q.includes('حول') || q.includes('قريب من') || q.includes('بالقرب من'))) {
     referenceLocationType = 'named';
     spatialRelation = 'near';
+  } else if (geographicArea) {
+    referenceLocationType = 'named';
+    spatialRelation = 'in';
   } else if (q.includes('near me') || q.includes('nearby') || q.includes('closest to me') || q.includes('closest') || q.includes('nearest') || q.includes('قريب مني') || q.includes('الأقرب لي') || q.includes('بالقرب مني')) {
     referenceLocationType = 'user';
     spatialRelation = 'near';
@@ -383,7 +417,27 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
   // Case 1: Refinement Query within active drawer scope
   // If user has active subcategories in drawer AND did NOT name an explicit new category/subType
   // e.g., "show high risk facilities", "which one is closest", "show those in Al Bateen", "within 5 km"
-  if (hasActiveDrawerScope && !category && !subType) {
+  // BUT general queries asking for all facilities, facilities near a location, or un-scoped queries MUST NOT be restricted!
+  const isGlobalFacilityQuery = (
+    q.includes('all facilities') || 
+    q.includes('every facility') ||
+    q.includes('show all') || 
+    q.includes('facilities near') ||
+    q.includes('near this location') ||
+    q.includes('near here') ||
+    q.includes('around here') ||
+    q.includes('near this facility') ||
+    q.includes('what is near') ||
+    q.includes('facilities near me') ||
+    q.includes('what facilities') ||
+    q.includes('كافة المنشآت') ||
+    q.includes('جميع المنشآت') ||
+    q.includes('كل المنشآت') ||
+    q.includes('منشآت قريبة') ||
+    q.includes('بالقرب من هذا الموقع')
+  );
+
+  if (hasActiveDrawerScope && !category && !subType && !isGlobalFacilityQuery) {
     isRefinement = true;
     activeSubcategoryScope = [...activeSubcategories];
   }

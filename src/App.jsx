@@ -53,11 +53,14 @@ function App() {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const userCoords = { 
-            lat: pos.coords.latitude, 
-            lng: pos.coords.longitude,
-            accuracy: pos.coords.accuracy 
-          };
+          const rawLat = pos.coords.latitude;
+          const rawLng = pos.coords.longitude;
+          // Validate coordinates are within UAE bounds [22.5 to 26.2 N, 51.4 to 56.5 E]
+          const isInsideUAE = rawLat >= 22.5 && rawLat <= 26.2 && rawLng >= 51.4 && rawLng <= 56.5;
+          const userCoords = isInsideUAE 
+            ? { lat: rawLat, lng: rawLng, accuracy: pos.coords.accuracy }
+            : { lat: 24.4839, lng: 54.3773, accuracy: pos.coords.accuracy, isSimulatedAbuDhabi: true };
+
           setExplorerState(prev => ({
             ...prev,
             userLocationEnabled: true,

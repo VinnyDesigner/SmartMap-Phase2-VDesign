@@ -82,13 +82,13 @@ export default function GeoSearchResultCard({
   const originLng = userLocation?.lng || 54.3773;
 
   let distanceStr = null;
-  if (item.lat && item.lng) {
-    const computedDist = calculateGeodesicDistance(originLat, originLng, item.lat, item.lng);
-    distanceStr = formatDistance(computedDist);
+  if (item.distance !== undefined && item.distance !== null) {
+    distanceStr = typeof item.distance === 'number' ? formatDistance(item.distance) : item.distance;
   } else if (item.distanceKm !== undefined && item.distanceKm !== null) {
     distanceStr = formatDistance(item.distanceKm);
-  } else if (item.distance !== undefined && item.distance !== null) {
-    distanceStr = typeof item.distance === 'number' ? formatDistance(item.distance) : item.distance;
+  } else if (item.lat && item.lng) {
+    const computedDist = calculateGeodesicDistance(originLat, originLng, item.lat, item.lng);
+    distanceStr = formatDistance(computedDist);
   }
 
   const handleFavoriteClick = (e) => {

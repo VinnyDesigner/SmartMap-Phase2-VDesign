@@ -4,7 +4,11 @@
  * Calculate geodesic distance in kilometers between two lat/lng pairs using Haversine formula
  */
 export function calculateGeodesicDistance(lat1, lon1, lat2, lon2) {
-  if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
+  if (
+    typeof lat1 !== 'number' || typeof lon1 !== 'number' || 
+    typeof lat2 !== 'number' || typeof lon2 !== 'number' ||
+    isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)
+  ) return 0;
   const R = 6371; // Radius of the Earth in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);

@@ -56,7 +56,7 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
         {/* Headlines & Logo */}
         <motion.div 
           className="mb-8 w-full"
-          animate={{ opacity: isFocused ? 0 : 1, y: isFocused ? -10 : 0 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
         >
           {/* GeoVision Logo with Animated Looping Geo Icon SVG replacing 'o' in Geo */}
@@ -165,7 +165,7 @@ export default function SearchInterface({ isFocused, setIsFocused, onSearch }) {
         {/* Explore by Theme Section (Wireframe Page 1) */}
         <motion.div 
           className="mt-8 w-full pointer-events-auto"
-          animate={{ opacity: isFocused ? 0 : 1, y: isFocused ? 20 : 0 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
           <div className="flex items-center justify-between mb-3 px-2">

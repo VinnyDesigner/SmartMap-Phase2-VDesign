@@ -346,6 +346,63 @@ async function runTests() {
   assert(res31.results.length > 0, 'Found legitimate ports');
   assert(res31.results.some(r => r.name.toLowerCase().includes('port') || (r.tags && r.tags.includes('port'))), 'Contains genuine port facility');
 
+  // Test 32: "Show facilities near this location" with active drawer subcategory
+  console.log('\n--- Test 32: Show facilities near this location with active drawer subcategory ---');
+  const allDataset = getMasterAuthoritativeDataset();
+  const firstCharter = allDataset.find(d => (d.tags || []).includes('charter_schools') || d.subType === 'charter_schools');
+  const charterSelectedState = {
+    selectedLocation: firstCharter,
+    selectedGisSubcategories: ['charter_schools']
+  };
+  const res32 = await mockAiEngine.processQuery('Show facilities near this location', charterSelectedState, false);
+  assert(res32.results.length > 0, 'Returns facilities near this location instead of 0 results');
+  assert(res32.results.every(r => r.name !== firstCharter.name), 'Excludes reference asset itself from results');
+  assert(res32.results.some(r => r.distanceKm !== undefined), 'Enriches results with distance');
+
+  // Test 33: "Clear risk filter" action
+  console.log('\n--- Test 33: Clear risk filter action ---');
+  const res33 = await mockAiEngine.processQuery('Clear risk filter', charterSelectedState, false);
+  assert(res33.actions.some(a => a.type === 'CLEAR_RISK_FILTER'), 'Dispatches CLEAR_RISK_FILTER action');
+  assert(res33.results.length > 0, 'Returns facilities after clearing risk filter');
+  assert(res33.reply.toLowerCase().includes('risk'), 'Reply mentions risk filter cleared');
+
+  // Test 34: "Expand search radius" action
+  console.log('\n--- Test 34: Expand search radius action ---');
+  const res34 = await mockAiEngine.processQuery('Expand search radius', charterSelectedState, false);
+  assert(res34.results.length > 0, 'Returns facilities on expanded search radius');
+  assert(res34.reply.includes('25 km'), 'Reply mentions 25 km expanded search radius');
+
+  // Test 35: Zero Results suggestions must NOT include "Clear risk filter" when no risk filter was active
+  console.log('\n--- Test 35: Zero Results suggestions contextual accuracy ---');
+  const noRiskZeroQuery = parseQueryIntent('government facilities within 1 meter', defaultState);
+  const zeroRes = executeGisQuery(noRiskZeroQuery, { userLocation: { lat: 24.0, lng: 54.0 } });
+  assert(zeroRes.status === 'ZERO_RESULTS', 'Returns ZERO_RESULTS status for 1 meter query');
+  assert(!zeroRes.suggestions.includes('Clear risk filter'), 'Does NOT suggest Clear risk filter when no risk filter is active');
+
+  // Test 36: Strict Location Specificity - "parks in al reem island"
+  console.log('\n--- Test 36: Strict Location Specificity: "parks in al reem island" ---');
+  const res36 = await mockAiEngine.processQuery('parks in al reem island', defaultState, false);
+  assert(res36.results.length === 1, 'Returns strictly 1 park in Al Reem Island');
+  assert(res36.results[0].name.includes('Al Reem Central Park'), 'Result is strictly Al Reem Central Park');
+  assert(res36.results[0].district === 'Al Reem Island', 'Result district is strictly Al Reem Island');
+  assert(!res36.results.some(r => r.name.includes('Umm Al Emarat') || r.district === 'Al Mushrif'), 'Does NOT include Umm Al Emarat Park in Al Mushrif');
+  assert(res36.results[0].distanceKm < 1.5, 'Distance is calculated from Al Reem Island center (< 1.5 km)');
+
+  // Test 37: Strict Location Specificity - "parks in al mushrif"
+  console.log('\n--- Test 37: Strict Location Specificity: "parks in al mushrif" ---');
+  const res37 = await mockAiEngine.processQuery('parks in al mushrif', defaultState, false);
+  assert(res37.results.length === 1, 'Returns strictly 1 park in Al Mushrif');
+  assert(res37.results[0].name.includes('Umm Al Emarat Park'), 'Result is strictly Umm Al Emarat Park');
+  assert(res37.results[0].district === 'Al Mushrif', 'Result district is strictly Al Mushrif');
+  assert(!res37.results.some(r => r.district === 'Al Reem Island'), 'Does NOT include Al Reem parks');
+
+  // Test 38: Strict Location Specificity in Arabic - "حدائق في جزيرة الريم"
+  console.log('\n--- Test 38: Arabic Strict Location Specificity: "حدائق في جزيرة الريم" ---');
+  const res38 = await mockAiEngine.processQuery('حدائق في جزيرة الريم', defaultState, true);
+  assert(res38.results.length === 1, 'Returns strictly 1 park in Arabic');
+  assert(res38.results[0].district === 'Al Reem Island', 'Result district is Al Reem Island');
+  assert(!res38.results.some(r => r.district === 'Al Mushrif'), 'Does NOT include Al Mushrif in Arabic');
+
   console.log('\n====================================================');
   console.log('🎉 ALL TESTS PASSED! AI SEARCH ACCURACY FULLY VERIFIED');
   console.log('====================================================\n');

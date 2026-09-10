@@ -116,7 +116,16 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
 
         {/* Current Location / Locate Me */}
         <button 
-          onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'locate' }))}
+          onClick={() => {
+            const loc = explorerState?.userLocation || { lat: 24.4839, lng: 54.3773 };
+            setExplorerState(prev => ({ 
+              ...prev, 
+              userLocationEnabled: true,
+              userLocation: loc,
+              mapAction: 'locate',
+              mapFocus: { lat: loc.lat, lng: loc.lng, zoom: 16, timestamp: Date.now() }
+            }));
+          }}
           title={t('My Location', 'موقعي الحالي')}
           className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
             explorerState?.userLocationEnabled 
@@ -403,7 +412,9 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                 setExplorerState(prev => ({ 
                   ...prev, 
                   userLocationEnabled: true,
-                  mapFocus: { lat: loc.lat, lng: loc.lng, zoom: 16 }
+                  userLocation: loc,
+                  mapAction: 'locate',
+                  mapFocus: { lat: loc.lat, lng: loc.lng, zoom: 16, timestamp: Date.now() }
                 }));
               }} 
             />

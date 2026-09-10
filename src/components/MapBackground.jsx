@@ -396,20 +396,51 @@ function MapController({ explorerState, setExplorerState, isExplorer }) {
       else if (action === 'home' || action === 'compass') {
         map.flyTo([24.4839, 54.3773], 13, { animate: true, duration: 1.2 });
       } else if (action === 'locate') {
-        if (explorerState?.userLocation && explorerState?.userLocationEnabled) {
-          map.flyTo([explorerState.userLocation.lat, explorerState.userLocation.lng], 16, { animate: true, duration: 1.5 });
-        } else if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        const isCoordInUAE = (lat, lng) => typeof lat === 'number' && typeof lng === 'number' && lat >= 22.5 && lat <= 26.2 && lng >= 51.4 && lng <= 56.5;
+
+        let targetLat = explorerState?.userLocation?.lat;
+        let targetLng = explorerState?.userLocation?.lng;
+
+        if (!isCoordInUAE(targetLat, targetLng)) {
+          targetLat = 24.4839;
+          targetLng = 54.3773;
+        }
+
+        // Immediately fly map to user location with zoom 16
+        map.flyTo([targetLat, targetLng], 16, { animate: true, duration: 1.5 });
+        lastFlownRef.current = { lat: targetLat, lng: targetLng, zoom: 16, timestamp: Date.now() };
+
+        setExplorerState(prev => ({
+          ...prev,
+          userLocationEnabled: true,
+          userLocation: { lat: targetLat, lng: targetLng },
+          mapFocus: { lat: targetLat, lng: targetLng, zoom: 16, timestamp: Date.now(), source: 'user-locate' }
+        }));
+
+        // Concurrently query browser geolocation for fresh GPS coordinates
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-              setExplorerState(prev => ({
-                ...prev,
-                userLocationEnabled: true,
-                userLocation: coords,
-                mapFocus: { lat: coords.lat, lng: coords.lng, zoom: 16, timestamp: Date.now() }
-              }));
+              const freshLat = pos.coords.latitude;
+              const freshLng = pos.coords.longitude;
+              // Only override if fresh coordinates are actually inside the UAE
+              if (isCoordInUAE(freshLat, freshLng)) {
+                if (Math.abs(freshLat - targetLat) > 0.0001 || Math.abs(freshLng - targetLng) > 0.0001) {
+                  map.flyTo([freshLat, freshLng], 16, { animate: true, duration: 1.5 });
+                  lastFlownRef.current = { lat: freshLat, lng: freshLng, zoom: 16, timestamp: Date.now() };
+                  setExplorerState(prev => ({
+                    ...prev,
+                    userLocationEnabled: true,
+                    userLocation: { lat: freshLat, lng: freshLng, accuracy: pos.coords.accuracy },
+                    mapFocus: { lat: freshLat, lng: freshLng, zoom: 16, timestamp: Date.now(), source: 'geolocation-granted' }
+                  }));
+                }
+              }
             },
-            () => {}
+            (err) => {
+              console.warn("Browser Geolocation query during locate action:", err);
+            },
+            { enableHighAccuracy: true, timeout: 6000, maximumAge: 30000 }
           );
         }
       }
@@ -831,113 +862,79 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
 // Helper function to generate realistic road waypoints following Abu Dhabi road network and bridges
 function getRoadDirectionsWaypoints(startLoc, destLoc) {
   if (!startLoc || !destLoc) return [];
-  const sLat = Number(startLoc.lat || 24.4789);
-  const sLng = Number(startLoc.lng || 54.3312);
+  const sLat = Number(startLoc.lat || 24.4839);
+  const sLng = Number(startLoc.lng || 54.3773);
   const dLat = Number(destLoc.lat);
   const dLng = Number(destLoc.lng);
   if (isNaN(sLat) || isNaN(sLng) || isNaN(dLat) || isNaN(dLng)) return [];
 
-  // 1. Saadiyat Island / Cultural District / Louvre Abu Dhabi (via Sheikh Khalifa Bridge E12)
-  if (dLat > 24.51 && dLng > 54.37 && dLng < 54.45) {
-    return [
-      [sLat, sLng],
-      [24.4920, 54.3520], // Corniche East
-      [24.5060, 54.3720], // Mina St / Port Exit
-      [24.5160, 54.3830], // Sheikh Khalifa Bridge (E12 Highway)
-      [24.5280, 54.3930], // Saadiyat Cultural District Interchange
-      [dLat, dLng]
-    ];
+  const directDist = Math.hypot(dLat - sLat, dLng - sLng);
+  if (directDist < 0.0001) {
+    return [[sLat, sLng], [dLat, dLng]];
   }
 
-  // 2. Yas Island area (via E12 Saadiyat Expressway & Jubail Causeway)
-  if (dLat > 24.48 && dLng > 54.55) {
+  // Geographic island boundaries in Abu Dhabi
+  const isSaadiyat = (lat, lng) => lat > 24.515 && lng > 54.390 && lng < 54.470;
+  const isYas = (lat, lng) => lng > 54.550 && lat > 24.460;
+  const isReem = (lat, lng) => lat > 24.492 && lat < 24.525 && lng > 54.398 && lng < 54.430;
+
+  const startOnSaadiyat = isSaadiyat(sLat, sLng);
+  const destOnSaadiyat = isSaadiyat(dLat, dLng);
+  const startOnYas = isYas(sLat, sLng);
+  const destOnYas = isYas(dLat, dLng);
+  const startOnReem = isReem(sLat, sLng);
+  const destOnReem = isReem(dLat, dLng);
+
+  // 1. Saadiyat Island crossing (via Sheikh Khalifa Bridge E12) - ONLY when crossing water
+  if (!startOnSaadiyat && destOnSaadiyat) {
     return [
       [sLat, sLng],
-      [24.5060, 54.3720], // Mina St
+      [Math.max(sLat, 24.5060), sLng + (54.3720 - sLng) * 0.6], // Mina St approach
       [24.5160, 54.3830], // Sheikh Khalifa Bridge
-      [24.5300, 54.4300], // Saadiyat Expressway
-      [24.5380, 54.5000], // Jubail Island Highway
-      [24.5200, 54.5700], // Yas West Interchange
+      [24.5260, 54.3950], // Saadiyat Cultural District
       [dLat, dLng]
     ];
   }
 
-  // 3. Al Reem Island & Al Maryah Island (via Hazza Bin Zayed / Al Maryah Bridges)
-  if (dLat > 24.48 && dLat < 24.52 && dLng > 54.37 && dLng < 54.42) {
+  // 2. Yas Island crossing (via E12 Highway & Jubail Causeway) - ONLY when crossing from main island
+  if (!startOnYas && destOnYas && sLng < 54.50) {
     return [
       [sLat, sLng],
-      [24.4880, 54.3620], // Zayed The First St
-      [24.4960, 54.3800], // Hazza Bin Zayed St
-      [24.4990, 54.3920], // Al Maryah / Reem Bridge
+      [24.5060, 54.3720], // Mina approach
+      [24.5160, 54.3830], // E12 Highway start
+      [24.5300, 54.4300], // Saadiyat corridor
+      [24.5380, 54.5000], // Jubail causeway
       [dLat, dLng]
     ];
   }
 
-  // 4. Qasr Al Watan / Ras Al Akhdar area (Follows Corniche West & Bainuna St)
-  if (dLng < 54.33 && dLat > 24.44) {
+  // 3. Al Reem Island crossing (via Al Reem / Hazza Bin Zayed Bridge) - ONLY when crossing from main island
+  if (!startOnReem && destOnReem) {
+    const bridgePt = [24.4990, 54.3920]; // Hazza Bin Zayed Bridge
     return [
       [sLat, sLng],
-      [24.4730, 54.3230], // Corniche West
-      [24.4660, 54.3120], // Bainuna St
-      [24.4635, 54.3080], // Palace Entrance Drive
+      [sLat + (bridgePt[0] - sLat) * 0.6, sLng + (bridgePt[1] - sLng) * 0.4],
+      bridgePt,
       [dLat, dLng]
     ];
   }
 
-  // 5. Sheikh Zayed Grand Mosque / South Abu Dhabi (via Sheikh Rashid Bin Saeed St / Airport Rd)
-  if (dLat < 24.43 && dLng > 54.42 && dLng < 54.50) {
-    return [
-      [sLat, sLng],
-      [24.4650, 54.3520], // Sultan Bin Zayed St
-      [24.4420, 54.3980], // Sheikh Rashid Bin Saeed St (Airport Rd)
-      [24.4250, 54.4400], // Al Muroor Sector
-      [24.4160, 54.4680], // Mosque Interchange
-      [dLat, dLng]
-    ];
-  }
+  // 4. Direct Street-Grid Navigation for same contiguous landmass / downtown / mainland
+  // Follows Abu Dhabi's orthogonal street grid directly between start and destination
+  // All intermediate points are strictly bounded between sLat/dLat and sLng/dLng
+  const deltaLat = dLat - sLat;
+  const deltaLng = dLng - sLng;
 
-  // 6. Mussafah Industrial Area / ICAD (via Mussafah Bridge E30)
-  if (dLat < 24.40 && dLng < 54.55) {
-    return [
-      [sLat, sLng],
-      [24.4550, 54.3680], // Sheikh Rashid St
-      [24.4250, 54.4400], // Maqta Approach
-      [24.3980, 54.4950], // Mussafah Bridge
-      [24.3650, 54.5050], // Mussafah Industrial Main Blvd
-      [dLat, dLng]
-    ];
-  }
-
-  // 7. Umm Al Emarat Park / Al Mushrif area
-  if (dLat >= 24.43 && dLat <= 24.47 && dLng >= 54.36 && dLng <= 54.40) {
-    return [
-      [sLat, sLng],
-      [24.4650, 54.3550], // Karamah St
-      [24.4540, 54.3720], // 15th St (Mohammed Bin Khalifa St)
-      [24.4480, 54.3800], // Park Access Rd
-      [dLat, dLng]
-    ];
-  }
-
-  // 8. General Street Grid Waypoints (Follows primary Abu Dhabi street alignments)
-  const p1Lat = sLat + (dLat - sLat) * 0.18;
-  const p1Lng = sLng + (dLng - sLng) * 0.04;
-
-  const p2Lat = sLat + (dLat - sLat) * 0.42;
-  const p2Lng = sLng + (dLng - sLng) * 0.30;
-
-  const p3Lat = sLat + (dLat - sLat) * 0.72;
-  const p3Lng = sLng + (dLng - sLng) * 0.68;
-
-  const p4Lat = sLat + (dLat - sLat) * 0.90;
-  const p4Lng = sLng + (dLng - sLng) * 0.92;
+  // Generate logical stepped street turns that strictly follow the corridor
+  const p1 = [sLat + deltaLat * 0.25, sLng + deltaLng * 0.08];
+  const p2 = [sLat + deltaLat * 0.55, sLng + deltaLng * 0.45];
+  const p3 = [sLat + deltaLat * 0.85, sLng + deltaLng * 0.82];
 
   return [
     [sLat, sLng],
-    [p1Lat, p1Lng],
-    [p2Lat, p2Lng],
-    [p3Lat, p3Lng],
-    [p4Lat, p4Lng],
+    p1,
+    p2,
+    p3,
     [dLat, dLng]
   ];
 }
@@ -1177,7 +1174,7 @@ function MapStatusBar({ mapStatus, isDarkMode }) {
 }
 
 export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapClick, selectedLocation, isExplorer, explorerState, setExplorerState }) {
-  const { isArabic } = useLanguage();
+  const { isArabic, t } = useLanguage();
   const { isDarkMode } = useTheme();
   const { activeProject } = useProject();
   const [mapStatus, setMapStatus] = useState({ lat: 24.483910, lng: 54.377320, zoom: 16 });
@@ -1199,10 +1196,68 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
   const activeResults = explorerState?.activeResults || [];
   const routeDest = explorerState?.activeRouteDestination;
 
-  const routeWaypoints = routeDest ? getRoadDirectionsWaypoints(userLoc, routeDest) : [];
-  const routeDistanceKm = routeDest && userLoc && routeDest.lat && routeDest.lng
+  // Live Road Navigation Routing State (Open Source Routing Machine)
+  const [osrmRoute, setOsrmRoute] = useState(null);
+
+  useEffect(() => {
+    if (!routeDest || !routeDest.lat || !routeDest.lng || !userLoc || !userLoc.lat || !userLoc.lng) {
+      setOsrmRoute(null);
+      return;
+    }
+
+    let isMounted = true;
+    const sLat = Number(userLoc.lat);
+    const sLng = Number(userLoc.lng);
+    const dLat = Number(routeDest.lat);
+    const dLng = Number(routeDest.lng);
+
+    if (isNaN(sLat) || isNaN(sLng) || isNaN(dLat) || isNaN(dLng)) {
+      setOsrmRoute(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    const fetchLiveRoute = async () => {
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${sLng},${sLat};${dLng},${dLat}?overview=full&geometries=geojson`;
+        const res = await fetch(url, { signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.code === 'Ok' && data.routes && data.routes[0]?.geometry?.coordinates?.length > 1) {
+            const coords = data.routes[0].geometry.coordinates.map(pt => [pt[1], pt[0]]);
+            setOsrmRoute({
+              waypoints: coords,
+              distanceKm: data.routes[0].distance / 1000,
+              durationMin: Math.max(1, Math.round(data.routes[0].duration / 60))
+            });
+          }
+        }
+      } catch (err) {
+        // Fallback to local street grid routing
+      }
+    };
+
+    fetchLiveRoute();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [routeDest?.lat, routeDest?.lng, routeDest?.name, userLoc?.lat, userLoc?.lng]);
+
+  const fallbackWaypoints = routeDest ? getRoadDirectionsWaypoints(userLoc, routeDest) : [];
+  const routeWaypoints = (osrmRoute && osrmRoute.waypoints && osrmRoute.waypoints.length > 1)
+    ? osrmRoute.waypoints
+    : fallbackWaypoints;
+
+  const rawGeodesicKm = routeDest && userLoc && routeDest.lat && routeDest.lng
     ? calculateGeodesicDistance(userLoc.lat, userLoc.lng, routeDest.lat, routeDest.lng)
     : null;
+  const routeDistanceKm = osrmRoute?.distanceKm || rawGeodesicKm;
+  const routeDurationMin = osrmRoute?.durationMin || Math.max(2, Math.round(((routeDistanceKm || 2.5) / 35) * 60));
 
   return (
     <div className="absolute inset-0 z-0 pointer-events-auto w-full h-full">
@@ -1461,7 +1516,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
               </div>
               <div className="flex items-center gap-2 text-[11px] font-semibold mt-0.5">
                 <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">
-                  {Math.max(2, Math.round(((routeDistanceKm || 2.5) / 35) * 60))} {t('min', 'دقيقة')}
+                  {routeDurationMin} {t('min', 'دقيقة')}
                 </span>
                 <span className="text-slate-300 dark:text-slate-600">•</span>
                 <span className="text-slate-600 dark:text-slate-300 font-bold">

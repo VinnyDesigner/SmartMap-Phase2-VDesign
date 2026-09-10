@@ -1,8 +1,8 @@
 // Universal AI Application Controller & Natural Language Agent for GeoVision / SmartMap
 import { ACTION_TYPES } from './actionRegistry.js';
 import { parseQueryIntent } from './ai/queryIntentResolver.js';
-import { executeGisQuery } from './spatial/gisQueryEngine.js';
-import { calculateGeodesicDistance, formatDistance } from './spatial/spatialAnalysisService.js';
+import { executeGisQuery, getMasterAuthoritativeDataset } from './spatial/gisQueryEngine.js';
+import { calculateGeodesicDistance, formatDistance, matchesGisSubcategories } from './spatial/spatialAnalysisService.js';
 import { routingService } from './routing/routingService.js';
 import { aiOrchestrator } from './ai/aiOrchestrator.js';
 import { getCategoryLocalizedName, getSubcategoryLocalizedName } from '../config/categoryTree.js';
@@ -288,6 +288,29 @@ export const LOCATIONS_DB = [
     description: 'Lush green park situated at the entrance of Yas Island with shaded sports tracks.',
     description_ar: 'حديقة خضراء واسعة عند مدخل جزيرة ياس تتميز بمسارات رياضية مظللة.',
     tags: ['park', 'yas island', 'green', 'recreation']
+  },
+  {
+    id: 13,
+    name: 'Al Reem Central Park & Waterfront Promenade',
+    name_ar: 'حديقة الريم المركزية والممشى المائي',
+    type: 'PARK',
+    facilityType: 'PARK',
+    subType: 'public_parks',
+    category_en: 'Public Park & Waterfront Recreation',
+    category_ar: 'حديقة عامة ومتنزه ترفيهي مائي',
+    location: 'Al Reem Island',
+    location_ar: 'جزيرة الريم',
+    district: 'Al Reem Island',
+    lat: 24.4965,
+    lng: 54.4072,
+    rating: 4.9,
+    capacity: 15000,
+    riskLevel: 'Low',
+    riskScore: 16,
+    isCoastal: true,
+    description: 'Iconic 1-million sq ft public park on Al Reem Island featuring waterfront skate parks, shaded recreational lawns, musical fountains, and beachfront promenades.',
+    description_ar: 'حديقة عامة رائدة بمساحة مليون قدم مربع في جزيرة الريم تضم مساحات خضراء، نوافير موسيقية، وممشى شاطئي وملاعب رياضية.',
+    tags: ['park', 'public park', 'reem', 'al reem island', 'waterfront', 'green', 'recreation', 'garden']
   },
 
   // 6. HEALTHCARE FACILITIES
@@ -1266,6 +1289,135 @@ export const mockAiEngine = {
         return { reply, actions, results: [], suggestions };
       }
 
+      if (parsedIntent.action === 'CLEAR_RISK_FILTER') {
+        actions.push({ type: ACTION_TYPES.CLEAR_RISK_FILTER, params: {} });
+        
+        const masterDataset = getMasterAuthoritativeDataset(currentState?.activeProject?.datasets);
+        const activeSubs = Array.isArray(currentState?.selectedGisSubcategories) ? currentState.selectedGisSubcategories : [];
+        
+        let filtered = masterDataset;
+        if (activeSubs.length > 0) {
+          const subMatches = masterDataset.filter(loc => matchesGisSubcategories(loc, activeSubs));
+          if (subMatches.length > 0) {
+            filtered = subMatches;
+          }
+        }
+
+        const displayResults = filtered.slice(0, 10);
+        if (displayResults.length > 0 && typeof displayResults[0].lat === 'number') {
+          actions.push({
+            type: ACTION_TYPES.MAP_FLY_TO,
+            params: { lat: displayResults[0].lat, lng: displayResults[0].lng, zoom: 13 }
+          });
+        }
+
+        if (filtered.length > 10) {
+          reply = isArabic
+            ? `تمت إزالة تصفية مستوى الخطورة بنجاح. تم العثور على **${filtered.length} منشأة معتمدة**. عرض **أقرب 10 منشآت**:`
+            : `Risk level filter has been cleared. Found **${filtered.length} authoritative facilities**. Showing the **top 10 closest**:`;
+        } else {
+          reply = isArabic
+            ? `تمت إزالة تصفية مستوى الخطورة بنجاح. يتم الآن عرض **${filtered.length} منشأة معتمدة** بدون قيود المخاطر:`
+            : `Risk level filter has been cleared. Showing **${filtered.length} authoritative facilities** without risk restrictions:`;
+        }
+
+        const suggestions = isArabic
+          ? (filtered.length > 10 ? ['عرض 10 منشآت إضافية', 'عرض المنشآت الحكومية', 'عرض المعالم السياحية'] : ['عرض المنشآت الحكومية', 'عرض المعالم السياحية', 'عرض الحدائق العامة'])
+          : (filtered.length > 10 ? ['Show next 10 facilities', 'Show government facilities', 'Show tourism landmarks'] : ['Show government facilities', 'Show tourism landmarks', 'Show parks near me']);
+
+        return {
+          reply,
+          actions,
+          results: displayResults,
+          totalCount: filtered.length,
+          allResults: filtered,
+          suggestions,
+          datasetsUsed: ['DGE Spatial SDI 2026'],
+          activeContext: {
+            category: 'ALL',
+            activeLocations: displayResults,
+            allResults: filtered,
+            totalCount: filtered.length,
+            paginationOffset: 0,
+            lastSearchLabel: 'facilities',
+            lastSearchLabelAr: 'منشأة',
+            lastRefLabel: 'Abu Dhabi',
+            lastParsedIntent: parsedIntent,
+            selectedFeature: displayResults[0]
+          }
+        };
+      }
+
+      if (parsedIntent.action === 'EXPAND_SEARCH_RADIUS') {
+        const origin = (currentState?.selectedLocation && typeof currentState.selectedLocation.lat === 'number')
+          ? currentState.selectedLocation
+          : (currentState?.mapFocus && typeof currentState.mapFocus.lat === 'number')
+            ? currentState.mapFocus
+            : (currentState?.userLocation && typeof currentState.userLocation.lat === 'number')
+              ? currentState.userLocation
+              : { lat: 24.4839, lng: 54.3773 };
+
+        const refName = currentState?.selectedLocation?.name || 'current view';
+        const refNameAr = currentState?.selectedLocation?.name_ar || 'العرض الحالي';
+
+        const masterDataset = getMasterAuthoritativeDataset(currentState?.activeProject?.datasets);
+        const radiusKm = 25;
+
+        const enriched = masterDataset
+          .map(item => {
+            const distKm = calculateGeodesicDistance(origin.lat, origin.lng, item.lat, item.lng);
+            return { ...item, distanceKm: distKm, distance: formatDistance(distKm) };
+          })
+          .sort((a, b) => a.distanceKm - b.distanceKm);
+
+        const withinRadius = enriched.filter(item => item.distanceKm <= radiusKm);
+        const finalEnriched = withinRadius.length > 0 ? withinRadius : enriched;
+        const displayResults = finalEnriched.slice(0, 10);
+
+        if (displayResults.length > 0 && typeof origin.lat === 'number') {
+          actions.push({
+            type: ACTION_TYPES.MAP_FLY_TO,
+            params: { lat: origin.lat, lng: origin.lng, zoom: 12 }
+          });
+        }
+
+        if (finalEnriched.length > 10) {
+          reply = isArabic
+            ? `تم توسيع نطاق البحث إلى ${radiusKm} كم حول **${refNameAr}**. تم العثور على **${finalEnriched.length} منشأة**. عرض **أقرب 10 منشآت**:`
+            : `Expanded search radius to ${radiusKm} km around **${refName}**. Found **${finalEnriched.length} facilities**. Showing the **top 10 closest**:`;
+        } else {
+          reply = isArabic
+            ? `تم توسيع نطاق البحث إلى ${radiusKm} كم حول **${refNameAr}**. تم العثور على **${finalEnriched.length} منشأة**، مرتبة حسب القرب:`
+            : `Expanded search radius to ${radiusKm} km around **${refName}**. Found **${finalEnriched.length} facilities**, ordered by proximity:`;
+        }
+
+        const suggestions = isArabic
+          ? (finalEnriched.length > 10 ? ['عرض 10 منشآت إضافية', 'عرض كافة المنشآت في أبوظبي', 'عرض المنشآت الحكومية'] : ['عرض كافة المنشآت في أبوظبي', 'عرض المنشآت الحكومية', 'عرض المستشفيات'])
+          : (finalEnriched.length > 10 ? ['Show next 10 facilities', 'Show all facilities in Abu Dhabi', 'Show government facilities'] : ['Show all facilities in Abu Dhabi', 'Show government facilities', 'Show hospitals']);
+
+        return {
+          reply,
+          actions,
+          results: displayResults,
+          totalCount: finalEnriched.length,
+          allResults: finalEnriched,
+          suggestions,
+          datasetsUsed: ['DGE Spatial SDI 2026'],
+          activeContext: {
+            category: 'ALL',
+            activeLocations: displayResults,
+            allResults: finalEnriched,
+            totalCount: finalEnriched.length,
+            paginationOffset: 0,
+            lastSearchLabel: 'facilities',
+            lastSearchLabelAr: 'منشأة',
+            lastRefLabel: refName,
+            lastParsedIntent: parsedIntent,
+            selectedFeature: displayResults[0]
+          }
+        };
+      }
+
       if (parsedIntent.action === 'OPEN_FACILITY_DETAIL') {
         const target = parsedIntent.target || currentState?.selectedLocation || currentState?.activeContext?.selectedFeature || currentState?.activeResults?.[0];
         if (target) {
@@ -1489,19 +1641,13 @@ export const mockAiEngine = {
 
     // 5B. Zero Results (Criteria too restrictive or zero matches in area)
     if (queryResult.status === 'ZERO_RESULTS') {
-      const hasShape = Boolean(
-        currentState?.drawnRectangle || 
-        currentState?.drawnCircle || 
-        currentState?.drawnPolygon || 
-        (currentState?.drawings && currentState.drawings.length > 0)
-      );
       return {
         reply: isArabic ? queryResult.message_ar : queryResult.message_en,
         results: [],
         actions: [],
-        suggestions: hasShape
-          ? (isArabic ? ['مسح منطقة الرسم', 'توسيع نطاق البحث', 'عرض كافة المنشآت في أبوظبي'] : ['Clear drawn area', 'Expand search radius', 'Show all facilities in Abu Dhabi'])
-          : (isArabic ? ['توسيع نطاق البحث', 'عرض كافة المنشآت في أبوظبي', 'إلغاء تصفية الخطورة'] : queryResult.suggestions),
+        suggestions: isArabic 
+          ? (queryResult.suggestionsAr || ['توسيع نطاق البحث', 'عرض كافة المنشآت في أبوظبي'])
+          : (queryResult.suggestions || ['Expand search radius', 'Show all facilities in Abu Dhabi']),
         datasetsUsed: ['DGE Spatial SDI 2026']
       };
     }
@@ -1511,21 +1657,16 @@ export const mockAiEngine = {
     const totalCount = allResults.length;
     const actions = [];
 
-    // Max results per batch: Cap to top 10 if there are more
+    // Max results per batch: Always cap to top 10 in chat interface to avoid dumping dozens of cards
     const MAX_PAGE_SIZE = 10;
-    const isExplicitAll = rawQ.toLowerCase().includes('show all') || 
-                          rawQ.toLowerCase().includes('عرض كافة') || 
-                          rawQ.toLowerCase().includes('عرض كل') ||
-                          rawQ.toLowerCase().includes('عرض جميع');
-    
-    const isTruncated = !isExplicitAll && totalCount > MAX_PAGE_SIZE && (!parsedIntent.limit || parsedIntent.limit > MAX_PAGE_SIZE);
+    const isTruncated = totalCount > MAX_PAGE_SIZE && (!parsedIntent.limit || parsedIntent.limit > MAX_PAGE_SIZE);
     const results = isTruncated ? allResults.slice(0, MAX_PAGE_SIZE) : allResults;
     const topItem = results[0];
 
     // Focus map on top item or extent
     if (topItem && typeof topItem.lat === 'number' && typeof topItem.lng === 'number') {
       actions.push(
-        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: parsedIntent.category || 'ALL' }, matchingResults: results, subcategories: parsedIntent.autoActivateSubcategories } },
+        { type: ACTION_TYPES.FILTER_APPLY_MULTI, params: { filters: { category: parsedIntent.category || 'ALL' }, matchingResults: allResults, subcategories: parsedIntent.autoActivateSubcategories } },
         { type: ACTION_TYPES.MAP_FLY_TO, params: { lat: topItem.lat, lng: topItem.lng, zoom: results.length === 1 ? 16 : 14 } }
       );
       if (results.length === 1 || parsedIntent.limit === 1) {
@@ -1555,12 +1696,14 @@ export const mockAiEngine = {
       ? (queryResult.referenceNameAr || 'موقعك الجغرافي')
       : (queryResult.referenceName || 'your location');
 
-    const hasDrawnScope = parsedIntent.isDrawnShapeQuery || Boolean(
-      currentState?.activeDrawnArea ||
-      currentState?.drawnRectangle || 
-      currentState?.drawnCircle || 
-      currentState?.drawnPolygon || 
-      (currentState?.drawings && currentState.drawings.length > 0)
+    const hasDrawnScope = parsedIntent.isDrawnShapeQuery || (
+      parsedIntent.referenceLocationType !== 'selected' && Boolean(
+        currentState?.activeDrawnArea ||
+        currentState?.drawnRectangle || 
+        currentState?.drawnCircle || 
+        currentState?.drawnPolygon || 
+        (currentState?.drawings && currentState.drawings.length > 0)
+      )
     );
 
     if (hasDrawnScope) {
@@ -1605,24 +1748,38 @@ export const mockAiEngine = {
       const activeCatName = isArabic 
         ? getCategoryLocalizedName(parsedIntent.autoActivateCategory, true)
         : getCategoryLocalizedName(parsedIntent.autoActivateCategory, false);
+      const areaSuffixEn = (parsedIntent.geographicArea && parsedIntent.geographicArea.id !== 'abu-dhabi')
+        ? ` in **${parsedIntent.geographicArea.name_en || queryResult.referenceName}**`
+        : '';
+      const areaSuffixAr = (parsedIntent.geographicArea && parsedIntent.geographicArea.id !== 'abu-dhabi')
+        ? ` في **${parsedIntent.geographicArea.name_ar || queryResult.referenceNameAr}**`
+        : '';
+
       if (isTruncated) {
         reply = isArabic
-          ? `تم تفعيل طبقة **${activeCatName}** في قائمة التصنيفات. تم العثور على **${totalCount} ${searchLabelAr}**. عرض **أقرب 10 منشآت**:`
-          : `Activated **${activeCatName}** in the layer drawer. Found **${totalCount} verified ${searchLabel}**. Showing the **top 10 closest**:`;
+          ? `تم تفعيل طبقة **${activeCatName}** في قائمة التصنيفات. تم العثور على **${totalCount} ${searchLabelAr}**${areaSuffixAr}. عرض **أقرب 10 منشآت**:`
+          : `Activated **${activeCatName}** in the layer drawer. Found **${totalCount} verified ${searchLabel}**${areaSuffixEn}. Showing the **top 10 closest**:`;
       } else {
         reply = isArabic
-          ? `تم تفعيل طبقة **${activeCatName}** في قائمة التصنيفات. تم العثور على **${results.length} ${searchLabelAr}** مطابقة، مرتبة حسب القرب الجغرافي:`
-          : `Activated **${activeCatName}** in the layer drawer. Found **${results.length} verified ${searchLabel}**, ordered by proximity:`;
+          ? `تم تفعيل طبقة **${activeCatName}** في قائمة التصنيفات. تم العثور على **${results.length} ${searchLabelAr}**${areaSuffixAr}، مرتبة حسب القرب الجغرافي:`
+          : `Activated **${activeCatName}** in the layer drawer. Found **${results.length} verified ${searchLabel}**${areaSuffixEn}, ordered by proximity:`;
       }
     } else {
+      const areaSuffixEn = (parsedIntent.geographicArea && parsedIntent.geographicArea.id !== 'abu-dhabi')
+        ? ` in **${parsedIntent.geographicArea.name_en || queryResult.referenceName}**`
+        : '';
+      const areaSuffixAr = (parsedIntent.geographicArea && parsedIntent.geographicArea.id !== 'abu-dhabi')
+        ? ` في **${parsedIntent.geographicArea.name_ar || queryResult.referenceNameAr}**`
+        : '';
+
       if (isTruncated) {
         reply = isArabic
-          ? `تم العثور على **${totalCount} منشأة/معلم** مطابقة للشروط المحددة. عرض **أقرب 10 منشآت**:`
-          : `Found **${totalCount} verified ${searchLabel}** matching all requested criteria. Showing the **top 10 closest**:`;
+          ? `تم العثور على **${totalCount} منشأة/معلم**${areaSuffixAr}. عرض **أقرب 10 منشآت**:`
+          : `Found **${totalCount} verified ${searchLabel}**${areaSuffixEn} matching all requested criteria. Showing the **top 10 closest**:`;
       } else {
         reply = isArabic
-          ? `تم العثور على **${results.length} منشأة/معلم** مطابقة للشروط المحددة، مرتبة حسب القرب الجغرافي:`
-          : `Found **${results.length} verified ${searchLabel}** matching all requested criteria, ordered by distance:`;
+          ? `تم العثور على **${results.length} منشأة/معلم**${areaSuffixAr}، مرتبة حسب القرب الجغرافي:`
+          : `Found **${results.length} verified ${searchLabel}**${areaSuffixEn} matching all requested criteria, ordered by distance:`;
       }
     }
 

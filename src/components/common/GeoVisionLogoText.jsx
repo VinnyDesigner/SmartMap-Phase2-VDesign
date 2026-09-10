@@ -23,9 +23,9 @@ export default function GeoVisionLogoText({
         Ge
       </span>
 
-      {/* Static container matching x-height of 'e' with pure SVG trim path animation */}
+      {/* Static container matching x-height of 'e' with pure SVG animation */}
       <span 
-        className="inline-flex items-center justify-center mx-[0.05em] relative top-[0.01em] shrink-0 overflow-visible"
+        className="inline-flex items-center justify-center mx-[0.03em] relative top-[0.01em] shrink-0 overflow-visible"
         style={{ 
           width: iconSize, 
           height: iconSize,

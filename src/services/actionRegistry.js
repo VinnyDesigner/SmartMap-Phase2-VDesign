@@ -14,6 +14,7 @@ export const ACTION_TYPES = {
   FILTER_SET: 'FILTER_SET',
   FILTER_CLEAR: 'FILTER_CLEAR',
   FILTER_APPLY_MULTI: 'FILTER_APPLY_MULTI',
+  CLEAR_RISK_FILTER: 'CLEAR_RISK_FILTER',
   
   // Layer Actions
   LAYER_TOGGLE: 'LAYER_TOGGLE',
@@ -214,6 +215,21 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
         activeFilters: {}
       }));
       return { success: true, message: "Cleared all active filters" };
+    }
+
+    case ACTION_TYPES.CLEAR_RISK_FILTER: {
+      recordActionHistory(prevState, action.type, action.params);
+      setExplorerState(prev => {
+        const nextFilters = { ...(prev.activeFilters || {}) };
+        delete nextFilters.riskLevel;
+        delete nextFilters.risk;
+        return {
+          ...prev,
+          activeFilters: nextFilters,
+          selectedRiskLevel: null
+        };
+      });
+      return { success: true, message: "Cleared risk filter" };
     }
 
     case ACTION_TYPES.FACILITY_SELECT:

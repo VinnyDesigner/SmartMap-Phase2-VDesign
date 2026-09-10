@@ -254,10 +254,17 @@ export const GEOGRAPHIC_LANDMARKS = [
   },
   {
     id: 'al-reem',
-    names: ['al reem island', 'reem island', 'reem', 'جزيرة الريم', 'الريم'],
+    names: ['al reem island', 'reem island', 'al reem', 'reem', 'جزيرة الريم', 'الريم'],
     coords: { lat: 24.5028, lng: 54.4056 },
     name_en: 'Al Reem Island',
     name_ar: 'جزيرة الريم'
+  },
+  {
+    id: 'al-bateen',
+    names: ['al bateen', 'bateen', 'البطين', 'البتين'],
+    coords: { lat: 24.4560, lng: 54.3480 },
+    name_en: 'Al Bateen',
+    name_ar: 'البطين'
   },
   {
     id: 'al-maryah',
@@ -324,9 +331,14 @@ export function checkUnavailableDataset(query = '') {
   
   for (const entry of UNAVAILABLE_DATASETS) {
     for (const term of entry.terms) {
-      const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      if (regex.test(q)) {
-        return entry;
+      const isArabicOrUnicode = /[^\x00-\x7F]/.test(term);
+      if (isArabicOrUnicode) {
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(^|[\\s،,.;:!?()"\'])${escaped}($|[\\s،,.;:!?()"\'])`, 'i');
+        if (regex.test(q)) return entry;
+      } else {
+        const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(q)) return entry;
       }
     }
   }
@@ -340,9 +352,14 @@ export function resolveCanonicalCategory(query = '') {
 
   for (const syn of SEMANTIC_SYNONYMS) {
     for (const term of syn.terms) {
-      const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-      if (regex.test(q)) {
-        return syn.category;
+      const isArabicOrUnicode = /[^\x00-\x7F]/.test(term);
+      if (isArabicOrUnicode) {
+        const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(^|[\\s،,.;:!?()"\'])${escaped}($|[\\s،,.;:!?()"\'])`, 'i');
+        if (regex.test(q)) return syn.category;
+      } else {
+        const regex = new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(q)) return syn.category;
       }
     }
   }

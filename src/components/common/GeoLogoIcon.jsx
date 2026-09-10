@@ -44,55 +44,67 @@ export default function GeoLogoIcon({
         className={className}
         style={style}
       >
+        {/* Layer 1: Permanent Solid Base Layer - Guarantees the SVG logo is ALWAYS displayed from frame 0 (No gaps between "e" and "V") */}
+        <g fill={color} opacity="0.35">
+          {PIN_PATHS.map((d, i) => (
+            <path key={`base-path-${i}`} d={d} />
+          ))}
+          {PIN_CIRCLES.map((circle, i) => (
+            <circle key={`base-circle-${i}`} cx={circle.cx} cy={circle.cy} r={circle.r} />
+          ))}
+        </g>
+
+        {/* Layer 2: Dynamic Animated Stroke Tracing & Sequential Energy Pulse */}
         <g>
           {PIN_PATHS.map((d, i) => (
             <motion.path
-              key={`path-${i}`}
+              key={`anim-path-${i}`}
               d={d}
               fill={color}
               stroke={color}
-              strokeWidth="12"
+              strokeWidth="16"
               strokeLinecap="round"
               strokeLinejoin="round"
-              initial={{ pathLength: 0, fillOpacity: 0, strokeOpacity: 0.2 }}
+              initial={{ pathLength: 0, fillOpacity: 0.15, strokeOpacity: 0.4 }}
               animate={{
                 pathLength: [0, 1, 1, 0],
-                fillOpacity: [0, 1, 1, 0],
-                strokeOpacity: [0.2, 1, 1, 0.2]
+                fillOpacity: [0.15, 0.95, 1, 0.15],
+                strokeOpacity: [0.4, 1, 1, 0.4]
               }}
               transition={{
-                duration: 4.2,
-                times: [0, 0.35, 0.65, 1],
+                duration: 3.2,
+                times: [0, 0.4, 0.7, 1],
                 ease: "easeInOut",
                 repeat: Infinity,
-                delay: i * 0.1,
-                repeatDelay: 1.2
+                delay: i * 0.15,
+                repeatDelay: 0.4
               }}
             />
           ))}
           {PIN_CIRCLES.map((circle, i) => (
             <motion.circle
-              key={`circle-${i}`}
+              key={`anim-circle-${i}`}
               cx={circle.cx}
               cy={circle.cy}
               r={circle.r}
               fill={color}
               stroke={color}
-              strokeWidth="12"
-              initial={{ pathLength: 0, fillOpacity: 0, scale: 0.7 }}
+              strokeWidth="16"
+              initial={{ pathLength: 0, fillOpacity: 0.2, scale: 0.8 }}
               animate={{
                 pathLength: [0, 1, 1, 0],
-                fillOpacity: [0, 1, 1, 0],
-                scale: [0.7, 1, 1, 0.7]
+                fillOpacity: [0.2, 1, 1, 0.2],
+                scale: [0.8, 1.15, 1.15, 0.8]
               }}
               transition={{
-                duration: 4.2,
-                times: [0, 0.35, 0.65, 1],
+                duration: 3.2,
+                times: [0, 0.4, 0.7, 1],
                 ease: "easeInOut",
                 repeat: Infinity,
-                delay: i * 0.1 + 0.05,
-                repeatDelay: 1.2
+                delay: i * 0.15 + 0.08,
+                repeatDelay: 0.4
               }}
+              style={{ transformOrigin: `${circle.cx}px ${circle.cy}px` }}
             />
           ))}
         </g>

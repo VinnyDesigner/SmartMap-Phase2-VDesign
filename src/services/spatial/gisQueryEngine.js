@@ -198,32 +198,81 @@ export function validateEntity(item, normalizedQuery, origin = null, context = {
       const areaName = (geographicArea.name_en || geographicArea.name || '').toLowerCase();
       const areaNameAr = (geographicArea.name_ar || '').toLowerCase();
 
-      // If user specified a specific local landmark area (e.g. "Yas Island", "Corniche")
-      if (areaName && areaName !== 'abu dhabi') {
+      // If user specified a specific local landmark area (e.g. "Yas Island", "Corniche", "Al Reem Island", "Al Mushrif")
+      // We skip district restriction if the landmark is Abu Dhabi itself (since all facilities belong to Abu Dhabi)
+      if (geographicArea.id !== 'abu-dhabi' && areaName !== 'abu dhabi') {
         const itemLocation = (item.location || '').toLowerCase();
         const itemDistrict = (item.district || '').toLowerCase();
         const itemLocationAr = (item.location_ar || '').toLowerCase();
-        const itemTags = (item.tags || []).map(t => t.toLowerCase());
+        const itemName = (item.name || '').toLowerCase();
+        const itemNameAr = (item.name_ar || '').toLowerCase();
+        const itemTags = (item.tags || []).map(t => String(t).toLowerCase());
 
-        const textMatches = itemLocation.includes(areaName) || 
-          itemDistrict.includes(areaName) || 
-          itemLocationAr.includes(areaNameAr) || 
-          itemTags.includes(areaName);
+        // Gather all known aliases for the target geographic area
+        const aliases = Array.from(new Set([
+          ...(geographicArea.names || []),
+          geographicArea.name_en,
+          geographicArea.name_ar,
+          geographicArea.name,
+          geographicArea.id?.replace(/-/g, ' ')
+        ])).filter(Boolean).map(a => a.toLowerCase().trim());
 
-        // Also check spatial proximity to landmark coordinates if landmark exists
-        let spatialNearLandmark = false;
-        if (geographicArea.coords) {
-          const distToLandmark = calculateGeodesicDistance(
-            geographicArea.coords.lat, 
-            geographicArea.coords.lng, 
-            item.lat, 
-            item.lng
-          );
-          // Within 5 km of landmark center
-          if (distToLandmark <= 6.0) spatialNearLandmark = true;
+        const textMatches = aliases.some(alias => 
+          itemLocation.includes(alias) || 
+          itemDistrict.includes(alias) || 
+          itemLocationAr.includes(alias) || 
+          itemTags.some(t => t === alias || t.includes(alias)) ||
+          itemName.includes(alias) ||
+          itemNameAr.includes(alias)
+        );
+
+        if (normalizedQuery.spatialRelation === 'in') {
+          // STRICT DISTRICT CONTAINMENT (e.g. "parks in al reem island", "schools in al bateen")
+          if (textMatches) {
+            return true;
+          }
+
+          // If text doesn't match directly, only allow spatial fallback if within tight neighborhood boundary (<= 1.8 km)
+          // AND it does NOT belong to an explicitly different, conflicting district (e.g. Al Mushrif vs Al Reem Island)
+          if (geographicArea.coords && typeof item.lat === 'number' && typeof item.lng === 'number') {
+            const distToLandmark = calculateGeodesicDistance(
+              geographicArea.coords.lat, 
+              geographicArea.coords.lng, 
+              item.lat, 
+              item.lng
+            );
+
+            if (distToLandmark <= 1.8) {
+              const knownMajorDistricts = [
+                'al mushrif', 'mushrif', 'yas island', 'saadiyat', 'corniche', 
+                'mussafah', 'al taweelah', 'al bateen', 'al rawdah', 'al maryah', 'al reem'
+              ];
+              const hasConflictingDistrict = knownMajorDistricts.some(other => 
+                !aliases.some(a => a.includes(other) || other.includes(a)) && 
+                (itemDistrict.includes(other) || itemLocation.includes(other))
+              );
+              if (!hasConflictingDistrict) {
+                return true;
+              }
+            }
+          }
+
+          return false;
+        } else {
+          // PROXIMITY SEARCH (e.g. "attractions around Yas Island", "facilities near Corniche")
+          let spatialNearLandmark = false;
+          if (geographicArea.coords && typeof item.lat === 'number' && typeof item.lng === 'number') {
+            const distToLandmark = calculateGeodesicDistance(
+              geographicArea.coords.lat, 
+              geographicArea.coords.lng, 
+              item.lat, 
+              item.lng
+            );
+            if (distToLandmark <= 4.0) spatialNearLandmark = true;
+          }
+
+          if (!textMatches && !spatialNearLandmark) return false;
         }
-
-        if (!textMatches && !spatialNearLandmark) return false;
       }
     }
   }
@@ -243,7 +292,11 @@ export function validateEntity(item, normalizedQuery, origin = null, context = {
     context?.drawnPolygon
   );
 
-  if (isDrawnShapeQuery || hasDrawnFilter) {
+  // Active drawn area filter applies to queries within the drawn shape,
+  // but does not constrain explicit selected-location proximity searches unless requested.
+  const isSelectedProximity = normalizedQuery.referenceLocationType === 'selected' && !isDrawnShapeQuery;
+
+  if ((isDrawnShapeQuery || hasDrawnFilter) && !isSelectedProximity) {
     if (context.drawnRectangle && !isPointInRectangle(item.lat, item.lng, context.drawnRectangle)) {
       return false;
     }
@@ -284,11 +337,30 @@ export function executeGisQuery(normalizedQuery, context = {}) {
   let referenceName = null;
   let referenceNameAr = null;
 
-  if (normalizedQuery.referenceLocationType === 'selected' && context.selectedLocation) {
-    origin = { lat: context.selectedLocation.lat, lng: context.selectedLocation.lng };
-    referenceName = context.selectedLocation.name;
-    referenceNameAr = context.selectedLocation.name_ar;
-  } else if (normalizedQuery.geographicArea && !normalizedQuery.geographicArea.isExternal && normalizedQuery.geographicArea.coords && normalizedQuery.spatialRelation === 'near') {
+  if (normalizedQuery.referenceLocationType === 'selected') {
+    if (context.selectedLocation && typeof context.selectedLocation.lat === 'number') {
+      origin = { lat: context.selectedLocation.lat, lng: context.selectedLocation.lng };
+      referenceName = context.selectedLocation.name;
+      referenceNameAr = context.selectedLocation.name_ar;
+    } else if (context.mapFocus && typeof context.mapFocus.lat === 'number' && typeof context.mapFocus.lng === 'number') {
+      origin = { lat: context.mapFocus.lat, lng: context.mapFocus.lng };
+      referenceName = 'Map View';
+      referenceNameAr = 'مركز الخريطة';
+    } else if (context.activeDrawnArea?.centerCoords) {
+      origin = context.activeDrawnArea.centerCoords;
+      referenceName = context.activeDrawnArea.label || 'Drawn Area';
+      referenceNameAr = context.activeDrawnArea.label_ar || 'المنطقة المحددة';
+    } else if (context.userLocation && typeof context.userLocation.lat === 'number') {
+      origin = { lat: context.userLocation.lat, lng: context.userLocation.lng };
+      referenceName = 'Your Location';
+      referenceNameAr = 'موقعك الحالي';
+    } else {
+      const defaultCenter = context.activeProject?.defaultCenter || { lat: 24.4839, lng: 54.3773 };
+      origin = defaultCenter;
+      referenceName = 'Abu Dhabi Central';
+      referenceNameAr = 'وسط أبوظبي';
+    }
+  } else if (normalizedQuery.referenceLocationType === 'named' && normalizedQuery.geographicArea && !normalizedQuery.geographicArea.isExternal && normalizedQuery.geographicArea.coords) {
     origin = normalizedQuery.geographicArea.coords;
     referenceName = normalizedQuery.geographicArea.name_en;
     referenceNameAr = normalizedQuery.geographicArea.name_ar;
@@ -364,6 +436,36 @@ export function executeGisQuery(normalizedQuery, context = {}) {
     const riskText = normalizedQuery.filters?.riskLevel ? ` matching "${normalizedQuery.filters.riskLevel} Risk"` : '';
     const riskTextAr = normalizedQuery.filters?.riskLevel ? ` بمستوى خطورة "${normalizedQuery.filters.riskLevel}"` : '';
 
+    const suggestions = [];
+    const suggestionsAr = [];
+
+    // ONLY suggest clearing risk filter if a risk filter was actually active!
+    if (normalizedQuery.filters?.riskLevel) {
+      suggestions.push('Clear risk filter');
+      suggestionsAr.push('إلغاء تصفية الخطورة');
+    }
+
+    if (normalizedQuery.radiusKm || normalizedQuery.spatialRelation === 'near') {
+      suggestions.push('Expand search radius');
+      suggestionsAr.push('توسيع نطاق البحث');
+    }
+
+    if (normalizedQuery.isDrawnShapeQuery || context?.hasActiveDrawingFilter) {
+      suggestions.push('Clear drawn area');
+      suggestionsAr.push('مسح منطقة الرسم');
+    }
+
+    suggestions.push('Show all facilities in Abu Dhabi');
+    suggestionsAr.push('عرض كافة المنشآت في أبوظبي');
+
+    if (normalizedQuery.category) {
+      suggestions.push(`Show all ${catLabel} in Abu Dhabi`);
+      suggestionsAr.push(`عرض كافة ${catLabelAr} في أبوظبي`);
+    } else {
+      suggestions.push('Show government facilities');
+      suggestionsAr.push('عرض المنشآت الحكومية');
+    }
+
     return {
       status: 'ZERO_RESULTS',
       results: [],
@@ -373,11 +475,8 @@ export function executeGisQuery(normalizedQuery, context = {}) {
       referenceNameAr,
       message_en: `No ${catLabel}${riskText} found${radiusText}${areaText} in the authoritative dataset.`,
       message_ar: `لم يتم العثور على ${catLabelAr}${riskTextAr}${radiusTextAr}${areaTextAr} في قاعدة البيانات المعتمدة.`,
-      suggestions: [
-        'Expand search radius',
-        'Show all facilities in Abu Dhabi',
-        'Clear risk filter'
-      ]
+      suggestions: suggestions.slice(0, 3),
+      suggestionsAr: suggestionsAr.slice(0, 3)
     };
   }
 

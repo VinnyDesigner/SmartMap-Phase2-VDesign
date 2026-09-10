@@ -189,6 +189,33 @@
     },
     {
       "type": "Feature",
+      "id": "FAC-AD-012",
+      "geometry": { "type": "Point", "coordinates": [54.4072, 24.4965] },
+      "properties": {
+        "id": "FAC-AD-012",
+        "name": "Al Reem Central Park & Waterfront Promenade",
+        "name_ar": "حديقة الريم المركزية والممشى المائي",
+        "country": "United Arab Emirates",
+        "state": "Abu Dhabi",
+        "city": "Abu Dhabi",
+        "district": "Al Reem Island",
+        "location": "Al Reem Island",
+        "facilityType": "PARK",
+        "sector": "Environment & Public Recreation",
+        "riskScore": 16,
+        "riskLevel": "Low",
+        "waterConsumption": 14200,
+        "emissionsIndex": 1100,
+        "capacity": 15000,
+        "trend": "stable",
+        "isCoastal": true,
+        "hasAlerts": false,
+        "riskDrivers": ["Coastal humidity and waterfront salt spray"],
+        "tags": ["park", "public park", "environment", "al reem island", "reem", "recreation", "green", "waterfront"]
+      }
+    },
+    {
+      "type": "Feature",
       "id": "FAC-AD-008",
       "geometry": { "type": "Point", "coordinates": [54.3725, 24.4719] },
       "properties": {

@@ -104,6 +104,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   const [editingText, setEditingText] = useState('');
   const scrollContainerRef = useRef(null);
   const inputRef = useRef(null);
+  const latestQuestionIdRef = useRef(null);
 
   const isLoggedIn = Boolean(explorerState?.userAuth?.isLoggedIn || explorerState?.isLoggedIn);
 
@@ -170,7 +171,6 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       drawingTool: null
     }));
   };
-
 
   // If user is guest, lock activeTab to 'chat'
   useEffect(() => {
@@ -312,18 +312,48 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
   const messages = explorerState?.chatHistory || [];
 
-  const scrollToBottom = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
+  const scrollToQuestion = () => {
+    if (!scrollContainerRef.current) return;
+    const container = scrollContainerRef.current;
+
+    // 1. Target the latest question asked by user
+    let targetEl = null;
+    if (latestQuestionIdRef.current) {
+      targetEl = document.getElementById(`chat-msg-${latestQuestionIdRef.current}`);
+    }
+
+    // 2. Fallback: find the last user message element rendered
+    if (!targetEl) {
+      const userQuestions = container.querySelectorAll('[data-role="user"]');
+      if (userQuestions.length > 0) {
+        targetEl = userQuestions[userQuestions.length - 1];
+      }
+    }
+
+    if (targetEl) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = targetEl.getBoundingClientRect();
+      // Bring question to top with 10px breathing room
+      const targetScrollTop = container.scrollTop + (elRect.top - containerRect.top) - 10;
+      container.scrollTo({
+        top: Math.max(0, targetScrollTop),
         behavior: 'smooth'
       });
+      return;
     }
+
+    // 3. Fallback for initial welcome state: stay at top
+    container.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   };
 
   useEffect(() => {
     if (activeTab === 'chat') {
-      scrollToBottom();
+      scrollToQuestion();
+      const timer = setTimeout(scrollToQuestion, 120);
+      return () => clearTimeout(timer);
     }
   }, [messages, activeStepText, activeTab]);
 
@@ -394,6 +424,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     const userMsgId = `msg-user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const userMsg = { id: userMsgId, role: 'user', content: queryToProcess };
     
+    latestQuestionIdRef.current = userMsgId;
+
     setExplorerState(prev => ({
       ...prev,
       lastQuery: queryToProcess,
@@ -609,7 +641,12 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
               </div>
             ) : (
               messages.map((msg, idx) => (
-              <div key={msg.id ? `${msg.id}-${idx}` : `msg-${idx}`} className={`flex gap-2.5 group items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div 
+                key={msg.id ? `${msg.id}-${idx}` : `msg-${idx}`} 
+                id={`chat-msg-${msg.id || idx}`}
+                data-role={msg.role}
+                className={`flex gap-2.5 group items-start ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
                 {msg.role === 'assistant' && (
                   <div className="shrink-0 mt-0.5 flex items-center justify-center">
                     <GeoLogoIcon 
@@ -805,120 +842,51 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
             
 
 
-            {/* 2. Visual Active Filter Scope Indicator */}
-            {explorerState?.selectedGisSubcategories?.length > 0 && (
-              <div className={`mb-2 px-2.5 py-1.5 rounded-lg border text-[11px] flex items-center justify-between gap-2 transition-all animate-fadeIn ${
-                isDarkMode 
-                  ? 'bg-purple-950/40 border-purple-800/50 text-purple-200' 
-                  : 'bg-purple-50/90 border-purple-200 text-purple-900'
-              }`}>
-                <div className="flex items-center gap-1.5 overflow-hidden flex-1">
-                  <span className="flex h-2 w-2 relative shrink-0">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-                  </span>
-                  <span className="font-semibold shrink-0">
-                    {isArabic ? 'نطاق التصفية المطبق:' : 'Active Scope:'}
-                  </span>
-                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
-                    {explorerState.selectedGisSubcategories.slice(0, 3).map(subId => (
-                      <span 
-                        key={subId} 
-                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border shrink-0 ${
-                          isDarkMode 
-                            ? 'bg-purple-900/60 border-purple-700/60 text-purple-100' 
-                            : 'bg-white border-purple-200 text-purple-800 shadow-2xs'
-                        }`}
-                      >
-                        {getSubcategoryLocalizedName(subId, isArabic)}
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSubcategoryScope(subId)}
-                          className="hover:opacity-75 focus:outline-none ml-0.5 cursor-pointer"
-                          title={isArabic ? 'إزالة هذا التصنيف' : 'Remove this filter'}
-                        >
-                          <X className="w-2.5 h-2.5" />
-                        </button>
-                      </span>
-                    ))}
-                    {explorerState.selectedGisSubcategories.length > 3 && (
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${
-                        isDarkMode ? 'bg-purple-900/40 text-purple-300' : 'bg-purple-100 text-purple-700'
-                      }`}>
-                        +{explorerState.selectedGisSubcategories.length - 3}
-                      </span>
-                    )}
-                  </div>
-                </div>
 
-                <button
-                  type="button"
-                  onClick={handleClearAllScope}
-                  className={`text-[10px] font-medium px-2 py-0.5 rounded transition-colors shrink-0 underline hover:no-underline cursor-pointer ${
-                    isDarkMode ? 'text-purple-300 hover:text-white' : 'text-purple-700 hover:text-purple-900'
-                  }`}
-                  title={isArabic ? 'إعادة ضبط البحث لجميع الفئات' : 'Reset search to all categories'}
-                >
-                  {isArabic ? 'إلغاء التصفية ✕' : 'Clear Scope ✕'}
-                </button>
+            {/* Selected Area Pill Badge if drawn area is active */}
+            {activeDrawnArea && (
+              <div className="mb-2 flex items-center justify-between">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#edf2fb] hover:bg-[#e2eafc] dark:bg-[#162544] dark:hover:bg-[#1c3058] text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs transition-all">
+                  <span>{isArabic ? (activeDrawnArea.label_ar || activeDrawnArea.label) : activeDrawnArea.label}</span>
+                  <button
+                    type="button"
+                    onClick={handleClearDrawnArea}
+                    className="w-3.5 h-3.5 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center justify-center transition-colors cursor-pointer text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                    title={isArabic ? 'مسح المنطقة المحددة' : 'Clear drawn area'}
+                  >
+                    <X className="w-2.5 h-2.5 stroke-[2.5]" />
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* 3. Modern Card Input Container (Matches Provided Screenshot) */}
-            <div className={`rounded-3xl border p-2.5 sm:p-3 transition-all shadow-md ${
-              isDarkMode 
-                ? 'bg-[#0b1426]/95 border-slate-700/80 text-white shadow-[0_8px_30px_rgba(0,0,0,0.4)]' 
-                : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-sm'
-            }`}>
-              
-              {/* Selected Area Pill Badge (Top Row inside Input Card) */}
-              {activeDrawnArea && (
-                <div className="mb-2 flex items-center justify-between">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-[#edf2fb] hover:bg-[#e2eafc] dark:bg-[#162544] dark:hover:bg-[#1c3058] text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs transition-all">
-                    <span>{isArabic ? (activeDrawnArea.label_ar || activeDrawnArea.label) : activeDrawnArea.label}</span>
-                    <button
-                      type="button"
-                      onClick={handleClearDrawnArea}
-                      className="w-3.5 h-3.5 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center justify-center transition-colors cursor-pointer text-slate-500 hover:text-slate-900 dark:hover:text-white"
-                      title={isArabic ? 'مسح المنطقة المحددة' : 'Clear drawn area'}
-                    >
-                      <X className="w-2.5 h-2.5 stroke-[2.5]" />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Input Row: Sparkle Circular Badge + Divider + Transparent Input + Send Button */}
-              <form onSubmit={handleSubmit} className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#3b82f6]/20 via-[#6366f1]/20 to-[#a855f7]/20 border border-blue-400/40 flex items-center justify-center shrink-0 shadow-xs">
-                  <Sparkles className="w-4 h-4 text-blue-500 dark:text-sky-400 fill-current" />
-                </div>
-
-                <div className="w-[1px] h-5 bg-slate-200 dark:bg-slate-700 mx-0.5 shrink-0" />
-
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder={isArabic ? 'اسأل الخريطة الذكية عن أي شيء...' : 'Ask Smart Map Anything...'}
-                  className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm font-medium text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 px-1 py-1"
-                />
-
-                <button
-                  type="submit"
-                  disabled={!inputValue.trim() || isTyping}
-                  className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-xs ${
-                    inputValue.trim() && !isTyping
-                      ? 'bg-[#1a73e8] hover:bg-[#1557bf] text-white shadow-md hover:scale-105'
-                      : 'bg-slate-200/80 dark:bg-slate-800/80 text-slate-400 dark:text-slate-600 cursor-not-allowed'
-                  }`}
-                  title={isArabic ? 'إرسال الاستعلام' : 'Send query'}
-                >
-                  <Send className="w-4 h-4 rtl:-scale-x-100" />
-                </button>
-              </form>
-            </div>
+            {/* Restored Previous Style: Pill Input + Separate Circular Send Button */}
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                placeholder={placeholderText}
+                className={`flex-1 text-xs sm:text-sm font-medium rounded-full px-4 py-2.5 sm:py-3 border outline-none transition-all ${
+                  isDarkMode 
+                    ? 'bg-[#15213c] text-white placeholder-slate-400 border-slate-700/80 focus:border-[#7c3aed] focus:ring-1 focus:ring-[#7c3aed]/30' 
+                    : 'bg-slate-100/90 hover:bg-slate-100 focus:bg-white text-slate-800 placeholder-slate-400 border-slate-200 focus:border-[#7c3aed]'
+                }`}
+              />
+              <button
+                type="submit"
+                disabled={!inputValue.trim() || isTyping}
+                className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
+                  inputValue.trim() && !isTyping
+                    ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-sm hover:bg-[#6d28d9]' : 'bg-[#1a73e8] text-white hover:bg-[#1557bf] shadow-sm')
+                    : (isDarkMode ? 'bg-slate-800/80 text-slate-600 cursor-not-allowed' : 'bg-slate-200/80 text-slate-400 cursor-not-allowed')
+                }`}
+                title={isArabic ? 'إرسال الاستعلام' : 'Send query'}
+              >
+                <Send className="w-4 h-4 rtl:-scale-x-100" />
+              </button>
+            </form>
           </div>
         </>
       )}
