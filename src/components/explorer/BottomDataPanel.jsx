@@ -63,25 +63,10 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
 
   const handleNewChat = () => {
     setExplorerState(prev => {
-      const currentHistory = prev.chatHistory || [];
-      const savedHistory = prev.savedChatHistory || [];
-      
-      let updatedSaved = savedHistory;
-      if (currentHistory.length > 1) {
-        updatedSaved = [
-          {
-            id: Date.now(),
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            preview: currentHistory[currentHistory.length - 1]?.content?.slice(0, 40) + '...',
-            messages: currentHistory
-          },
-          ...savedHistory
-        ];
-      }
-
       const welcomeMessage = {
         id: Date.now(),
         role: 'assistant',
+        isWelcome: true,
         content: isArabic 
           ? "مرحباً! أنا مساعد الخريطة المكانية الذكية لإمارة أبوظبي.\n\nيمكنني مساعدتك في استكشاف المرافق الحكومية، المتاحف، المتنزهات، وشبكات النقل وتصفية الاستعلامات المكانية. كيف يمكنني مساعدتك اليوم؟"
           : "Welcome to SmartMap AI Assistant! I can help you explore Abu Dhabi spatial data, government facilities, tourism landmarks, public transit, and environmental layers. What would you like to analyze today?",
@@ -90,9 +75,9 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
 
       return {
         ...prev,
+        activeChatSessionId: null,
         // ── Chat reset ──
         chatHistory: [welcomeMessage],
-        savedChatHistory: updatedSaved,
         // ── Map markers & selections ──
         selectedLocation: null,
         selectedDetail: null,

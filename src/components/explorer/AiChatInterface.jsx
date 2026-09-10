@@ -52,7 +52,7 @@ const SEED_HISTORY_SESSIONS = [
     timestamp: 'Today, 02:15 PM',
     title: 'Government facilities in Abu Dhabi',
     preview: 'Government facilities in Abu Dhabi',
-    isPinned: true,
+    isFavorite: false,
     messageCount: 3,
     messages: [
       { id: 1, role: 'user', content: 'Show government facilities near me' },
@@ -69,7 +69,7 @@ const SEED_HISTORY_SESSIONS = [
     timestamp: 'Yesterday, 04:30 PM',
     title: 'Parks near Yas Island',
     preview: 'Parks near Yas Island',
-    isPinned: false,
+    isFavorite: false,
     messageCount: 2,
     messages: [
       { id: 1, role: 'user', content: 'Show parks near Yas Island' },
@@ -97,7 +97,6 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   const [isTyping, setIsTyping] = useState(false);
   const [activeStepText, setActiveStepText] = useState(null);
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'saved' | 'history'
-  const [historySubFilter, setHistorySubFilter] = useState('all'); // 'all' | 'pinned'
   const [saveSuccessToast, setSaveSuccessToast] = useState(null);
   const [authModalState, setAuthModalState] = useState({ isOpen: false, featureName: '' });
   const [editingMsgId, setEditingMsgId] = useState(null);
@@ -234,36 +233,58 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     });
   };
 
-  const handlePinQuery = (queryText) => {
+  const handleToggleFavoriteSession = (session) => {
+    if (!session) return;
     if (!isLoggedIn) {
       setAuthModalState({
         isOpen: true,
-        featureName: isArabic ? 'تثبيت الاستعلام في السجل' : 'Pin Query to History'
+        featureName: isArabic ? 'حفظ المحادثات في المفضلة' : 'Save Conversation to Favorites'
       });
       return;
     }
 
-    const cleanTitle = sanitizeMarkdown(queryText);
-    const newPinnedSession = {
-      id: 'pinned-' + Date.now(),
-      timestamp: 'Just now',
-      title: cleanTitle,
-      preview: cleanTitle,
-      isPinned: true,
-      messageCount: 2,
-      messages: [
-        { id: 1, role: 'user', content: cleanTitle },
-        { id: 2, role: 'assistant', content: isArabic ? `استعلام مثبت: ${cleanTitle}` : `Pinned Query: ${cleanTitle}` }
-      ]
-    };
+    setExplorerState(prev => {
+      const currentSessions = prev.savedChatHistory && prev.savedChatHistory.length > 0 
+        ? prev.savedChatHistory 
+        : SEED_HISTORY_SESSIONS;
+      
+      const updatedSessions = currentSessions.map(s => {
+        if (s.id === session.id) {
+          return { ...s, isFavorite: !s.isFavorite };
+        }
+        return s;
+      });
+
+      return {
+        ...prev,
+        savedChatHistory: updatedSessions
+      };
+    });
+
+    const willBeFavorite = !session.isFavorite;
+    setSaveSuccessToast(
+      willBeFavorite
+        ? (isArabic ? "تم نقل المحادثة إلى المفضلة ❤️" : "Conversation moved to Favorites! ❤️")
+        : (isArabic ? "تمت الإزالة من المفضلة" : "Removed from Favorites")
+    );
+    setTimeout(() => setSaveSuccessToast(null), 3000);
+  };
+
+  const handleRestoreSession = (session) => {
+    if (!session || !session.messages) return;
+
+    const lastAssistantMsg = [...session.messages].reverse().find(m => m.role === 'assistant');
+    const restoredResults = lastAssistantMsg?.results || [];
 
     setExplorerState(prev => ({
       ...prev,
-      savedChatHistory: [newPinnedSession, ...(prev.savedChatHistory || SEED_HISTORY_SESSIONS)]
+      chatHistory: session.messages,
+      activeChatSessionId: session.id,
+      activeResults: restoredResults,
+      showSearchResults: Boolean(restoredResults && restoredResults.length > 0)
     }));
 
-    setSaveSuccessToast(isArabic ? "تم تثبيت الاستعلام في السجل 📌" : "Query pinned to History! 📌");
-    setTimeout(() => setSaveSuccessToast(null), 3000);
+    setActiveTab('chat');
   };
 
   const handleToggleFavoriteLocation = (item) => {
@@ -301,7 +322,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   useEffect(() => {
     if (explorerState?.pendingQuery) {
       const q = explorerState.pendingQuery;
-      setExplorerState(prev => ({ ...prev, pendingQuery: null }));
+      setExplorerState(prev => ({ ...prev, pendingQuery: null, activeChatSessionId: null }));
       handleSubmit(null, q);
     }
   }, [explorerState?.pendingQuery]);
@@ -392,7 +413,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       if (!currentHistory || currentHistory.length === 0) {
         return {
           ...prev,
-          chatHistory: [{ id: Date.now(), role: 'assistant', content: welcomeContent, suggestions: rotatedSuggestions }]
+          chatHistory: [{ id: Date.now(), role: 'assistant', isWelcome: true, content: welcomeContent, suggestions: rotatedSuggestions }]
         };
       }
       return prev;
@@ -476,13 +497,58 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         allResults: aiResponse.allResults
       };
 
-      setExplorerState(prev => ({
-        ...prev,
-        activeResults: aiResponse.results || [],
-        showSearchResults: Boolean(aiResponse.results && aiResponse.results.length > 0),
-        activeContext: aiResponse.activeContext ? { ...(prev.activeContext || {}), ...aiResponse.activeContext } : prev.activeContext,
-        chatHistory: [...(prev.chatHistory || []), assistantMsg]
-      }));
+      setExplorerState(prev => {
+        const updatedChatHistory = [...(prev.chatHistory || []), assistantMsg];
+        let updatedSavedHistory = prev.savedChatHistory && prev.savedChatHistory.length > 0
+          ? [...prev.savedChatHistory]
+          : [...SEED_HISTORY_SESSIONS];
+
+        let currentSessionId = prev.activeChatSessionId;
+
+        // Auto-capture every chat into History for registered users
+        if (isLoggedIn) {
+          const nowTimestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const existingSessionIndex = currentSessionId 
+            ? updatedSavedHistory.findIndex(s => s.id === currentSessionId)
+            : -1;
+
+          if (existingSessionIndex >= 0) {
+            const existing = updatedSavedHistory[existingSessionIndex];
+            const updatedSession = {
+              ...existing,
+              timestamp: nowTimestamp,
+              preview: sanitizeMarkdown(queryToProcess),
+              messageCount: updatedChatHistory.filter(m => m.role !== 'system').length,
+              messages: updatedChatHistory
+            };
+            const newList = [...updatedSavedHistory];
+            newList.splice(existingSessionIndex, 1);
+            updatedSavedHistory = [updatedSession, ...newList];
+          } else {
+            currentSessionId = `session-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+            const newSession = {
+              id: currentSessionId,
+              timestamp: nowTimestamp,
+              title: sanitizeMarkdown(queryToProcess),
+              preview: sanitizeMarkdown(queryToProcess),
+              isFavorite: false,
+              messageCount: updatedChatHistory.filter(m => m.role !== 'system').length,
+              messages: updatedChatHistory
+            };
+            updatedSavedHistory = [newSession, ...updatedSavedHistory];
+          }
+        }
+
+        return {
+          ...prev,
+          activeChatSessionId: currentSessionId,
+          activeResults: aiResponse.results || [],
+          showSearchResults: Boolean(aiResponse.results && aiResponse.results.length > 0),
+          activeContext: aiResponse.activeContext ? { ...(prev.activeContext || {}), ...aiResponse.activeContext } : prev.activeContext,
+          chatHistory: updatedChatHistory,
+          savedChatHistory: updatedSavedHistory
+        };
+      });
 
       // Delivery phase delay (700ms - 1400ms) so the trim path animation animates while text is delivered
       const deliveryDelay = Math.floor(Math.random() * 700) + 700;
@@ -531,10 +597,8 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     ? (explorerState?.savedChatHistory?.length > 0 ? explorerState.savedChatHistory : SEED_HISTORY_SESSIONS) 
     : [];
 
-  const filteredHistory = historySessions.filter(s => {
-    if (historySubFilter === 'pinned') return s.isPinned;
-    return true;
-  });
+  const favoriteSessions = historySessions.filter(s => s.isFavorite);
+  const totalFavoritesCount = savedLocations.length + favoriteSessions.length;
 
   return (
     <div className={`flex flex-col h-full w-full overflow-hidden relative transition-colors duration-300 ${
@@ -569,9 +633,9 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
             >
               <Heart className="w-3.5 h-3.5 text-rose-500 fill-current" />
               <span>{t('Favorites', 'المفضلة')}</span>
-              {savedLocations.length > 0 && (
+              {totalFavoritesCount > 0 && (
                 <span className={`w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center ms-0.5 ${isDarkMode ? 'bg-[#182645] text-[#00e5ff]' : 'bg-[#215A9E] text-white'}`}>
-                  {savedLocations.length}
+                  {totalFavoritesCount}
                 </span>
               )}
             </button>
@@ -719,8 +783,17 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         activeExpandedCardId={explorerState?.expandedCardId}
                       />
 
-                      {/* Small Non-Prominent Action Toolbar (Print PDF, Analytics, Pin Query) */}
-                      {msg.role === 'assistant' && (
+                      {/* Action Toolbar (Print PDF, Analytics): Only show on actual query results, never in new/welcome chat */}
+                      {Boolean(
+                        !msg.isWelcome && (
+                          (Array.isArray(msg.results) && msg.results.length > 0) ||
+                          (Array.isArray(msg.allResults) && msg.allResults.length > 0) ||
+                          (typeof msg.totalCount === 'number' && msg.totalCount > 0) ||
+                          Boolean(msg.chartData) ||
+                          (Array.isArray(msg.blocks) && msg.blocks.some(b => b.type === 'results' || b.type === 'chart' || b.type === 'table')) ||
+                          Boolean(msg.actionCards && msg.actionCards.length > 0)
+                        )
+                      ) && (
                         <div className="mt-2.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-end gap-1.5 flex-wrap">
                           <button
                             type="button"
@@ -753,22 +826,6 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                             <BarChart3 className="w-3 h-3 text-indigo-400" />
                             <span>{t("Analytics", "التحليلات")}</span>
                           </button>
-
-                          {isLoggedIn && idx > 0 && (
-                            <button
-                              type="button"
-                              onClick={() => handlePinQuery(messages[idx - 1]?.content || msg.content)}
-                              className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 opacity-70 hover:opacity-100 ${
-                                isDarkMode 
-                                  ? 'bg-[#182645]/60 border-slate-700/60 text-slate-300 hover:text-[#00e5ff] hover:bg-[#182645]' 
-                                  : 'bg-slate-100 border-slate-200 text-slate-600 hover:text-[#215A9E] hover:bg-slate-200'
-                              }`}
-                              title={t("Pin this query to History", "تثبيت هذا البحث في السجل")}
-                            >
-                              <Pin className="w-3 h-3 text-amber-500" />
-                              <span>{t("Pin Query", "تثبيت البحث")}</span>
-                            </button>
-                          )}
                         </div>
                       )}
                     </>
@@ -893,55 +950,130 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
       {/* 2. FAVORITES TAB (AUTHENTICATED USER ONLY) */}
       {activeTab === 'saved' && isLoggedIn && (
-        <div className={`flex-1 overflow-y-auto p-4 space-y-3 sleek-scrollbar ${isDarkMode ? 'bg-transparent' : 'bg-slate-50/50'}`}>
+        <div className={`flex-1 overflow-y-auto p-4 space-y-4 sleek-scrollbar ${isDarkMode ? 'bg-transparent' : 'bg-slate-50/50'}`}>
           <div className={`flex items-center justify-between pb-2 border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <div className="flex items-center gap-2">
-              <Bookmark className="w-4 h-4 text-amber-500 fill-current" />
+              <Heart className="w-4 h-4 text-rose-500 fill-current" />
               <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
-                {t('FAVORITE LOCATIONS', 'المواقع المفضلة')} ({savedLocations.length})
+                {t('FAVORITES', 'المفضلة')} ({totalFavoritesCount})
               </h3>
             </div>
           </div>
 
-          {savedLocations.length > 0 ? (
-            <div className="space-y-2">
-              {savedLocations.map(item => (
-                <div 
-                  key={item.id}
-                  className={`border rounded-2xl p-3 flex items-center justify-between group ${
-                    isDarkMode 
-                      ? 'bg-[#131d35] border-slate-700/70 text-white' 
-                      : 'bg-white border-slate-200/90 text-slate-800'
-                  }`}
-                >
-                  <div 
-                    onClick={() => handleEntityClick(item)}
-                    className="flex-1 cursor-pointer min-w-0 me-2"
-                  >
-                    <h4 className={`font-bold text-xs truncate ${
-                      isDarkMode ? 'text-white' : 'text-[#1e2749]'
-                    }`}>
-                      {isArabic && item.name_ar ? item.name_ar : item.name}
-                    </h4>
-                    <p className="text-[11px] font-medium text-slate-400 mt-0.5">
-                      {item.district || item.location}
-                    </p>
+          {totalFavoritesCount > 0 ? (
+            <div className="space-y-4">
+              {/* Favorited Chat Conversations */}
+              {favoriteSessions.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <MessageSquare className="w-3.5 h-3.5 text-[#7c3aed]" />
+                    <span>{t('FAVORITE CONVERSATIONS', 'المحادثات المفضلة')} ({favoriteSessions.length})</span>
                   </div>
 
-                  <button
-                    onClick={() => handleToggleFavoriteLocation(item)}
-                    className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 cursor-pointer"
-                    title={t('Remove from Favorites', 'إزالة من المفضلة')}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {favoriteSessions.map(session => (
+                    <div 
+                      key={session.id}
+                      className={`border rounded-2xl p-3.5 flex items-center justify-between group transition-all ${
+                        isDarkMode 
+                          ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-slate-600' 
+                          : 'bg-white border-slate-200/90 text-slate-800 hover:border-slate-300 shadow-2xs'
+                      }`}
+                    >
+                      <div 
+                        onClick={() => handleRestoreSession(session)}
+                        className="flex-1 cursor-pointer min-w-0 me-3"
+                      >
+                        <span className="text-[10px] font-bold text-slate-400 block mb-1">
+                          {session.timestamp || 'Today'}
+                        </span>
+                        <h4 className={`font-bold text-xs truncate ${
+                          isDarkMode ? 'text-white' : 'text-[#1e2749]'
+                        }`}>
+                          {session.title || session.preview}
+                        </h4>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Restore Button */}
+                        <button
+                          onClick={() => handleRestoreSession(session)}
+                          className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 cursor-pointer ${
+                            isDarkMode 
+                              ? 'bg-[#182645] text-[#00e5ff] hover:bg-[#7c3aed] hover:text-white' 
+                              : 'bg-[#eef3ff] text-[#215A9E] hover:bg-[#215A9E] hover:text-white'
+                          }`}
+                          title={t('Restore Conversation', 'استعادة المحادثة')}
+                        >
+                          <span>{t('Restore', 'استعادة')}</span>
+                          <ArrowRight className="w-3 h-3 rtl:-scale-x-100" />
+                        </button>
+
+                        {/* Remove from Favorites */}
+                        <button
+                          onClick={() => handleToggleFavoriteSession(session)}
+                          className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                          title={t('Remove from Favorites', 'إزالة من المفضلة')}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
+
+              {/* Favorited Locations */}
+              {savedLocations.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <Bookmark className="w-3.5 h-3.5 text-amber-500 fill-current" />
+                    <span>{t('FAVORITE LOCATIONS', 'المواقع المفضلة')} ({savedLocations.length})</span>
+                  </div>
+
+                  {savedLocations.map(item => (
+                    <div 
+                      key={item.id}
+                      className={`border rounded-2xl p-3 flex items-center justify-between group ${
+                        isDarkMode 
+                          ? 'bg-[#131d35] border-slate-700/70 text-white' 
+                          : 'bg-white border-slate-200/90 text-slate-800'
+                      }`}
+                    >
+                      <div 
+                        onClick={() => handleEntityClick(item)}
+                        className="flex-1 cursor-pointer min-w-0 me-2"
+                      >
+                        <h4 className={`font-bold text-xs truncate ${
+                          isDarkMode ? 'text-white' : 'text-[#1e2749]'
+                        }`}>
+                          {isArabic && item.name_ar ? item.name_ar : item.name}
+                        </h4>
+                        <p className="text-[11px] font-medium text-slate-400 mt-0.5">
+                          {item.district || item.location}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={() => handleToggleFavoriteLocation(item)}
+                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 cursor-pointer"
+                        title={t('Remove from Favorites', 'إزالة من المفضلة')}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
-              <Bookmark className="w-10 h-10 mb-3 opacity-30 text-amber-500" />
-              <p className={`font-bold text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>{t('No favorite locations yet', 'لا توجد مواقع مفضلة حتى الآن')}</p>
+              <Heart className="w-10 h-10 mb-3 opacity-30 text-rose-500" />
+              <p className={`font-bold text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
+                {t('No favorites yet', 'لا توجد عناصر مفضلة حتى الآن')}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1 max-w-xs">
+                {t('Save locations or move conversations from History to access them anytime.', 'احفظ المواقع أو انقل المحادثات من السجل للوصول إليها في أي وقت.')}
+              </p>
             </div>
           )}
         </div>
@@ -954,62 +1086,34 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
             <div className="flex items-center gap-2">
               <History className="w-4 h-4 text-[#7c3aed]" />
               <h3 className={`font-bold text-xs uppercase tracking-wider ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
-                {t('INTERACTION HISTORY', 'سجل المحادثات والبحث')} ({filteredHistory.length})
+                {t('INTERACTION HISTORY', 'سجل المحادثات والبحث')} ({historySessions.length})
               </h3>
-            </div>
-            
-            {/* Filter Pills for All Recent vs Pinned Queries */}
-            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
-              <button
-                onClick={() => setHistorySubFilter('all')}
-                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
-                  historySubFilter === 'all' 
-                    ? 'bg-white dark:bg-[#182645] text-slate-900 dark:text-white shadow-2xs' 
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {t('Recent', 'الكل')}
-              </button>
-              <button
-                onClick={() => setHistorySubFilter('pinned')}
-                className={`px-2 py-0.5 text-[10px] font-bold rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                  historySubFilter === 'pinned' 
-                    ? 'bg-white dark:bg-[#182645] text-slate-900 dark:text-white shadow-2xs' 
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                <Pin className="w-2.5 h-2.5 text-amber-500" />
-                <span>{t('Pinned', 'المثبتة')}</span>
-              </button>
             </div>
           </div>
 
-          {filteredHistory.length > 0 ? (
+          {historySessions.length > 0 ? (
             <div className="space-y-2">
-              {filteredHistory.map(session => (
+              {historySessions.map(session => (
                 <div 
                   key={session.id}
-                  className={`border rounded-2xl p-3.5 flex items-center justify-between group ${
+                  className={`border rounded-2xl p-3.5 flex items-center justify-between group transition-all ${
                     isDarkMode 
-                      ? 'bg-[#131d35] border-slate-700/70 text-white' 
-                      : 'bg-white border-slate-200/90 text-slate-800'
+                      ? 'bg-[#131d35] border-slate-700/70 text-white hover:border-slate-600' 
+                      : 'bg-white border-slate-200/90 text-slate-800 hover:border-slate-300 shadow-2xs'
                   }`}
                 >
                   <div 
-                    onClick={() => {
-                      setExplorerState(prev => ({ ...prev, chatHistory: session.messages || [] }));
-                      setActiveTab('chat');
-                    }}
-                    className="flex-1 cursor-pointer min-w-0 me-2"
+                    onClick={() => handleRestoreSession(session)}
+                    className="flex-1 cursor-pointer min-w-0 me-3"
                   >
-                    <div className="flex items-center justify-between gap-1 mb-1">
+                    <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold text-slate-400">
                         {session.timestamp || 'Today'}
                       </span>
-                      {session.isPinned && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 flex items-center gap-1 border border-amber-500/20">
-                          <Pin className="w-2.5 h-2.5" />
-                          <span>{t('Pinned Query', 'استعلام مثبت')}</span>
+                      {session.isFavorite && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-rose-500/10 text-rose-500 flex items-center gap-1 border border-rose-500/20">
+                          <Heart className="w-2.5 h-2.5 fill-current" />
+                          <span>{t('Favorite', 'مفضلة')}</span>
                         </span>
                       )}
                     </div>
@@ -1020,18 +1124,40 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                     </h4>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      setExplorerState(prev => ({ ...prev, chatHistory: session.messages || [] }));
-                      setActiveTab('chat');
-                    }}
-                    className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 cursor-pointer shrink-0 ${
-                      isDarkMode ? 'bg-[#182645] text-[#00e5ff] hover:bg-[#7c3aed] hover:text-white' : 'bg-[#eef3ff] text-[#215A9E] hover:bg-[#215A9E] hover:text-white'
-                    }`}
-                  >
-                    <span>{t('Restore', 'استعادة')}</span>
-                    <ArrowRight className="w-3 h-3 rtl:-scale-x-100" />
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Favorites Button / Icon */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavoriteSession(session);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 cursor-pointer ${
+                        session.isFavorite
+                          ? 'bg-rose-500/15 text-rose-500 border border-rose-500/30 hover:bg-rose-500/25'
+                          : (isDarkMode 
+                              ? 'bg-[#182645]/80 text-slate-300 hover:text-rose-400 hover:bg-[#182645] border border-slate-700/60' 
+                              : 'bg-slate-100 text-slate-600 hover:text-rose-600 hover:bg-slate-200 border border-slate-200')
+                      }`}
+                      title={session.isFavorite ? t('Remove from Favorites', 'إزالة من المفضلة') : t('Move to Favorites', 'نقل إلى المفضلة')}
+                    >
+                      <Heart className={`w-3 h-3 ${session.isFavorite ? 'fill-current text-rose-500' : ''}`} />
+                      <span>{session.isFavorite ? t('Favorited', 'مفضلة') : t('Favorites', 'المفضلة')}</span>
+                    </button>
+
+                    {/* Restore Button */}
+                    <button
+                      onClick={() => handleRestoreSession(session)}
+                      className={`px-2.5 py-1 rounded-lg font-bold text-[10px] transition-all flex items-center gap-1 cursor-pointer ${
+                        isDarkMode 
+                          ? 'bg-[#182645] text-[#00e5ff] hover:bg-[#7c3aed] hover:text-white' 
+                          : 'bg-[#eef3ff] text-[#215A9E] hover:bg-[#215A9E] hover:text-white'
+                      }`}
+                      title={t('Restore Conversation', 'استعادة المحادثة')}
+                    >
+                      <span>{t('Restore', 'استعادة')}</span>
+                      <ArrowRight className="w-3 h-3 rtl:-scale-x-100" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
