@@ -55,15 +55,14 @@ export default function SignInPage({ onNavigate, onSignIn }) {
         <div className="relative z-10 p-16 flex flex-col justify-between h-full w-full">
           <div>
             <div className="flex items-center gap-4 mb-8">
-              <a
-                href="https://www.dge.gov.ae/en"
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Department of Government Enablement"
-                className="inline-block transition-opacity hover:opacity-85 focus:outline-hidden"
+              <button
+                type="button"
+                onClick={() => onNavigate('landing')}
+                title={t("Department of Government Enablement - Home", "دائرة التمكين الحكومي - الرئيسية")}
+                className="inline-block transition-opacity hover:opacity-85 focus:outline-hidden cursor-pointer bg-transparent border-0 p-0"
               >
                 <img src={dgeDarkLogo} alt="Department of Government Enablement" className="h-10 md:h-12 object-contain cursor-pointer" />
-              </a>
+              </button>
             </div>
 
             <motion.div
@@ -82,15 +81,14 @@ export default function SignInPage({ onNavigate, onSignIn }) {
           </div>
 
           <div className="flex items-center gap-6 pt-12 border-t border-white/10">
-            <a
-              href="https://sdi.gov.abudhabi/sdi/"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Abu Dhabi Spatial Data Infrastructure"
-              className="inline-block transition-opacity hover:opacity-85 focus:outline-hidden"
+            <button
+              type="button"
+              onClick={() => onNavigate('landing')}
+              title={t("Abu Dhabi Spatial Data Infrastructure - Home", "البنية التحتية للبيانات المكانية لإمارة أبوظبي - الرئيسية")}
+              className="inline-block transition-opacity hover:opacity-85 focus:outline-hidden cursor-pointer bg-transparent border-0 p-0"
             >
               <img src={sdiDarkLogo} alt="Abu Dhabi Spatial Data Infrastructure" className="h-10 md:h-12 object-contain opacity-90 cursor-pointer" />
-            </a>
+            </button>
             <div className="h-8 w-px bg-white/20" />
             <div className="flex items-center gap-2 text-white/80">
               <ShieldCheck className="w-5 h-5 text-[#7DA1C4]" />
@@ -110,15 +108,14 @@ export default function SignInPage({ onNavigate, onSignIn }) {
         >
           {/* Mobile Brand Logo */}
           <div className="lg:hidden mb-8 text-center">
-            <a
-              href="https://www.dge.gov.ae/en"
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Department of Government Enablement"
-              className="inline-block transition-opacity hover:opacity-85 focus:outline-hidden"
+            <button
+              type="button"
+              onClick={() => onNavigate('landing')}
+              title={t("Department of Government Enablement - Home", "دائرة التمكين الحكومي - الرئيسية")}
+              className="inline-block transition-opacity hover:opacity-85 focus:outline-hidden cursor-pointer bg-transparent border-0 p-0"
             >
               <img src={isDarkMode ? dgeDarkLogo : dgeLightLogo} alt="DGE" className="h-9 object-contain mx-auto cursor-pointer" />
-            </a>
+            </button>
           </div>
 
           <div className="mb-6 text-center lg:text-start">

@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, User, MapPin, Heart, History, MessageSquare, 
   Trash2, ArrowRight, Pencil, Check, Pin, Sparkles, Bookmark,
-  Printer, BarChart3
+  Printer, BarChart3, X, Filter, Layers
 } from 'lucide-react';
 import GeoLogoIcon from '../common/GeoLogoIcon';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
 import { mockAiEngine, sanitizeMarkdown } from '../../services/mockAiEngine';
+import { getSubcategoryLocalizedName } from '../../config/categoryTree';
 import { executeAppAction, ACTION_TYPES } from '../../services/actionRegistry';
 import AiResponseRenderer from '../ai/AiResponseRenderer';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -140,6 +141,31 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
     });
 
     handleSubmit(null, newQuery);
+  };
+
+  const handleRemoveSubcategoryScope = (subIdToRemove) => {
+    const updated = (explorerState?.selectedGisSubcategories || []).filter(s => s !== subIdToRemove);
+    setExplorerState(prev => {
+      const masterDataset = activeProject?.datasets || [];
+      return {
+        ...prev,
+        selectedGisSubcategories: updated,
+        activeResults: updated.length === 0 ? masterDataset : prev.activeResults,
+        showSearchResults: updated.length > 0
+      };
+    });
+  };
+
+  const handleClearAllScope = () => {
+    setExplorerState(prev => {
+      const masterDataset = activeProject?.datasets || [];
+      return {
+        ...prev,
+        selectedGisSubcategories: [],
+        activeResults: masterDataset,
+        showSearchResults: false
+      };
+    });
   };
 
   const handlePinQuery = (queryText) => {
@@ -296,9 +322,6 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
       showSearchResults: false,
       highlightedLocations: [],
       activeRouteDestination: null,
-      drawnPolygon: null,
-      drawnCircle: null,
-      drawnRectangle: null,
       activeFilters: {}
     }));
 
@@ -350,13 +373,16 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
         actionCards: aiResponse.actionCards,
         suggestions: aiResponse.suggestions,
         datasetsUsed: aiResponse.datasetsUsed,
-        results: aiResponse.results
+        results: aiResponse.results,
+        totalCount: aiResponse.totalCount,
+        allResults: aiResponse.allResults
       };
 
       setExplorerState(prev => ({
         ...prev,
         activeResults: aiResponse.results || [],
         showSearchResults: Boolean(aiResponse.results && aiResponse.results.length > 0),
+        activeContext: aiResponse.activeContext ? { ...(prev.activeContext || {}), ...aiResponse.activeContext } : prev.activeContext,
         chatHistory: [...(prev.chatHistory || []), assistantMsg]
       }));
 
@@ -710,6 +736,66 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
 
           {/* Bottom Chat Input Form */}
           <div className={`p-3 border-t shrink-0 relative z-20 backdrop-blur-md transition-colors duration-300 ${isDarkMode ? 'bg-[#0f1932]/95 border-slate-800/90' : 'bg-white border-slate-200'}`}>
+            
+            {/* Visual Active Filter Scope Indicator */}
+            {explorerState?.selectedGisSubcategories?.length > 0 && (
+              <div className={`mb-2 px-2.5 py-1.5 rounded-lg border text-[11px] flex items-center justify-between gap-2 transition-all animate-fadeIn ${
+                isDarkMode 
+                  ? 'bg-purple-950/40 border-purple-800/50 text-purple-200' 
+                  : 'bg-purple-50/90 border-purple-200 text-purple-900'
+              }`}>
+                <div className="flex items-center gap-1.5 overflow-hidden flex-1">
+                  <span className="flex h-2 w-2 relative shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                  </span>
+                  <span className="font-semibold shrink-0">
+                    {isArabic ? 'نطاق التصفية المطبق:' : 'Active Scope:'}
+                  </span>
+                  <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
+                    {explorerState.selectedGisSubcategories.slice(0, 3).map(subId => (
+                      <span 
+                        key={subId} 
+                        className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border shrink-0 ${
+                          isDarkMode 
+                            ? 'bg-purple-900/60 border-purple-700/60 text-purple-100' 
+                            : 'bg-white border-purple-200 text-purple-800 shadow-2xs'
+                        }`}
+                      >
+                        {getSubcategoryLocalizedName(subId, isArabic)}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSubcategoryScope(subId)}
+                          className="hover:opacity-75 focus:outline-none ml-0.5 cursor-pointer"
+                          title={isArabic ? 'إزالة هذا التصنيف' : 'Remove this filter'}
+                        >
+                          <X className="w-2.5 h-2.5" />
+                        </button>
+                      </span>
+                    ))}
+                    {explorerState.selectedGisSubcategories.length > 3 && (
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold shrink-0 ${
+                        isDarkMode ? 'bg-purple-900/40 text-purple-300' : 'bg-purple-100 text-purple-700'
+                      }`}>
+                        +{explorerState.selectedGisSubcategories.length - 3}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleClearAllScope}
+                  className={`text-[10px] font-medium px-2 py-0.5 rounded transition-colors shrink-0 underline hover:no-underline cursor-pointer ${
+                    isDarkMode ? 'text-purple-300 hover:text-white' : 'text-purple-700 hover:text-purple-900'
+                  }`}
+                  title={isArabic ? 'إعادة ضبط البحث لجميع الفئات' : 'Reset search to all categories'}
+                >
+                  {isArabic ? 'إلغاء التصفية ✕' : 'Clear Scope ✕'}
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
               <input
                 type="text"

@@ -26,18 +26,18 @@ export default function AnalyticsModal({ isOpen, onClose, title, results = [] })
     let totalDist = 0;
     let within5Count = 0;
     dataset.forEach(item => {
-      const dist = item.distance ? parseFloat(item.distance) : (Math.random() * 4 + 1.2);
+      const dist = item.distance ? parseFloat(item.distance) : (typeof item.distanceKm === 'number' ? item.distanceKm : 0);
       totalDist += dist;
-      if (dist <= 5.0) within5Count++;
+      if (dist <= 5.0 && dist > 0) within5Count++;
     });
 
-    const avgDistance = total > 0 ? (totalDist / total).toFixed(1) : '3.2';
+    const avgDistance = total > 0 ? (totalDist / total).toFixed(1) : '0';
 
     return {
-      total: total || 10,
+      total,
       avgDistance: `${avgDistance} km`,
-      within5km: within5Count || Math.min(9, total),
-      districts: districtCount || 10
+      within5km: within5Count,
+      districts: districtCount
     };
   }, [dataset]);
 
@@ -167,7 +167,7 @@ export default function AnalyticsModal({ isOpen, onClose, title, results = [] })
     });
 
     const categories = Object.keys(rangeCounts);
-    const values = Object.values(rangeCounts).map(v => v || Math.floor(Math.random() * 3 + 1));
+    const values = Object.values(rangeCounts);
 
     return {
       chart: { type: 'column', backgroundColor: 'transparent', height: 240 },
@@ -249,7 +249,7 @@ export default function AnalyticsModal({ isOpen, onClose, title, results = [] })
   const resourceComparisonOptions = useMemo(() => {
     const topItems = dataset.slice(0, 6);
     const categories = topItems.map(item => isArabic && item.name_ar ? item.name_ar : (item.name ? item.name.slice(0, 18) + '...' : 'Facility'));
-    const waterData = topItems.map(item => item.waterConsumption || (Math.floor(Math.random() * 8000) + 4000));
+    const waterData = topItems.map(item => item.waterConsumption || 0);
 
     return {
       chart: { type: 'bar', backgroundColor: 'transparent', height: 240 },
@@ -288,8 +288,8 @@ export default function AnalyticsModal({ isOpen, onClose, title, results = [] })
   const capacityComparisonOptions = useMemo(() => {
     const topItems = dataset.slice(0, 5);
     const categories = topItems.map(item => isArabic && item.name_ar ? item.name_ar : (item.name ? item.name.slice(0, 15) + '...' : 'Facility'));
-    const capacityData = topItems.map(item => item.capacity || (Math.floor(Math.random() * 5000) + 1500));
-    const visitorsData = topItems.map(item => item.annualVisitors ? Math.round(item.annualVisitors / 1000) : (Math.floor(Math.random() * 3000) + 800));
+    const capacityData = topItems.map(item => item.capacity || 0);
+    const visitorsData = topItems.map(item => item.annualVisitors ? Math.round(item.annualVisitors / 1000) : 0);
 
     return {
       chart: { type: 'column', backgroundColor: 'transparent', height: 240 },

@@ -2,9 +2,11 @@ import React from 'react';
 import GeoSearchResultCard from './GeoSearchResultCard';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { calculateGeodesicDistance } from '../../../services/spatial/spatialAnalysisService';
+import { Sparkles } from 'lucide-react';
 
 export default function AiLocationListBlock({ 
   locations = [], 
+  totalCount = null,
   onEntityClick, 
   onActionClick, 
   isLoggedIn = false,
@@ -14,7 +16,7 @@ export default function AiLocationListBlock({
   onPromptAuth = null,
   activeExpandedCardId = null
 }) {
-  const { t } = useLanguage();
+  const { t, isArabic } = useLanguage();
   const [internalExpandedCardId, setInternalExpandedCardId] = React.useState(null);
 
   const activeId = activeExpandedCardId || internalExpandedCardId;
@@ -56,7 +58,9 @@ export default function AiLocationListBlock({
   return (
     <div className="space-y-2 my-2.5">
       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5 flex items-center justify-between">
-        <span>{t('MATCHING LOCATIONS', 'المواقع المطابقة')} ({sortedLocations.length})</span>
+        <span>
+          {t('MATCHING LOCATIONS', 'المواقع المطابقة')} ({totalCount && totalCount > sortedLocations.length ? `${sortedLocations.length} ${t('of', 'من أصل')} ${totalCount}` : sortedLocations.length})
+        </span>
         <span className="text-[9px] text-slate-400 font-semibold text-emerald-600 dark:text-emerald-400">{t('Ordered by proximity (Closest first)', 'مرتبة حسب الأقرب مسافة')}</span>
       </div>
       <div className="grid grid-cols-1 gap-2.5">
@@ -82,6 +86,28 @@ export default function AiLocationListBlock({
           );
         })}
       </div>
+
+      {totalCount && totalCount > sortedLocations.length && (
+        <button
+          type="button"
+          onClick={() => {
+            if (onActionClick) {
+              onActionClick({ 
+                actionType: 'SEARCH_SUBMIT', 
+                query: isArabic ? 'عرض 10 منشآت إضافية' : 'Show next 10 facilities' 
+              });
+            }
+          }}
+          className="w-full mt-2 py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer bg-purple-500/10 hover:bg-purple-500/15 border-purple-500/30 text-purple-700 dark:text-purple-300 hover:border-purple-500/50 shadow-2xs group"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-purple-500 animate-pulse group-hover:scale-110 transition-transform" />
+          <span>
+            {isArabic 
+              ? `عرض 10 منشآت إضافية (متبقي ${totalCount - sortedLocations.length}) ←` 
+              : `List more facilities (${totalCount - sortedLocations.length} remaining) →`}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

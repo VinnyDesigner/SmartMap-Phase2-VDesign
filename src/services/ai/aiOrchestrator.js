@@ -1,9 +1,8 @@
-// Dynamic Conversational Analytics & Task-Tailored AI Orchestration Layer
-import { ACTION_TYPES } from '../actionRegistry';
-import facilitiesData from '../../data/facilitiesData.json';
-import facilityMetricsData from '../../data/facilityMetrics.json';
-import { calculateHaversineDistanceKm, evaluatePointInPolygonIntersections, findNearestNeighbors } from '../spatial/spatialAnalysisService';
-import { decomposeFacilityRisk } from '../risk/riskDecompositionService';
+import { ACTION_TYPES } from '../actionRegistry.js';
+import facilitiesData from '../../data/facilitiesData.json' with { type: 'json' };
+import facilityMetricsData from '../../data/facilityMetrics.json' with { type: 'json' };
+import { calculateHaversineDistanceKm, evaluatePointInPolygonIntersections, findNearestNeighbors } from '../spatial/spatialAnalysisService.js';
+import { decomposeFacilityRisk } from '../risk/riskDecompositionService.js';
 
 const ALL_FACILITIES = facilitiesData.features.map(f => ({
   id: f.properties.id,
@@ -64,12 +63,19 @@ export const aiOrchestrator = {
     const sortedAllFacilities = sortFacilitiesByDistance(ALL_FACILITIES);
 
     // Context tracking for follow-up questions
-    let lastContextFacility = currentState?.selectedLocation || currentState?.activeResults?.[0] || sortedAllFacilities[0];
+    let lastContextFacility = currentState?.selectedLocation || currentState?.activeResults?.[0] || null;
 
     // Handle "Which one is worst?" -> highest risk in current context
     if (q.includes('which one is worst') || q.includes('which is worst') || q.includes('أيها الأسوأ') || q.includes('أي منها الأكثر خطورة')) {
-      const activeList = currentState?.activeResults?.length > 0 ? currentState.activeResults : sortedAllFacilities;
-      const worstFacility = [...activeList].sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0))[0] || sortedAllFacilities[0];
+      const activeList = currentState?.activeResults?.length > 0 ? currentState.activeResults : [];
+      if (activeList.length === 0) {
+        return {
+          reply: isArabic ? "يرجى إجراء بحث أو تحديد منشآت أولاً لمعرفة المنشأة الأكثر خطورة." : "Please search for facilities first to determine the highest-risk asset among them.",
+          blocks: [],
+          actions: []
+        };
+      }
+      const worstFacility = [...activeList].sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0))[0];
       lastContextFacility = worstFacility;
 
       actions.push(
@@ -109,7 +115,14 @@ export const aiOrchestrator = {
 
     // Handle "Why?" / "Why is this facility high risk?"
     if (q === 'why' || q === 'why?' || q.includes('why is this facility high risk') || q.includes('why high risk') || q.includes('لماذا تعتبر عالية الخطورة') || q.includes('لماذا هذه المنشأة عالية الخطورة')) {
-      const target = lastContextFacility || sortedAllFacilities[2];
+      const target = lastContextFacility;
+      if (!target) {
+        return {
+          reply: isArabic ? "يرجى تحديد منشأة أولاً لمعرفة تفاصيل مؤشر الخطورة الخاص بها." : "Please select or search for a facility first to inspect its risk decomposition.",
+          blocks: [],
+          actions: []
+        };
+      }
       const spatialResult = evaluatePointInPolygonIntersections({ lat: target.lat, lng: target.lng });
       const riskDecomposition = decomposeFacilityRisk(target, spatialResult);
 
@@ -183,7 +196,14 @@ export const aiOrchestrator = {
 
     // Handle "Compare it" / "Compare this facility with nearby facilities"
     if (q === 'compare it' || q.includes('compare this facility with nearby') || q.includes('compare with nearby') || q.includes('مقارنة بالمنشآت المجاورة') || q.includes('قارنها')) {
-      const target = lastContextFacility || sortedAllFacilities[2];
+      const target = lastContextFacility;
+      if (!target) {
+        return {
+          reply: isArabic ? "يرجى تحديد منشأة أولاً لمقارنتها بالمنشآت المجاورة." : "Please select a facility first to compare it with nearby infrastructure.",
+          blocks: [],
+          actions: []
+        };
+      }
       const neighbors = findNearestNeighbors(target, sortedAllFacilities, 3);
 
       const targetName = isArabic && target.name_ar ? target.name_ar : target.name;
@@ -419,7 +439,14 @@ export const aiOrchestrator = {
     // ACCEPTANCE QUERY 3: HISTORICAL TREND (Show the last 12 months)
     // ==========================================
     if (q.includes('show the last 12 months') || q.includes('last 12 months') || q.includes('12 month trend') || q.includes('الـ 12 شهراً الأخيرة')) {
-      const target = lastContextFacility || sortedAllFacilities[2];
+      const target = lastContextFacility;
+      if (!target) {
+        return {
+          reply: isArabic ? "يرجى اختيار منشأة لعرض سجل الـ 12 شهراً الخاص بها." : "Please select or search for a facility first to view its 12-month historical trajectory.",
+          blocks: [],
+          actions: []
+        };
+      }
       const metricsObj = facilityMetricsData[target.id] || facilityMetricsData['FAC-AD-003'];
       const history = metricsObj.historical12m || [
         { month: 'Jan', riskScore: 82, month_ar: 'يناير' },

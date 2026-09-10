@@ -7,8 +7,21 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useProject } from '../contexts/ProjectContext';
 import ArcGISBasemap from './explorer/ArcGISBasemap';
-import { getLandmarkThumbnail } from '../utils/landmarkImages';
 import { triggerViewDetails } from '../utils/viewDetailsHandler';
+import { getMasterAuthoritativeDataset } from '../services/spatial/gisQueryEngine';
+import { 
+  isPointInPolygon, 
+  isPointInRectangle, 
+  isPointInCircle, 
+  matchesGisSubcategories, 
+  computeProportionalCategoryBreakdown,
+  calculateGeodesicDistance
+} from '../services/spatial/spatialAnalysisService';
+import { 
+  CATEGORY_TREE,
+  getSubcategoryLocalizedName, 
+  findCategoryBySubcategoryId 
+} from '../config/categoryTree';
 
 const customPinIcon = L.divIcon({
   className: 'custom-map-pin-container',
@@ -57,6 +70,33 @@ const getCategoryColorDetails = (type) => {
   } else if (type === 'TOURISM') {
     textColor = 'text-amber-500';
     hexColor = '#d97706';
+  } else if (type === 'PUBLIC_SAFETY') {
+    textColor = 'text-rose-600';
+    hexColor = '#e11d48';
+  } else if (type === 'HOUSING') {
+    textColor = 'text-purple-600';
+    hexColor = '#7c3aed';
+  } else if (type === 'INFRASTRUCTURE') {
+    textColor = 'text-amber-600';
+    hexColor = '#d97706';
+  } else if (type === 'UTILITIES' || type === 'CIVIC_INFRASTRUCTURE') {
+    textColor = 'text-yellow-600';
+    hexColor = '#ca8a04';
+  } else if (type === 'CLIMATE') {
+    textColor = 'text-sky-600';
+    hexColor = '#0284c7';
+  } else if (type === 'CONSTRUCTION') {
+    textColor = 'text-orange-600';
+    hexColor = '#ea580c';
+  } else if (type === 'ENERGY') {
+    textColor = 'text-amber-500';
+    hexColor = '#f59e0b';
+  } else if (type === 'AGRICULTURE') {
+    textColor = 'text-emerald-600';
+    hexColor = '#059669';
+  } else if (type === 'EMPLOYMENT') {
+    textColor = 'text-indigo-600';
+    hexColor = '#4f46e5';
   }
 
   return { textColor, hexColor };
@@ -206,32 +246,141 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
     }
   }, [drawingTool, map]);
 
-  const generateAiChatMessages = (shapeType, filtered) => {
-    let shapeLabelEn = 'Drawn Area';
+  const generateAiChatMessages = (shapeType, filteredAll, centerCoords, activeSubcategories = [], inShape = []) => {
+    let shapeLabelEn = 'Drawn Zone';
     let shapeLabelAr = 'المنطقة المحددة';
     if (shapeType === 'circle') { shapeLabelEn = 'Circle Zone'; shapeLabelAr = 'المنطقة الدائرية'; }
     else if (shapeType === 'rectangle') { shapeLabelEn = 'Box Zone'; shapeLabelAr = 'المنطقة المربعة'; }
     else if (shapeType === 'polygon') { shapeLabelEn = 'Polygon Zone'; shapeLabelAr = 'المنطقة المضلعة'; }
 
+    // Proportional breakdown analytics
+    const proportionalAnalytics = computeProportionalCategoryBreakdown(filteredAll, activeSubcategories, isArabic);
+
+    // Selected category names for messaging
+    const selectedNamesEn = activeSubcategories
+      .map(id => getSubcategoryLocalizedName(id, false))
+      .filter(Boolean)
+      .join(', ');
+    const selectedNamesAr = activeSubcategories
+      .map(id => getSubcategoryLocalizedName(id, true))
+      .filter(Boolean)
+      .join('، ');
+
+    const hasCategoryFilter = activeSubcategories.length > 0;
+    const categoryScopeHeaderEn = hasCategoryFilter ? ` (${selectedNamesEn})` : '';
+    const categoryScopeHeaderAr = hasCategoryFilter ? ` (${selectedNamesAr})` : '';
+
     const userMsg = {
       id: `msg-draw-usr-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       role: 'user',
       content: isArabic 
-        ? `تحليل مكاني: ${shapeLabelAr} (${filtered.length} نتائج)` 
-        : `Spatial Analysis: ${shapeLabelEn} (${filtered.length} results found)`
+        ? `تحليل مكاني: ${shapeLabelAr}${categoryScopeHeaderAr} (${filteredAll.length} نتائج)` 
+        : `Spatial Analysis: ${shapeLabelEn}${categoryScopeHeaderEn} (${filteredAll.length} results found)`
     };
+
+    // Sort closest to center of drawn shape
+    const sortedFiltered = [...filteredAll].map(loc => {
+      const distKm = centerCoords && loc.lat && loc.lng 
+        ? calculateGeodesicDistance(centerCoords.lat, centerCoords.lng, loc.lat, loc.lng)
+        : (loc.distanceKm || 0);
+      return { ...loc, distanceKm: distKm };
+    }).sort((a, b) => a.distanceKm - b.distanceKm);
+
+    // Initial page capping (top 10 closest to shape center)
+    const MAX_PAGE_SIZE = 10;
+    const displayResults = sortedFiltered.slice(0, MAX_PAGE_SIZE);
+
+    let contentEn = '';
+    let contentAr = '';
+
+    if (filteredAll.length === 0) {
+      contentEn = hasCategoryFilter
+        ? `🎯 **Spatial Analysis for ${shapeLabelEn}**\n\nNo facilities matching your selected categories (**${selectedNamesEn}**) were found inside the drawn boundary.\n\n💡 *Tip: Expand the drawn boundary on the map or enable additional categories in the category drawer.*`
+        : `🎯 **Spatial Analysis for ${shapeLabelEn}**\n\nNo spatial assets or government facilities were detected within the drawn boundary.`;
+
+      contentAr = hasCategoryFilter
+        ? `🎯 **التحليل المكاني لـ ${shapeLabelAr}**\n\nلم يتم العثور على أي منشآت مطابقة للفئات المحددة (**${selectedNamesAr}**) داخل حدود الرسم.\n\n💡 *نصيحة: يمكنك توسيع نطاق الرسم على الخريطة أو تفعيل فئات إضافية من قائمة التصنيفات.*`
+        : `🎯 **التحليل المكاني لـ ${shapeLabelAr}**\n\nلم يتم رصد أي منشآت أو معالم ضمن حدود الرسم الحالية.`;
+    } else {
+      const totalCount = filteredAll.length;
+      const countHeaderEn = totalCount > MAX_PAGE_SIZE 
+        ? `Showing the **top ${MAX_PAGE_SIZE} closest** of **${totalCount} verified facilities**`
+        : `Identified **${totalCount} verified ${totalCount === 1 ? 'facility' : 'facilities'}**`;
+      const countHeaderAr = totalCount > MAX_PAGE_SIZE
+        ? `عرض **أقرب ${MAX_PAGE_SIZE} منشآت** من أصل **${totalCount} منشأة معتمدة**`
+        : `تم تحديد **${totalCount} منشأة معتمدة**`;
+
+      if (hasCategoryFilter) {
+        contentEn = `🎯 **Spatial Analysis Complete for ${shapeLabelEn}**\n\n${countHeaderEn} strictly proportional and relevant to your active scope (**${selectedNamesEn}**) within the bounding zone.\n\n**Proportional Category Breakdown:**\n${proportionalAnalytics.summaryBulletsEn}`;
+        contentAr = `🎯 **اكتمل التحليل المكاني لـ ${shapeLabelAr}**\n\n${countHeaderAr} متناسبة ومتوافقة مع الفئات المحددة (**${selectedNamesAr}**) ضمن الحدود المكانية.\n\n**التوزيع النسبي حسب الفئات:**\n${proportionalAnalytics.summaryBulletsAr}`;
+      } else {
+        contentEn = `🎯 **Spatial Analysis Complete for ${shapeLabelEn}**\n\n${countHeaderEn} across **${proportionalAnalytics.breakdown.length} categories** within the bounding zone.\n\n**Proportional Distribution:**\n${proportionalAnalytics.summaryBulletsEn}`;
+        contentAr = `🎯 **اكتمل التحليل المكاني لـ ${shapeLabelAr}**\n\n${countHeaderAr} موزعة عبر **${proportionalAnalytics.breakdown.length} فئات** ضمن الحدود المكانية.\n\n**التوزيع النسبي للفئات:**\n${proportionalAnalytics.summaryBulletsAr}`;
+      }
+    }
+
+    // Compute random other category not currently selected
+    const selectedCategoryIds = new Set(
+      activeSubcategories.map(subId => findCategoryBySubcategoryId(subId)?.id).filter(Boolean)
+    );
+
+    // Look for other categories with facilities present inside the drawn shape
+    const otherFacilitiesInShape = (inShape || []).filter(loc => !matchesGisSubcategories(loc, activeSubcategories));
+    const otherCategoriesInShape = [];
+    otherFacilitiesInShape.forEach(loc => {
+      const catTree = CATEGORY_TREE.find(cat => {
+        if (selectedCategoryIds.has(cat.id)) return false;
+        const subIds = (cat.subcategories || []).map(s => s.id);
+        return matchesGisSubcategories(loc, subIds);
+      });
+      if (catTree && !otherCategoriesInShape.some(c => c.id === catTree.id)) {
+        otherCategoriesInShape.push(catTree);
+      }
+    });
+
+    const unselectedPool = otherCategoriesInShape.length > 0
+      ? otherCategoriesInShape
+      : CATEGORY_TREE.filter(cat => !selectedCategoryIds.has(cat.id));
+
+    const randomOtherCategory = unselectedPool.length > 0
+      ? unselectedPool[Math.floor(Math.random() * unselectedPool.length)]
+      : null;
+
+    const suggestions = [];
+    if (filteredAll.length > MAX_PAGE_SIZE) {
+      suggestions.push(isArabic ? 'عرض 10 منشآت إضافية' : 'Show next 10 facilities');
+    }
+    if (filteredAll.length > 1) {
+      suggestions.push(isArabic ? 'أيها الأقرب؟' : 'Which one is closest?');
+      suggestions.push(isArabic ? 'مقارنة المنشآت في هذا النطاق' : 'Compare facilities in this zone');
+    } else if (filteredAll.length === 1) {
+      suggestions.push(isArabic ? 'عرض تفاصيل المنشأة' : 'Show facility details');
+    }
+
+    // 1. Suggest searching random other category within the drawn area
+    if (randomOtherCategory) {
+      suggestions.push(isArabic 
+        ? `عرض ${randomOtherCategory.name_ar} في هذه المنطقة المحددة`
+        : `Show ${randomOtherCategory.name} in this drawn area`
+      );
+    }
+
+    // 2. Suggest clearing the drawn area
+    suggestions.push(isArabic ? 'مسح منطقة الرسم' : 'Clear drawn area');
+
+    suggestions.push(isArabic ? 'تصدير التحليل إلى PDF' : 'Export spatial analysis to PDF');
 
     const assistantMsg = {
       id: `msg-draw-ast-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       role: 'assistant',
-      content: isArabic
-        ? `🎯 **اكتمل التحليل المكاني لـ ${shapeLabelAr}**\n\nتم تحليل نطاق الرسم بنجاح وتصفية **${filtered.length}** موقعاً ومعلماً حكومياً ضمن الحدود المحددة.`
-        : `🎯 **Spatial Analysis Complete for ${shapeLabelEn}**\n\nSuccessfully processed your spatial drawing and identified **${filtered.length}** points of interest and government facilities within the bounding zone.`,
-      results: filtered,
+      content: isArabic ? contentAr : contentEn,
+      results: displayResults,
+      totalCount: filteredAll.length,
+      allResults: sortedFiltered,
+      kpiGrid: proportionalAnalytics.kpiMetrics,
+      chartData: proportionalAnalytics.chartData,
       datasetsUsed: ['DGE Spatial SDI 2026', 'Abu Dhabi Government Facilities Registry'],
-      suggestions: isArabic
-        ? ["مقارنة المنشآت القريبة", "تصدير التحليل إلى PDF", "عرض الملخص الديموغرافي"]
-        : ["Compare nearby facilities", "Export spatial analysis to PDF", "Show area demographics"]
+      suggestions
     };
 
     return [userMsg, assistantMsg];
@@ -249,11 +398,19 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
     }
 
     const bounds = [[minLat, minLng], [maxLat, maxLng]];
-    const dataset = activeProject?.datasets || [];
-    const filtered = dataset.filter(loc => 
-      loc.lat >= minLat && loc.lat <= maxLat &&
-      loc.lng >= minLng && loc.lng <= maxLng
+    const centerCoords = { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 };
+    const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
+    const activeSubcategories = explorerState?.selectedGisSubcategories || [];
+
+    // 1. Spatial containment
+    const inShape = masterDataset.filter(loc => 
+      isPointInRectangle(loc.lat, loc.lng, bounds)
     );
+
+    // 2. Category relevance
+    const filtered = activeSubcategories.length > 0
+      ? inShape.filter(loc => matchesGisSubcategories(loc, activeSubcategories))
+      : inShape;
 
     const newDrawing = {
       id: 'rect-' + Date.now(),
@@ -261,7 +418,7 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
       bounds
     };
 
-    const [userMsg, assistantMsg] = generateAiChatMessages('rectangle', filtered);
+    const [userMsg, assistantMsg] = generateAiChatMessages('rectangle', filtered, centerCoords, activeSubcategories, inShape);
 
     setExplorerState(prev => ({
       ...prev,
@@ -285,11 +442,19 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
     if (radius < 5) return;
 
     const center = [start.lat, start.lng];
-    const dataset = activeProject?.datasets || [];
-    const filtered = dataset.filter(loc => {
-      const dist = L.latLng(start.lat, start.lng).distanceTo([loc.lat, loc.lng]);
-      return dist <= radius;
-    });
+    const centerCoords = { lat: start.lat, lng: start.lng };
+    const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
+    const activeSubcategories = explorerState?.selectedGisSubcategories || [];
+
+    // 1. Spatial containment
+    const inShape = masterDataset.filter(loc => 
+      isPointInCircle(loc.lat, loc.lng, centerCoords, radius)
+    );
+
+    // 2. Category relevance
+    const filtered = activeSubcategories.length > 0
+      ? inShape.filter(loc => matchesGisSubcategories(loc, activeSubcategories))
+      : inShape;
 
     const newDrawing = {
       id: 'circle-' + Date.now(),
@@ -298,7 +463,7 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
       radius
     };
 
-    const [userMsg, assistantMsg] = generateAiChatMessages('circle', filtered);
+    const [userMsg, assistantMsg] = generateAiChatMessages('circle', filtered, centerCoords, activeSubcategories, inShape);
 
     setExplorerState(prev => ({
       ...prev,
@@ -320,18 +485,25 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
     if (!pts || pts.length < 3) return;
     const positions = pts.map(p => [p.lat, p.lng]);
 
+    // Compute centroid for distance sorting
     const lats = pts.map(p => p.lat);
     const lngs = pts.map(p => p.lng);
-    const minLat = Math.min(...lats);
-    const maxLat = Math.max(...lats);
-    const minLng = Math.min(...lngs);
-    const maxLng = Math.max(...lngs);
+    const avgLat = lats.reduce((a, b) => a + b, 0) / lats.length;
+    const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
+    const centerCoords = { lat: avgLat, lng: avgLng };
 
-    const dataset = activeProject?.datasets || [];
-    const filtered = dataset.filter(loc => 
-      loc.lat >= minLat && loc.lat <= maxLat &&
-      loc.lng >= minLng && loc.lng <= maxLng
+    const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
+    const activeSubcategories = explorerState?.selectedGisSubcategories || [];
+
+    // 1. Precise Ray-Casting Polygon containment
+    const inShape = masterDataset.filter(loc => 
+      isPointInPolygon(loc.lat, loc.lng, positions)
     );
+
+    // 2. Category relevance
+    const filtered = activeSubcategories.length > 0
+      ? inShape.filter(loc => matchesGisSubcategories(loc, activeSubcategories))
+      : inShape;
 
     const newDrawing = {
       id: 'poly-' + Date.now(),
@@ -339,7 +511,7 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
       positions
     };
 
-    const [userMsg, assistantMsg] = generateAiChatMessages('polygon', filtered);
+    const [userMsg, assistantMsg] = generateAiChatMessages('polygon', filtered, centerCoords, activeSubcategories, inShape);
 
     setExplorerState(prev => ({
       ...prev,
@@ -591,15 +763,7 @@ function FacilityMarker({ item, isArabic, isLoggedIn, explorerState, setExplorer
       }}
     >
       <Popup minWidth={270} maxWidth={300} className="custom-facility-popup">
-        <div className={`p-1 font-sans flex flex-col gap-2 rounded-2xl ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
-          <div className={`w-full h-24 rounded-xl overflow-hidden relative ${isDarkMode ? 'bg-slate-800' : 'bg-slate-100'}`}>
-            <img 
-              src={getLandmarkThumbnail(item)} 
-              alt={item.name} 
-              className="w-full h-full object-cover" 
-            />
-          </div>
-
+        <div className={`p-1.5 font-sans flex flex-col gap-2 rounded-2xl ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>
           <div>
             <h4 className={`font-extrabold text-xs leading-snug ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
               {isArabic && item.name_ar ? item.name_ar : item.name}
@@ -999,14 +1163,23 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           </span>
           <button
             type="button"
-            onClick={() => setExplorerState(prev => ({
-              ...prev,
-              drawings: [],
-              drawnPolygon: null,
-              drawnCircle: null,
-              drawnRectangle: null,
-              activeResults: []
-            }))}
+            onClick={() => {
+              const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
+              const activeSubs = explorerState?.selectedGisSubcategories || [];
+              const restoredResults = activeSubs.length > 0
+                ? masterDataset.filter(loc => matchesGisSubcategories(loc, activeSubs))
+                : (activeProject?.datasets || masterDataset);
+
+              setExplorerState(prev => ({
+                ...prev,
+                drawings: [],
+                drawnPolygon: null,
+                drawnCircle: null,
+                drawnRectangle: null,
+                activeResults: restoredResults,
+                showSearchResults: activeSubs.length > 0
+              }));
+            }}
             className="ms-1 px-2.5 py-1 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-600 hover:text-white dark:text-rose-400 dark:hover:text-white border border-rose-500/30 text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer"
             title={isArabic ? 'مسح الشكل المكتوب' : 'Clear drawn shape'}
           >

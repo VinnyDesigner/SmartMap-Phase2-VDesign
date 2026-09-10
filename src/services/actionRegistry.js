@@ -1,10 +1,12 @@
-// Central Application Action Registry & Execution Engine for GeoVision / SmartMap
+import { getMasterAuthoritativeDataset } from './spatial/gisQueryEngine.js';
+import { matchesGisSubcategories } from './spatial/spatialAnalysisService.js';
 
 export const ACTION_TYPES = {
   // Map Actions
   MAP_FLY_TO: 'MAP_FLY_TO',
   MAP_ZOOM: 'MAP_ZOOM',
   MAP_RESET: 'MAP_RESET',
+  MAP_CLEAR_DRAWING: 'MAP_CLEAR_DRAWING',
   MAP_SET_BASEMAP: 'MAP_SET_BASEMAP',
   MAP_HIGHLIGHT_LOCATIONS: 'MAP_HIGHLIGHT_LOCATIONS',
   
@@ -17,6 +19,7 @@ export const ACTION_TYPES = {
   LAYER_TOGGLE: 'LAYER_TOGGLE',
   LAYER_ENABLE_ALL: 'LAYER_ENABLE_ALL',
   LAYER_DISABLE_ALL: 'LAYER_DISABLE_ALL',
+  GIS_SYNC_SUBCATEGORIES: 'GIS_SYNC_SUBCATEGORIES',
   
   // Facility / POI Actions
   FACILITY_SELECT: 'FACILITY_SELECT',
@@ -117,6 +120,29 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
       return { success: true, message: "Map view and all active selections reset to default" };
     }
 
+    case ACTION_TYPES.MAP_CLEAR_DRAWING: {
+      recordActionHistory(prevState, action.type, action.params);
+      setExplorerState(prev => {
+        const masterDataset = getMasterAuthoritativeDataset(prev?.activeProject?.datasets || []);
+        const activeSubs = prev?.selectedGisSubcategories || [];
+        const restoredResults = activeSubs.length > 0
+          ? masterDataset.filter(loc => matchesGisSubcategories(loc, activeSubs))
+          : (prev?.activeResults || []);
+
+        return {
+          ...prev,
+          drawnPolygon: null,
+          drawnCircle: null,
+          drawnRectangle: null,
+          drawings: [],
+          drawingTool: null,
+          activeResults: restoredResults,
+          showSearchResults: restoredResults.length > 0
+        };
+      });
+      return { success: true, message: "Cleared drawn spatial boundary" };
+    }
+
 
     case ACTION_TYPES.MAP_SET_BASEMAP: {
       recordActionHistory(prevState, action.type, action.params);
@@ -152,13 +178,27 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
       return { success: true, message: `Applied filter: ${key} = ${value}` };
     }
 
+    case ACTION_TYPES.GIS_SYNC_SUBCATEGORIES: {
+      recordActionHistory(prevState, action.type, action.params);
+      const { subcategories = [], expandCategory = null, categoryId = null, activeResults = null } = action.params || {};
+      const targetCategory = expandCategory || categoryId;
+      setExplorerState(prev => ({
+        ...prev,
+        selectedGisSubcategories: subcategories,
+        ...(targetCategory ? { autoExpandedGisCategory: targetCategory } : {}),
+        ...(activeResults ? { activeResults, showSearchResults: activeResults.length > 0 } : {})
+      }));
+      return { success: true, message: `Synchronized GIS layer subcategories: ${subcategories.join(', ')}` };
+    }
+
     case ACTION_TYPES.FILTER_APPLY_MULTI: {
       recordActionHistory(prevState, action.type, action.params);
-      const { filters = {}, matchingResults = [] } = action.params || {};
+      const { filters = {}, matchingResults = [], subcategories } = action.params || {};
       setExplorerState(prev => ({
         ...prev,
         activeFilters: { ...(prev.activeFilters || {}), ...filters },
-        ...(matchingResults.length > 0 ? { activeResults: matchingResults } : {})
+        ...(matchingResults.length > 0 ? { activeResults: matchingResults } : {}),
+        ...(Array.isArray(subcategories) ? { selectedGisSubcategories: subcategories } : {})
       }));
       return { success: true, message: `Applied ${Object.keys(filters).length} filters` };
     }

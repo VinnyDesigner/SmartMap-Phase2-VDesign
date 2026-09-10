@@ -22,6 +22,17 @@ const ACTION_LABEL_MAP = {
   'Undo': 'تراجع',
   'Which one is closest?': 'أيها الأقرب لي؟',
   'Which one is closest': 'أيها الأقرب لي؟',
+  'Show me directions': 'اعرض الاتجاهات',
+  'Compare these facilities': 'مقارنة هذه المنشآت',
+  'Show facilities near this location': 'عرض منشآت بالقرب من هذا الموقع',
+  'Show other facilities in Abu Dhabi': 'عرض منشآت أخرى في أبوظبي',
+  'Show all hospitals in Abu Dhabi': 'عرض كافة المستشفيات في أبوظبي',
+  'Show all schools in Abu Dhabi': 'عرض كافة المدارس في أبوظبي',
+  'Show all parks in Abu Dhabi': 'عرض كافة الحدائق في أبوظبي',
+  'Show all government centers': 'عرض كافة المراكز الحكومية',
+  'Show all public safety stations': 'عرض كافة مراكز السلامة العامة',
+  'Show all facilities in Abu Dhabi': 'عرض كافة المنشآت في أبوظبي',
+  'Why is this facility high risk?': 'لماذا تعتبر عالية الخطورة؟',
   'Within 5 km of Zayed Sports City': 'ضمن نطاق 5 كم من مدينة زايد الرياضية',
   'Show its details': 'عرض تفاصيلها',
   'Show schools within 2 km of these hospitals': 'عرض المدارس ضمن 2 كم من هذه المستشفيات',
@@ -40,10 +51,35 @@ const ACTION_LABEL_MAP = {
   'Export Analysis': 'طباعة التحليلات',
   'Emissions Chart': 'مخطط الانبعاثات',
   'View Water Chart': 'مخطط استهلاك المياه',
-  'Why High Risk?': 'لماذا تعتبر عالية الخطورة؟'
+  'Why High Risk?': 'لماذا تعتبر عالية الخطورة؟',
+  'Show next 10 facilities': 'عرض 10 منشآت إضافية',
+  'Show more facilities': 'عرض المزيد من المنشآت',
+  'List more facilities': 'عرض المزيد من المنشآت',
+  'Show next 10': 'عرض الـ 10 التالية',
+  'Next 10': 'الـ 10 التالية',
+  'Clear drawn area': 'مسح منطقة الرسم',
+  'Clear area': 'مسح المنطقة',
+  'Clear Shape': 'مسح الرسم',
+  'Clear shape': 'مسح الرسم',
+  'Show Healthcare in this drawn area': 'عرض الرعاية الصحية في هذه المنطقة المحددة',
+  'Show Education in this drawn area': 'عرض التعليم في هذه المنطقة المحددة',
+  'Show Transport in this drawn area': 'عرض النقل والمواصلات في هذه المنطقة المحددة',
+  'Show Tourism in this drawn area': 'عرض السياحة والتراث في هذه المنطقة المحددة',
+  'Show Government Services in this drawn area': 'عرض الخدمات الحكومية في هذه المنطقة المحددة',
+  'Show Public Safety in this drawn area': 'عرض السلامة العامة والأمن في هذه المنطقة المحددة',
+  'Show Environment in this drawn area': 'عرض البيئة والاستدامة في هذه المنطقة المحددة',
+  'Show Housing in this drawn area': 'عرض الإسكان والمجتمعات في هذه المنطقة المحددة',
+  'Show Parks in this drawn area': 'عرض الحدائق العامة في هذه المنطقة المحددة',
+  'Show Utilities in this drawn area': 'عرض المرافق والخدمات في هذه المنطقة المحددة',
+  'Show facility details': 'عرض تفاصيل المنشأة'
 };
 
 const REVERSE_LABEL_MAP = {
+  'عرض تفاصيل المنشأة': 'Show facility details',
+  'عرض 10 منشآت إضافية': 'Show next 10 facilities',
+  'عرض المزيد من المنشآت': 'Show more facilities',
+  'عرض الـ 10 التالية': 'Show next 10',
+  'الـ 10 التالية': 'Next 10',
   'مقارنة استهلاك المياه': 'Compare Water Consumption',
   'طباعة تقرير الانبعاثات': 'Export Emissions Report',
   'مقارنة المنشآت المجاورة': 'Compare Nearby Facilities',
@@ -63,6 +99,17 @@ const REVERSE_LABEL_MAP = {
   'عرض الانبعاثات': 'Show Emissions',
   'تراجع': 'Undo',
   'أيها الأقرب لي؟': 'Which one is closest?',
+  'اعرض الاتجاهات': 'Show me directions',
+  'مقارنة هذه المنشآت': 'Compare these facilities',
+  'مقارنة المنشآت': 'Compare these facilities',
+  'عرض منشآت بالقرب من هذا الموقع': 'Show facilities near this location',
+  'عرض منشآت أخرى في أبوظبي': 'Show other facilities in Abu Dhabi',
+  'عرض كافة المستشفيات في أبوظبي': 'Show all hospitals in Abu Dhabi',
+  'عرض كافة المدارس في أبوظبي': 'Show all schools in Abu Dhabi',
+  'عرض كافة الحدائق في أبوظبي': 'Show all parks in Abu Dhabi',
+  'عرض كافة المراكز الحكومية': 'Show all government centers',
+  'عرض كافة مراكز السلامة العامة': 'Show all public safety stations',
+  'عرض كافة المنشآت في أبوظبي': 'Show all facilities in Abu Dhabi',
   'عرض تفاصيلها': 'Show Details',
   'عرض المدارس ضمن 2 كم من هذه المستشفيات': 'Show Schools within 2 km of these Hospitals',
   'حفظ هذا البحث': 'Save this Search',
@@ -72,7 +119,21 @@ const REVERSE_LABEL_MAP = {
   'المستشفيات الحكومية فقط': 'Only Government Hospitals',
   'تفعيل تحديد الموقع': 'Enable Location Access',
   'لماذا تعتبر عالية الخطورة؟': 'Why is this High Risk?',
-  'لماذا مستشفى شخبوط عالي الخطورة؟': 'Why is SSMC High Risk?'
+  'لماذا مستشفى شخبوط عالي الخطورة؟': 'Why is SSMC High Risk?',
+  'مسح منطقة الرسم': 'Clear drawn area',
+  'مسح المنطقة': 'Clear area',
+  'مسح الرسم': 'Clear shape',
+  'مسح المنطقة المحددة': 'Clear drawn area',
+  'عرض الرعاية الصحية في هذه المنطقة المحددة': 'Show Healthcare in this drawn area',
+  'عرض التعليم في هذه المنطقة المحددة': 'Show Education in this drawn area',
+  'عرض النقل والمواصلات في هذه المنطقة المحددة': 'Show Transport in this drawn area',
+  'عرض السياحة والتراث في هذه المنطقة المحددة': 'Show Tourism in this drawn area',
+  'عرض الخدمات الحكومية في هذه المنطقة المحددة': 'Show Government Services in this drawn area',
+  'عرض السلامة العامة والأمن في هذه المنطقة المحددة': 'Show Public Safety in this drawn area',
+  'عرض البيئة والاستدامة في هذه المنطقة المحددة': 'Show Environment in this drawn area',
+  'عرض الإسكان والمجتمعات في هذه المنطقة المحددة': 'Show Housing in this drawn area',
+  'عرض الحدائق العامة في هذه المنطقة المحددة': 'Show Parks in this drawn area',
+  'عرض المرافق والخدمات في هذه المنطقة المحددة': 'Show Utilities in this drawn area'
 };
 
 const isSaveOrFavoriteItem = (itemText = '') => {
@@ -83,6 +144,28 @@ const isSaveOrFavoriteItem = (itemText = '') => {
 const isUndoItem = (itemText = '') => {
   const text = (itemText || '').toLowerCase();
   return ['undo', 'تراجع', 'undo_action'].some(k => text.includes(k));
+};
+
+const isDirectionItem = (itemText = '') => {
+  const text = (itemText || '').toLowerCase().trim();
+  return [
+    'direction',
+    'directions',
+    'route',
+    'routing',
+    'route to',
+    'get there',
+    'how do i get',
+    'اتجاه',
+    'اتجاهات',
+    'اعرض الاتجاهات',
+    'الاتجاهات',
+    'اتجاهات السير',
+    'مسار',
+    'مسارات',
+    'طريق',
+    'كيف أصل'
+  ].some(k => text.includes(k));
 };
 
 const isIrrelevantOrHeaderItem = (itemText = '') => {
@@ -99,14 +182,18 @@ export default function AiActionSuggestions({ actionCards = [], suggestions = []
   const { isDarkMode } = useTheme();
   const { isArabic } = useLanguage();
 
-  // Filter out any save/favorite actions, Undo suggestions, or irrelevant header titles
+  // Filter out any save/favorite actions, Undo suggestions, directions, or irrelevant header titles
   const filteredActionCards = (actionCards || []).filter(c => 
     !isUndoItem(c.label || c.title || c.id) && 
+    !isDirectionItem(c.label || c.title || c.id) &&
+    !isDirectionItem(c.actionType) &&
+    c.actionType !== 'SHOW_DIRECTIONS' &&
     !isIrrelevantOrHeaderItem(c.label || c.title || c.id) && 
     (isLoggedIn || !isSaveOrFavoriteItem(c.label || c.title))
   );
   const filteredSuggestions = (suggestions || []).filter(sug => 
     !isUndoItem(sug) && 
+    !isDirectionItem(sug) &&
     !isIrrelevantOrHeaderItem(sug) && 
     (isLoggedIn || !isSaveOrFavoriteItem(sug))
   );

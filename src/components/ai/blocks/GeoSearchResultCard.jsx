@@ -27,7 +27,6 @@ import {
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useLanguage } from '../../../contexts/LanguageContext';
 import { calculateGeodesicDistance, formatDistance } from '../../../services/spatial/spatialAnalysisService';
-import { getLandmarkThumbnail } from '../../../utils/landmarkImages';
 
 const ICON_MAP = {
   GOVERNMENT: AccountBalanceOutlinedIcon,
@@ -314,24 +313,7 @@ export default function GeoSearchResultCard({
                 isDarkMode ? 'border-slate-800 text-slate-200 bg-[#080e1e]/95' : 'border-slate-200 text-slate-700 bg-slate-50/95'
               }`}
             >
-              {/* 1. Landmark Image Banner with Title & Risk Badge (Image 2) */}
-              <div className="relative w-full h-32 rounded-xl overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-800 shadow-xs">
-                <img
-                  src={getLandmarkThumbnail(item)}
-                  alt={displayName}
-                  loading="eager"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/30 to-transparent" />
-                <div className="absolute bottom-2 start-2.5 end-2.5 flex items-center justify-between text-white text-[11px] font-bold tracking-tight">
-                  <span className="truncate drop-shadow-md">{displayName}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] text-sky-300 border border-white/20 shrink-0 ms-2">
-                    {item.riskLevel ? `${item.riskLevel} Risk` : 'SDI Certified'}
-                  </span>
-                </div>
-              </div>
-
-              {/* 2. 4 Tabs: Overview | Details | Nearby | Related (Image 2) */}
+              {/* 4 Tabs: Overview | Details | Nearby | Related */}
               <div className={`flex items-center justify-around border-b shrink-0 px-1 py-1 text-[11px] font-extrabold ${
                 isDarkMode ? 'bg-[#0f1932] border-slate-800' : 'bg-white border-slate-200/80'
               }`}>

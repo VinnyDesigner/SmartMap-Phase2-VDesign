@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Building2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getLandmarkThumbnail } from '../../utils/landmarkImages';
 
 export default function FlyingCardOverlay({ flyingCard, setExplorerState }) {
   const { isArabic } = useLanguage();

@@ -84,8 +84,8 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
         : `Resolved spatial reference around **${selectedPolice.name}**. Found **${results.length} nearby ambulance stations**:`;
 
       const suggestions = isArabic 
-        ? ["أيها الأقرب؟", "اعرض الاتجاهات", "مقارنة المنشآت"] 
-        : ["Which one is closest?", "Show me directions", "Compare them"];
+        ? ["أيها الأقرب؟", "عرض تفاصيل المنشأة", "مقارنة المنشآت"] 
+        : ["Which one is closest?", "Show facility details", "Compare them"];
 
       return { reply, results, actions, suggestions, activeContext: { ...currentState?.activeContext, activeLocations: results } };
     }
@@ -291,12 +291,11 @@ export const AI_KNOWLEDGE_BASE_ENTRIES = [
       'ما المتاح في هذا الموقع'
     ],
     handler: (currentState, isArabic) => {
-      const results = LOCATIONS_DB.slice(0, 4);
       const reply = isArabic
-        ? "🗺️ **استكشاف المنطقة المحيطة**:\nإليك أبرز المعالم والخدمات المتاحة بالقرب من موقعك الحالي:"
-        : "🗺️ **Spatial Area Overview**:\nHere are key landmarks and public services available around your current location:";
+        ? "❓ **استكشاف المنطقة المحيطة**:\nيرجى تحديد الفئة التي ترغب في استكشافها (مثل: المنشآت الحكومية، المعالم السياحية، الحدائق، وسائل النقل)."
+        : "❓ **Spatial Area Overview**:\nPlease specify what type of service you are looking for (e.g., government centers, tourism landmarks, parks, or public transit).";
 
-      return { reply, results, suggestions: ["Show on map"], activeContext: { activeLocations: results } };
+      return { reply, results: [], suggestions: ["Show government facilities", "Show parks near me", "Show tourism landmarks"] };
     }
   }
 ];
@@ -318,10 +317,10 @@ export function matchKnowledgeBaseQuery(queryText, currentState, isArabic = fals
 
     const patterns = isArabic ? (entry.patterns_ar || entry.patterns_en) : entry.patterns_en;
     
-    // Check if query matches any pattern explicitly or via token inclusion
+    // Strict exact pattern matching only — never substring overlap to prevent random matching
     const matched = patterns.some(pat => {
       const p = pat.toLowerCase().trim();
-      return q === p || q.includes(p) || p.includes(q);
+      return q === p;
     });
 
     if (matched) {

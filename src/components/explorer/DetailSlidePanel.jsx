@@ -8,7 +8,6 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useProject } from '../../contexts/ProjectContext';
-import { getLandmarkThumbnail } from '../../utils/landmarkImages';
 
 export default function DetailSlidePanel({ explorerState, setExplorerState }) {
   const detail = explorerState?.selectedDetail || explorerState?.selectedLocation;
@@ -70,7 +69,6 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
   const department = isArabic ? 'دائرة التمكين الحكومي - أبوظبي' : 'Department of Government Enablement';
   const address = isArabic && detail.location_ar ? detail.location_ar : (detail.location || detail.district || 'Al Bateen, Abu Dhabi');
   const distanceStr = detail.distance || '2.1 km from your location';
-  const thumbnailImg = getLandmarkThumbnail(detail);
 
   // Derived Nearby POIs
   const nearbyPois = [
@@ -132,37 +130,38 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
             : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-xl'
         }`}
       >
-        {/* 1. Header (Wireframe Page 05) */}
-        <div className={`p-4 pb-3 border-b flex items-center justify-between shrink-0 ${
+        {/* 1. Facility Header & Status (No Thumbnail) */}
+        <div className={`p-4 pb-3 border-b shrink-0 transition-colors ${
           isDarkMode ? 'bg-[#0a0f1d] border-slate-800' : 'bg-white border-slate-100'
         }`}>
-          <h3 className={`font-extrabold text-base tracking-tight truncate ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
-            {facilityName}
-          </h3>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full ${
+                  isDarkMode ? 'bg-sky-500/15 text-sky-300' : 'bg-sky-50 text-[#215A9E]'
+                }`}>
+                  {facilityType}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-slate-800/80 text-[10px] font-semibold text-sky-300 border border-slate-700/50">
+                  {detail.riskLevel ? `${detail.riskLevel} Risk` : 'SDI Verified'}
+                </span>
+              </div>
+              <h3 className={`font-extrabold text-base tracking-tight truncate ${isDarkMode ? 'text-white' : 'text-[#1e2749]'}`}>
+                {facilityName}
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                📍 {address}
+              </p>
+            </div>
 
-          <button 
-            onClick={handleClose}
-            className={`p-1.5 rounded-full transition-colors cursor-pointer ${
-              isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-800'
-            }`}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* 2. Facility Image Banner (Wireframe Page 05) */}
-        <div className="relative w-full h-36 bg-slate-200 dark:bg-slate-800 overflow-hidden shrink-0">
-          <img
-            src={thumbnailImg}
-            alt={facilityName}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-          <div className="absolute bottom-2.5 start-3 end-3 flex items-center justify-between text-white text-[11px] font-bold tracking-tight">
-            <span className="truncate drop-shadow-md">{facilityName}</span>
-            <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-[10px] text-sky-300 border border-white/20 shrink-0 ms-2">
-              {detail.riskLevel ? `${detail.riskLevel} Risk` : 'SDI Verified'}
-            </span>
+            <button 
+              onClick={handleClose}
+              className={`p-1.5 rounded-full transition-colors cursor-pointer shrink-0 ${
+                isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-400 hover:text-slate-800'
+              }`}
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
 

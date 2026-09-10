@@ -31,19 +31,18 @@ export default function ExplorerHeader({ onNavigate, currentView, userAuth, onSi
     }`}>
       {/* Left: Logo */}
       <div className="flex items-center gap-3 md:gap-5 h-full shrink-0 py-2">
-        <a
-          href="https://www.dge.gov.ae/en"
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Department of Government Enablement"
-          className="flex items-center transition-opacity hover:opacity-85 focus:outline-hidden"
+        <button
+          type="button"
+          onClick={() => onNavigate?.('landing')}
+          title={t("Department of Government Enablement - Home", "دائرة التمكين الحكومي - الرئيسية")}
+          className="flex items-center transition-opacity hover:opacity-85 focus:outline-hidden cursor-pointer bg-transparent border-0 p-0"
         >
           <img 
             src={isDarkMode ? dgeDarkLogo : dgeLightLogo} 
             alt="Department of Government Enablement" 
             className="h-7 md:h-8 lg:h-9 max-h-9 w-auto object-contain drop-shadow-sm cursor-pointer transition-all my-auto" 
           />
-        </a>
+        </button>
       </div>
 
       {/* Center: SDI-Style Navigation */}
@@ -227,19 +226,18 @@ export default function ExplorerHeader({ onNavigate, currentView, userAuth, onSi
         </div>
 
         <div className="hidden xl:flex items-center ms-3 shrink-0 py-2">
-          <a
-            href="https://sdi.gov.abudhabi/sdi/"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Abu Dhabi Spatial Data Infrastructure"
-            className="flex items-center transition-opacity hover:opacity-85 focus:outline-hidden"
+          <button
+            type="button"
+            onClick={() => onNavigate?.('landing')}
+            title={t("Abu Dhabi Spatial Data Infrastructure - Home", "البنية التحتية للبيانات المكانية لإمارة أبوظبي - الرئيسية")}
+            className="flex items-center transition-opacity hover:opacity-85 focus:outline-hidden cursor-pointer bg-transparent border-0 p-0"
           >
             <img 
               src={isDarkMode ? sdiDarkLogo : sdiLightLogo} 
               alt="Abu Dhabi Spatial Data Infrastructure" 
               className="h-8 md:h-9 lg:h-10 max-h-10 w-auto object-contain cursor-pointer transition-all" 
             />
-          </a>
+          </button>
         </div>
       </div>
     </header>

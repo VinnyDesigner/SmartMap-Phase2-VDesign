@@ -115,6 +115,7 @@ export default function AiResponseRenderer({
                 <AiLocationListBlock
                   key={key}
                   locations={block.locations || block.results || []}
+                  totalCount={block.totalCount || response.totalCount}
                   onEntityClick={onEntityClick}
                   onActionClick={onActionClick}
                   isLoggedIn={isLoggedIn}
@@ -186,6 +187,7 @@ export default function AiResponseRenderer({
           {response.outputType !== 'table' && response.results && response.results.length > 0 && (
             <AiLocationListBlock
               locations={response.results}
+              totalCount={response.totalCount}
               onEntityClick={onEntityClick}
               onActionClick={onActionClick}
               isLoggedIn={isLoggedIn}

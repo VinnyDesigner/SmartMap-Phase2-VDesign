@@ -36,12 +36,20 @@ export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics
   const displayTitle = isArabic ? (chartData.title_ar || CATEGORY_MAP[title] || title) : title;
   const displayUnit = isArabic ? (unit === 'tCO2e' ? 'طن مكافئ' : unit === 'pts' ? 'نقاط' : unit) : unit;
 
+  const totalSum = data.reduce((sum, item) => {
+    const val = typeof item[yKey] === 'number' ? item[yKey] : (item.value || item.riskScore || 0);
+    return sum + val;
+  }, 0) || 1;
+
   const categories = data.map(item => {
     const rawVal = item[xKey] || item.name || item.label || item.district || item.facility;
     return isArabic ? (item.name_ar || CATEGORY_MAP[rawVal] || rawVal) : rawVal;
   });
 
-  const isPieOrDonut = activeType === 'pie' || activeType === 'donut' || activeType === 'doughnut';
+  // For category distribution in narrow chat panels, ranked horizontal bar is the clean standard
+  const isDistributionChart = (title || '').toLowerCase().includes('distribution') || (title || '').toLowerCase().includes('zone') || activeType === 'distribution';
+  const isPieOrDonut = (activeType === 'pie' || activeType === 'donut' || activeType === 'doughnut') && !isDistributionChart;
+  const isBar = activeType === 'bar' || activeType === 'horizontal_bar' || activeType === 'ranked_bar' || isDistributionChart || (!isPieOrDonut && activeType !== 'line' && activeType !== 'column');
 
   const seriesValues = isPieOrDonut
     ? data.map(item => ({
@@ -52,19 +60,26 @@ export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics
       }))
     : data.map(item => ({
         y: typeof item[yKey] === 'number' ? item[yKey] : (item.value || item.riskScore || item.emissions || 0),
+        color: item.color,
+        percentage: item.percentage !== undefined ? item.percentage : (((item[yKey] || item.value || 0) / totalSum) * 100),
         facilityId: item.id || item.facilityId,
         facility: item
       }));
 
   let hChartType = 'column';
   if (activeType === 'line') hChartType = 'line';
-  else if (activeType === 'bar' || activeType === 'horizontal_bar' || activeType === 'ranked_bar') hChartType = 'bar';
+  else if (isBar) hChartType = 'bar';
   else if (isPieOrDonut) hChartType = 'pie';
+
+  // Compute clean responsive height
+  const chartHeight = isBar 
+    ? Math.max(140, Math.min(320, data.length * 36 + 30))
+    : (isPieOrDonut ? 210 : 185);
 
   const options = {
     chart: {
       type: hChartType,
-      height: 185,
+      height: chartHeight,
       backgroundColor: 'transparent',
       style: { fontFamily: 'Inter, sans-serif' }
     },
@@ -73,15 +88,34 @@ export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics
       style: { fontSize: '11px', fontWeight: '700', color: isDarkMode ? '#f8fafc' : '#1e2749' }
     },
     credits: { enabled: false },
-    legend: { enabled: isPieOrDonut },
+    legend: { 
+      enabled: isPieOrDonut,
+      layout: 'vertical',
+      align: 'right',
+      verticalAlign: 'middle',
+      itemStyle: {
+        fontSize: '9.5px',
+        fontWeight: '600',
+        color: isDarkMode ? '#cbd5e1' : '#475569'
+      }
+    },
     xAxis: isPieOrDonut ? undefined : {
       categories: categories,
-      labels: { style: { fontSize: '9px', color: isDarkMode ? '#94a3b8' : '#64748b' } },
+      labels: { 
+        style: { 
+          fontSize: '9.5px', 
+          fontWeight: '600',
+          color: isDarkMode ? '#94a3b8' : '#64748b' 
+        } 
+      },
       lineColor: isDarkMode ? '#334155' : '#e2e8f0'
     },
     yAxis: isPieOrDonut ? undefined : {
       title: { text: null },
-      labels: { style: { fontSize: '9px', color: isDarkMode ? '#94a3b8' : '#64748b' } },
+      allowDecimals: false,
+      labels: { 
+        style: { fontSize: '9px', color: isDarkMode ? '#94a3b8' : '#64748b' } 
+      },
       gridLineColor: isDarkMode ? '#1e293b' : '#f1f5f9'
     },
     tooltip: {
@@ -94,8 +128,33 @@ export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics
     plotOptions: {
       pie: {
         innerSize: (activeType === 'donut' || activeType === 'doughnut') ? '55%' : '0%',
-        dataLabels: { enabled: false },
+        size: '80%',
+        center: ['35%', '50%'],
+        dataLabels: { 
+          enabled: true, 
+          format: '{point.percentage:.0f}%',
+          distance: -16,
+          style: { fontSize: '9px', fontWeight: 'bold', color: '#ffffff', textOutline: 'none' }
+        },
         showInLegend: true
+      },
+      bar: {
+        colorByPoint: true,
+        borderRadius: 4,
+        pointWidth: 16,
+        dataLabels: {
+          enabled: true,
+          formatter: function() {
+            const pct = this.point.percentage !== undefined ? this.point.percentage : ((this.point.y / totalSum) * 100);
+            return `<b>${this.point.y}</b> <span style="opacity:0.75">(${pct.toFixed(0)}%)</span>`;
+          },
+          style: {
+            fontSize: '9.5px',
+            fontWeight: '700',
+            color: isDarkMode ? '#f8fafc' : '#1e2749',
+            textOutline: 'none'
+          }
+        }
       },
       series: {
         borderRadius: hChartType === 'line' ? 0 : 4,
@@ -141,6 +200,25 @@ export default function AiChartBlock({ chartData, onEntityClick, onOpenAnalytics
           </button>
         )}
       </div>
+
+      {/* Proportional Segmented Progress Strip */}
+      {data.length > 1 && (
+        <div className="space-y-1 mb-1 px-0.5">
+          <div className="w-full h-2 rounded-full overflow-hidden flex bg-slate-200 dark:bg-slate-800 shadow-inner">
+            {data.map((item, idx) => {
+              const pct = item.percentage !== undefined ? item.percentage : (((item[yKey] || item.value || 0) / totalSum) * 100);
+              return (
+                <div
+                  key={idx}
+                  style={{ width: `${Math.max(4, pct)}%`, backgroundColor: item.color || '#3b82f6' }}
+                  className="h-full transition-all hover:brightness-110"
+                  title={`${item.label || item.name}: ${item.value || 0} (${pct.toFixed(0)}%)`}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <HighchartsReact highcharts={Highcharts} options={options} />
     </div>
