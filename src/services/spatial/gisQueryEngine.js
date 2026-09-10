@@ -235,7 +235,15 @@ export function validateEntity(item, normalizedQuery, origin = null, context = {
   }
 
   // 6. Active Drawn Shape Spatial Containment
-  if (isDrawnShapeQuery || (context?.hasActiveDrawingFilter && isRefinement)) {
+  const hasDrawnFilter = Boolean(
+    context?.hasActiveDrawingFilter ||
+    context?.activeDrawnArea ||
+    context?.drawnCircle ||
+    context?.drawnRectangle ||
+    context?.drawnPolygon
+  );
+
+  if (isDrawnShapeQuery || hasDrawnFilter) {
     if (context.drawnRectangle && !isPointInRectangle(item.lat, item.lng, context.drawnRectangle)) {
       return false;
     }

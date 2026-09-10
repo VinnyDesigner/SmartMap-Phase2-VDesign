@@ -13,24 +13,24 @@ import {
   findCategoryBySubcategoryId 
 } from '../../config/categoryTree';
 
-// Comprehensive Category Symbology & Theme Details
-const CATEGORY_SYMBOLOGY_MAP = {
-  government: { hex: '#063360', bg: 'bg-[#063360]', text: 'text-[#063360]', icon: Building2, label_en: 'Government & Municipal', label_ar: 'الجهات الحكومية والبلدية' },
-  education: { hex: '#2563eb', bg: 'bg-blue-600', text: 'text-blue-600', icon: GraduationCap, label_en: 'Education & Schools', label_ar: 'التعليم والمدارس' },
-  healthcare: { hex: '#dc2626', bg: 'bg-red-600', text: 'text-red-600', icon: PlusSquare, label_en: 'Healthcare & Hospitals', label_ar: 'الرعاية الصحية والمستشفيات' },
-  park: { hex: '#059669', bg: 'bg-emerald-600', text: 'text-emerald-600', icon: TreePine, label_en: 'Parks & Greenery', label_ar: 'الحدائق والمساحات الخضراء' },
-  environment: { hex: '#059669', bg: 'bg-emerald-600', text: 'text-emerald-600', icon: TreePine, label_en: 'Environment & Sustainability', label_ar: 'البيئة والاستدامة' },
-  transportation: { hex: '#9333ea', bg: 'bg-purple-600', text: 'text-purple-600', icon: Bus, label_en: 'Transport & Transit', label_ar: 'النقل والمواصلات' },
-  tourism: { hex: '#d97706', bg: 'bg-amber-500', text: 'text-amber-500', icon: Compass, label_en: 'Tourism & Landmarks', label_ar: 'السياحة والمعالم' },
-  public_safety: { hex: '#e11d48', bg: 'bg-rose-600', text: 'text-rose-600', icon: Shield, label_en: 'Public Safety & Emergency', label_ar: 'السلامة العامة والطوارئ' },
-  utilities: { hex: '#ca8a04', bg: 'bg-yellow-600', text: 'text-yellow-600', icon: Zap, label_en: 'Utilities & Power', label_ar: 'المرافق والطاقة' },
-  housing: { hex: '#7c3aed', bg: 'bg-purple-600', text: 'text-purple-600', icon: Home, label_en: 'Housing & Communities', label_ar: 'الإسكان والمجتمعات' },
-  infrastructure: { hex: '#d97706', bg: 'bg-amber-600', text: 'text-amber-600', icon: Building2, label_en: 'Infrastructure & Projects', label_ar: 'البنية التحتية والمشاريع' },
-  climate: { hex: '#0284c7', bg: 'bg-sky-600', text: 'text-sky-600', icon: CloudRain, label_en: 'Climate & Meteorology', label_ar: 'المناخ والأرصاد' },
-  construction: { hex: '#ea580c', bg: 'bg-orange-600', text: 'text-orange-600', icon: Hammer, label_en: 'Construction & Development', label_ar: 'الإنشاءات والتطوير' },
-  energy: { hex: '#f59e0b', bg: 'bg-amber-500', text: 'text-amber-500', icon: Zap, label_en: 'Energy & Desalination', label_ar: 'الطاقة وتحلية المياه' },
-  agriculture: { hex: '#059669', bg: 'bg-emerald-600', text: 'text-emerald-600', icon: Sprout, label_en: 'Agriculture & Farms', label_ar: 'الزراعة والمزارع' },
-  employment: { hex: '#4f46e5', bg: 'bg-indigo-600', text: 'text-indigo-600', icon: Briefcase, label_en: 'Employment & Labor', label_ar: 'العمل والتوظيف' }
+// Comprehensive Category Symbology & Pastel Theme Details
+export const CATEGORY_SYMBOLOGY_MAP = {
+  government: { hex: '#9EC5FE', pastelBg: '#CFE2FE', pastelBorder: '#9EC5FE', iconColor: '#1565C0', icon: Building2, label_en: 'Government & Municipal', label_ar: 'الجهات الحكومية والبلدية' },
+  education: { hex: '#81D4FA', pastelBg: '#B3E5FC', pastelBorder: '#81D4FA', iconColor: '#0277BD', icon: GraduationCap, label_en: 'Education & Schools', label_ar: 'التعليم والمدارس' },
+  healthcare: { hex: '#FFA4A4', pastelBg: '#FFD6D6', pastelBorder: '#FFA4A4', iconColor: '#C62828', icon: PlusSquare, label_en: 'Healthcare & Hospitals', label_ar: 'الرعاية الصحية والمستشفيات' },
+  park: { hex: '#C5E1A5', pastelBg: '#DCEDC8', pastelBorder: '#C5E1A5', iconColor: '#33691E', icon: TreePine, label_en: 'Parks & Greenery', label_ar: 'الحدائق والمساحات الخضراء' },
+  environment: { hex: '#9FD6A3', pastelBg: '#C8E6C9', pastelBorder: '#9FD6A3', iconColor: '#2E7D32', icon: TreePine, label_en: 'Environment & Sustainability', label_ar: 'البيئة والاستدامة' },
+  transportation: { hex: '#B9A4EC', pastelBg: '#E0D7F8', pastelBorder: '#B9A4EC', iconColor: '#5E35B1', icon: Bus, label_en: 'Transport & Transit', label_ar: 'النقل والمواصلات' },
+  tourism: { hex: '#FFCC80', pastelBg: '#FFE5B4', pastelBorder: '#FFCC80', iconColor: '#E65100', icon: Compass, label_en: 'Tourism & Landmarks', label_ar: 'السياحة والمعالم' },
+  public_safety: { hex: '#EF9A9A', pastelBg: '#FFCDD2', pastelBorder: '#EF9A9A', iconColor: '#C2185B', icon: Shield, label_en: 'Public Safety & Emergency', label_ar: 'السلامة العامة والطوارئ' },
+  utilities: { hex: '#FFF176', pastelBg: '#FFF9C4', pastelBorder: '#FFF176', iconColor: '#F57F17', icon: Zap, label_en: 'Utilities & Power', label_ar: 'المرافق والطاقة' },
+  housing: { hex: '#DEABED', pastelBg: '#F1D6F7', pastelBorder: '#DEABED', iconColor: '#7B1FA2', icon: Home, label_en: 'Housing & Communities', label_ar: 'الإسكان والمجتمعات' },
+  infrastructure: { hex: '#CBD5E1', pastelBg: '#E2E8F0', pastelBorder: '#CBD5E1', iconColor: '#475569', icon: Building2, label_en: 'Infrastructure & Projects', label_ar: 'البنية التحتية والمشاريع' },
+  climate: { hex: '#80DEEA', pastelBg: '#B2EBF2', pastelBorder: '#80DEEA', iconColor: '#00838F', icon: CloudRain, label_en: 'Climate & Meteorology', label_ar: 'المناخ والأرصاد' },
+  construction: { hex: '#FFAB91', pastelBg: '#FFD8C7', pastelBorder: '#FFAB91', iconColor: '#D84315', icon: Hammer, label_en: 'Construction & Development', label_ar: 'الإنشاءات والتطوير' },
+  energy: { hex: '#FFD54F', pastelBg: '#FFE082', pastelBorder: '#FFD54F', iconColor: '#FF6F00', icon: Zap, label_en: 'Energy & Desalination', label_ar: 'الطاقة وتحلية المياه' },
+  agriculture: { hex: '#A9DF9C', pastelBg: '#D7ECC7', pastelBorder: '#A9DF9C', iconColor: '#2E7D32', icon: Sprout, label_en: 'Agriculture & Farms', label_ar: 'الزراعة والمزارع' },
+  employment: { hex: '#A4C6FB', pastelBg: '#D0E1FD', pastelBorder: '#A4C6FB', iconColor: '#1E40AF', icon: Briefcase, label_en: 'Employment & Labor', label_ar: 'العمل والتوظيف' }
 };
 
 // Fallback lookup from result item types
@@ -82,6 +82,7 @@ export default function MapLegendPanel({ explorerState, setExplorerState, onClos
       drawnPolygon: null,
       drawnCircle: null,
       drawnRectangle: null,
+      activeDrawnArea: null,
       drawings: []
     }));
   };
@@ -216,10 +217,14 @@ export default function MapLegendPanel({ explorerState, setExplorerState, onClos
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      {/* Colored Pin Badge */}
+                      {/* Colored Pastel Pin Badge */}
                       <div 
-                        className="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-xs"
-                        style={{ backgroundColor: item.symbology.hex }}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border shadow-xs transition-colors"
+                        style={{ 
+                          backgroundColor: item.symbology.pastelBg || item.symbology.hex,
+                          borderColor: item.symbology.pastelBorder || item.symbology.hex,
+                          color: item.symbology.iconColor || '#ffffff'
+                        }}
                       >
                         <Icon className="w-3.5 h-3.5" />
                       </div>
@@ -271,8 +276,12 @@ export default function MapLegendPanel({ explorerState, setExplorerState, onClos
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div 
-                        className="w-6 h-6 rounded-lg flex items-center justify-center text-white shrink-0 shadow-xs"
-                        style={{ backgroundColor: item.symbology.hex }}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border shadow-xs transition-colors"
+                        style={{ 
+                          backgroundColor: item.symbology.pastelBg || item.symbology.hex,
+                          borderColor: item.symbology.pastelBorder || item.symbology.hex,
+                          color: item.symbology.iconColor || '#ffffff'
+                        }}
                       >
                         <Icon className="w-3.5 h-3.5" />
                       </div>
@@ -326,8 +335,12 @@ export default function MapLegendPanel({ explorerState, setExplorerState, onClos
                   >
                     <div className="flex items-center gap-2">
                       <div 
-                        className="w-5 h-5 rounded-md flex items-center justify-center text-white shrink-0 text-[10px]"
-                        style={{ backgroundColor: sym.hex }}
+                        className="w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[10px] border shadow-2xs transition-colors"
+                        style={{ 
+                          backgroundColor: sym.pastelBg || sym.hex,
+                          borderColor: sym.pastelBorder || sym.hex,
+                          color: sym.iconColor || '#ffffff'
+                        }}
                       >
                         <Icon className="w-3 h-3" />
                       </div>
@@ -402,7 +415,37 @@ export default function MapLegendPanel({ explorerState, setExplorerState, onClos
               </div>
             )}
 
-            {/* 3. User Location Beacon */}
+            {/* 3. Active Navigation Route (Google Maps Style) */}
+            {explorerState?.activeRouteDestination && (
+              <div className="flex items-center justify-between p-2 rounded-xl border border-blue-500/40 bg-blue-500/10 text-blue-700 dark:text-blue-300">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-5 h-5 rounded-md bg-[#1a73e8] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <Navigation className="w-3 h-3 fill-current" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="font-extrabold text-[10.5px] block truncate">
+                      {t("Active Route (Google Maps)", "مسار الاتجاهات النشط")}
+                    </span>
+                    <span className="text-[9px] font-medium opacity-80 block truncate">
+                      {isArabic && explorerState.activeRouteDestination.name_ar 
+                        ? explorerState.activeRouteDestination.name_ar 
+                        : explorerState.activeRouteDestination.name}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExplorerState(prev => ({ ...prev, activeRouteDestination: null }))}
+                  className="px-2 py-0.5 text-[9.5px] font-extrabold rounded-md bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/30 transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                  title={t("Clear active route", "مسح المسار")}
+                >
+                  <Trash2 className="w-2.5 h-2.5" />
+                  <span>{t("Clear", "مسح")}</span>
+                </button>
+              </div>
+            )}
+
+            {/* 4. User Location Beacon */}
             <div className={`flex items-center justify-between p-2 rounded-xl border ${
               isDarkMode ? 'bg-[#0f172a]/70 border-slate-800/80 text-slate-300' : 'bg-slate-50/80 border-slate-200/80 text-slate-600'
             }`}>

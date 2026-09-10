@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, Marker, Popup, useMap, useMapEvents, Polygon, Circle, Rectangle, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import { motion } from 'framer-motion';
-import { MapPin, ArrowRight, Sparkles, Navigation, Target, Copy, Check, Trash2 } from 'lucide-react';
+import { MapPin, ArrowRight, Sparkles, Navigation, Target, Copy, Check, Trash2, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -20,7 +20,8 @@ import {
 import { 
   CATEGORY_TREE,
   getSubcategoryLocalizedName, 
-  findCategoryBySubcategoryId 
+  findCategoryBySubcategoryId,
+  CANONICAL_TO_CATEGORY_ID 
 } from '../config/categoryTree';
 
 const customPinIcon = L.divIcon({
@@ -48,108 +49,290 @@ const userLocationPinIcon = L.divIcon({
   iconAnchor: [24, 24]
 });
 
-const getCategoryColorDetails = (type) => {
-  let textColor = 'text-[#215A9E]';
-  let hexColor = '#215A9E';
+// Google Maps Style Origin Waypoint Pin
+const googleMapsOriginIcon = L.divIcon({
+  className: 'google-maps-origin-pin',
+  html: `
+    <div style="width: 22px; height: 22px; background: white; border: 4px solid #1a73e8; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center;">
+      <div style="width: 5px; height: 5px; background: #1a73e8; border-radius: 50%;"></div>
+    </div>
+  `,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11]
+});
 
-  if (type === 'GOVERNMENT' || type === 'MUNICIPAL') {
-    textColor = 'text-[#063360]';
-    hexColor = '#063360';
-  } else if (type === 'EDUCATION') {
-    textColor = 'text-blue-600';
-    hexColor = '#2563eb';
-  } else if (type === 'HOSPITAL' || type === 'HEALTHCARE') {
-    textColor = 'text-red-600';
-    hexColor = '#dc2626';
-  } else if (type === 'PARK' || type === 'ENVIRONMENT') {
-    textColor = 'text-emerald-600';
-    hexColor = '#059669';
-  } else if (type === 'TRANSPORT') {
-    textColor = 'text-purple-600';
-    hexColor = '#9333ea';
-  } else if (type === 'TOURISM') {
-    textColor = 'text-amber-500';
-    hexColor = '#d97706';
-  } else if (type === 'PUBLIC_SAFETY') {
-    textColor = 'text-rose-600';
-    hexColor = '#e11d48';
-  } else if (type === 'HOUSING') {
-    textColor = 'text-purple-600';
-    hexColor = '#7c3aed';
-  } else if (type === 'INFRASTRUCTURE') {
-    textColor = 'text-amber-600';
-    hexColor = '#d97706';
-  } else if (type === 'UTILITIES' || type === 'CIVIC_INFRASTRUCTURE') {
-    textColor = 'text-yellow-600';
-    hexColor = '#ca8a04';
-  } else if (type === 'CLIMATE') {
-    textColor = 'text-sky-600';
-    hexColor = '#0284c7';
-  } else if (type === 'CONSTRUCTION') {
-    textColor = 'text-orange-600';
-    hexColor = '#ea580c';
-  } else if (type === 'ENERGY') {
-    textColor = 'text-amber-500';
-    hexColor = '#f59e0b';
-  } else if (type === 'AGRICULTURE') {
-    textColor = 'text-emerald-600';
-    hexColor = '#059669';
-  } else if (type === 'EMPLOYMENT') {
-    textColor = 'text-indigo-600';
-    hexColor = '#4f46e5';
+// Google Maps Style Destination Red Pin
+const googleMapsDestinationIcon = L.divIcon({
+  className: 'google-maps-destination-pin',
+  html: `
+    <div style="filter: drop-shadow(0 4px 8px rgba(0,0,0,0.45)); transform: translateY(-4px);">
+      <svg width="30" height="38" viewBox="0 0 28 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 0C6.268 0 0 6.268 0 14C0 24.5 14 36 14 36C14 36 28 24.5 28 14C28 6.268 21.732 0 14 0Z" fill="#EA4335"/>
+        <circle cx="14" cy="14" r="7" fill="#B31412"/>
+        <circle cx="14" cy="14" r="5" fill="white"/>
+        <circle cx="14" cy="14" r="2.5" fill="#EA4335"/>
+      </svg>
+    </div>
+  `,
+  iconSize: [30, 38],
+  iconAnchor: [15, 38]
+});
+
+export const CATEGORY_STYLE_MAP = {
+  healthcare: {
+    pastelBg: '#FFD6D6',
+    pastelBorder: '#FFA4A4',
+    iconColor: '#C62828',
+    label_en: 'Healthcare',
+    label_ar: 'الرعاية الصحية',
+    iconInnerSvg: '<path d="M12 5v14M5 12h14" stroke-width="3" stroke-linecap="round"/>'
+  },
+  transportation: {
+    pastelBg: '#E0D7F8',
+    pastelBorder: '#B9A4EC',
+    iconColor: '#5E35B1',
+    label_en: 'Transport',
+    label_ar: 'النقل والمواصلات',
+    iconInnerSvg: '<rect width="18" height="13" x="3" y="4" rx="2" stroke-width="2"/><path d="M7 17v2M17 17v2M3 11h18M7 14h.01M17 14h.01" stroke-width="2" stroke-linecap="round"/>'
+  },
+  environment: {
+    pastelBg: '#C8E6C9',
+    pastelBorder: '#9FD6A3',
+    iconColor: '#2E7D32',
+    label_en: 'Environment',
+    label_ar: 'البيئة والاستدامة',
+    iconInnerSvg: '<path d="m12 2 4 5h-2.5l3.5 5h-3l4 6H5l4-6H6l3.5-5H7l5-5zM12 18v4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+  },
+  government: {
+    pastelBg: '#CFE2FE',
+    pastelBorder: '#9EC5FE',
+    iconColor: '#1565C0',
+    label_en: 'Government Services',
+    label_ar: 'الخدمات الحكومية',
+    iconInnerSvg: '<path d="M3 21h18M4 18h16M4 8l8-5 8 5M6 8v10M10 8v10M14 8v10M18 8v10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+  },
+  tourism: {
+    pastelBg: '#FFE5B4',
+    pastelBorder: '#FFCC80',
+    iconColor: '#E65100',
+    label_en: 'Tourism',
+    label_ar: 'السياحة والتراث',
+    iconInnerSvg: '<polygon points="12 2 15 8.5 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 8.5 12 2" fill="#E65100" stroke="none"/>'
+  },
+  infrastructure: {
+    pastelBg: '#E2E8F0',
+    pastelBorder: '#CBD5E1',
+    iconColor: '#475569',
+    label_en: 'Infrastructure',
+    label_ar: 'البنية التحتية',
+    iconInnerSvg: '<path d="M4 19V6M20 19V6M2 19h20M4 10h16M4 10c4 5 8 5 8 5s4 0 8-5" stroke-width="2" stroke-linecap="round"/>'
+  },
+  housing: {
+    pastelBg: '#F1D6F7',
+    pastelBorder: '#DEABED',
+    iconColor: '#7B1FA2',
+    label_en: 'Housing',
+    label_ar: 'الإسكان والمجتمعات',
+    iconInnerSvg: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-4v-6h-6v6H4a1 1 0 0 1-1-1Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+  },
+  public_safety: {
+    pastelBg: '#FFCDD2',
+    pastelBorder: '#EF9A9A',
+    iconColor: '#C2185B',
+    label_en: 'Public Safety',
+    label_ar: 'السلامة العامة والأمن',
+    iconInnerSvg: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+  },
+  utilities: {
+    pastelBg: '#FFF9C4',
+    pastelBorder: '#FFF176',
+    iconColor: '#F57F17',
+    label_en: 'Utilities',
+    label_ar: 'المرافق والخدمات',
+    iconInnerSvg: '<polygon points="13 2 4 13 11 13 10 22 20 11 13 11 13 2" fill="#F57F17" stroke="none"/>'
+  },
+  climate: {
+    pastelBg: '#B2EBF2',
+    pastelBorder: '#80DEEA',
+    iconColor: '#00838F',
+    label_en: 'Climate',
+    label_ar: 'المناخ والطقس',
+    iconInnerSvg: '<path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 15v3M14 15v3" stroke-width="2" stroke-linecap="round"/>'
+  },
+  construction: {
+    pastelBg: '#FFD8C7',
+    pastelBorder: '#FFAB91',
+    iconColor: '#D84315',
+    label_en: 'Construction',
+    label_ar: 'البناء والتشييد',
+    iconInnerSvg: '<path d="m15 12-8.5 8.5a2.12 2.12 0 1 1-3-3L12 9" stroke-width="2" stroke-linecap="round"/><path d="M17.5 15 22 10.5M21 3.5l-6 6a2 2 0 0 0 0 3l1.5 1.5a2 2 0 0 0 3 0l6-6-4.5-4.5z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+  },
+  energy: {
+    pastelBg: '#FFE082',
+    pastelBorder: '#FFD54F',
+    iconColor: '#FF6F00',
+    label_en: 'Energy',
+    label_ar: 'الطاقة والشبكات',
+    iconInnerSvg: '<circle cx="12" cy="12" r="4" stroke-width="2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.2 2.2M16.9 16.9l2.2 2.2M4.9 19.1l2.2-2.2M16.9 7.1l2.2-2.2" stroke-width="2" stroke-linecap="round"/>'
+  },
+  park: {
+    pastelBg: '#DCEDC8',
+    pastelBorder: '#C5E1A5',
+    iconColor: '#33691E',
+    label_en: 'Parks',
+    label_ar: 'الحدائق والمتنزهات',
+    iconInnerSvg: '<path d="M12 22v-6M8 12a4 4 0 0 1 8 0 4 4 0 0 1-2 3.5M6 12a4 4 0 0 0 6 3.5" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="5" stroke-width="2"/>'
+  },
+  agriculture: {
+    pastelBg: '#D7ECC7',
+    pastelBorder: '#A9DF9C',
+    iconColor: '#2E7D32',
+    label_en: 'Agriculture',
+    label_ar: 'الزراعة والأمن الغذائي',
+    iconInnerSvg: '<path d="M7 20h10M12 20v-8M12 12a5 5 0 0 1 5-5h2v2a5 5 0 0 1-5 5h-2zM12 12a5 5 0 0 0-5-5H5v2a5 5 0 0 0 5 5h2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'
+  },
+  employment: {
+    pastelBg: '#D0E1FD',
+    pastelBorder: '#A4C6FB',
+    iconColor: '#1E40AF',
+    label_en: 'Employment',
+    label_ar: 'التوظيف والأعمال',
+    iconInnerSvg: '<rect width="18" height="12" x="3" y="8" rx="2" stroke-width="2"/><path d="M16 8V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v3M3 13h18" stroke-width="2" stroke-linecap="round"/>'
+  },
+  education: {
+    pastelBg: '#B3E5FC',
+    pastelBorder: '#81D4FA',
+    iconColor: '#0277BD',
+    label_en: 'Education',
+    label_ar: 'التعليم',
+    iconInnerSvg: '<path d="M22 10v6M2 10l10-5 10 5-10 5z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 12v5c3 3 9 3 12 0v-5" stroke-width="2" stroke-linecap="round"/>'
   }
-
-  return { textColor, hexColor };
 };
 
-const createPulsePointerIcon = (type = 'GOVERNMENT') => {
-  const { textColor, hexColor } = getCategoryColorDetails(type);
+export function getCategoryKeyFromItem(itemOrType) {
+  if (!itemOrType) return 'government';
+  
+  if (typeof itemOrType === 'string') {
+    const s = itemOrType.trim().toUpperCase();
+    if (CANONICAL_TO_CATEGORY_ID && CANONICAL_TO_CATEGORY_ID[s]) {
+      return CANONICAL_TO_CATEGORY_ID[s];
+    }
+    const sLow = itemOrType.trim().toLowerCase();
+    const cat = CATEGORY_TREE.find(c => c.id === sLow || c.name.toLowerCase() === sLow);
+    if (cat) return cat.id;
+
+    if (sLow.includes('health') || sLow.includes('hospital') || sLow.includes('clinic') || sLow.includes('pharm')) return 'healthcare';
+    if (sLow.includes('transit') || sLow.includes('transport') || sLow.includes('bus') || sLow.includes('metro') || sLow.includes('airport') || sLow.includes('taxi') || sLow.includes('seaport') || sLow.includes('port')) return 'transportation';
+    if (sLow.includes('park') || sLow.includes('garden') || sLow.includes('playground')) return 'park';
+    if (sLow.includes('environ') || sLow.includes('sensor') || sLow.includes('recycl') || sLow.includes('waste')) return 'environment';
+    if (sLow.includes('school') || sLow.includes('educat') || sLow.includes('college') || sLow.includes('univers') || sLow.includes('pod') || sLow.includes('nursery')) return 'education';
+    if (sLow.includes('tour') || sLow.includes('hotel') || sLow.includes('museum') || sLow.includes('resort') || sLow.includes('attract') || sLow.includes('landmark')) return 'tourism';
+    if (sLow.includes('police') || sLow.includes('safety') || sLow.includes('fire') || sLow.includes('civil') || sLow.includes('emergency') || sLow.includes('ambulance')) return 'public_safety';
+    if (sLow.includes('house') || sLow.includes('housing') || sLow.includes('residential') || sLow.includes('villa')) return 'housing';
+    if (sLow.includes('power') || sLow.includes('utility') || sLow.includes('utilities') || sLow.includes('water') || sLow.includes('telecom') || sLow.includes('substation')) return 'utilities';
+    if (sLow.includes('climat') || sLow.includes('weather') || sLow.includes('co2')) return 'climate';
+    if (sLow.includes('solar') || sLow.includes('energy') || sLow.includes('gas') || sLow.includes('grid')) return 'energy';
+    if (sLow.includes('construct') || sLow.includes('building project') || sLow.includes('zoning')) return 'construction';
+    if (sLow.includes('infrastruct') || sLow.includes('bridge') || sLow.includes('road') || sLow.includes('lighting')) return 'infrastructure';
+    if (sLow.includes('agri') || sLow.includes('farm') || sLow.includes('crop') || sLow.includes('irrigation') || sLow.includes('livestock') || sLow.includes('greenhouse')) return 'agriculture';
+    if (sLow.includes('employ') || sLow.includes('job') || sLow.includes('business hub') || sLow.includes('free zone') || sLow.includes('corporate')) return 'employment';
+    if (sLow.includes('govt') || sLow.includes('government') || sLow.includes('ministry') || sLow.includes('embassy') || sLow.includes('court') || sLow.includes('municipal') || sLow.includes('service') || sLow.includes('tamm')) return 'government';
+    return 'government';
+  }
+
+  const item = itemOrType;
+  if (item.subType) {
+    const parentCat = findCategoryBySubcategoryId(item.subType);
+    if (parentCat) return parentCat.id;
+  }
+  
+  if (item.type && CANONICAL_TO_CATEGORY_ID && CANONICAL_TO_CATEGORY_ID[item.type.toUpperCase()]) {
+    return CANONICAL_TO_CATEGORY_ID[item.type.toUpperCase()];
+  }
+
+  const catName = item.category_en || item.category;
+  if (catName) {
+    const cLow = catName.toLowerCase();
+    const cat = CATEGORY_TREE.find(c => c.id === cLow || c.name.toLowerCase() === cLow);
+    if (cat) return cat.id;
+  }
+
+  return getCategoryKeyFromItem(item.facilityType || item.type || item.name || 'government');
+}
+
+export const getCategoryColorDetails = (itemOrType) => {
+  const catKey = getCategoryKeyFromItem(itemOrType);
+  const style = CATEGORY_STYLE_MAP[catKey] || CATEGORY_STYLE_MAP.government;
+  return {
+    textColor: `text-[${style.iconColor}]`,
+    hexColor: style.iconColor,
+    pastelBg: style.pastelBg,
+    pastelBorder: style.pastelBorder
+  };
+};
+
+export const createPulsePointerIcon = (itemOrType = 'government') => {
+  const catKey = getCategoryKeyFromItem(itemOrType);
+  const style = CATEGORY_STYLE_MAP[catKey] || CATEGORY_STYLE_MAP.government;
+  const { pastelBg, pastelBorder, iconColor, iconInnerSvg } = style;
   
   return L.divIcon({
     className: 'custom-pulse-pointer-container',
     html: `
-      <div class="relative flex items-center justify-center" style="width: 56px; height: 56px;">
-        <!-- Expanding Pulse Wave 1 -->
-        <div class="absolute inset-0 rounded-full animate-ping opacity-65 pointer-events-none" style="background-color: ${hexColor}40;"></div>
-        <!-- Glowing Pulse Aura 2 -->
-        <div class="absolute inset-1.5 rounded-full animate-pulse opacity-85 pointer-events-none border-2" style="background-color: ${hexColor}25; border-color: ${hexColor}; box-shadow: 0 0 20px ${hexColor};"></div>
-        <!-- Pulse Target Center Core -->
-        <div class="relative w-7 h-7 rounded-full bg-white shadow-[0_0_14px_${hexColor}] flex items-center justify-center border-2 pointer-events-auto" style="border-color: ${hexColor};">
-          <div class="w-3 h-3 rounded-full animate-ping" style="background-color: ${hexColor};"></div>
-          <div class="absolute w-2.5 h-2.5 rounded-full shadow-sm" style="background-color: ${hexColor};"></div>
+      <div class="relative flex items-center justify-center" style="width: 60px; height: 60px;">
+        <!-- Expanding Radar Ping Wave in Pastel Accent -->
+        <div class="absolute inset-0 rounded-full animate-ping opacity-60 pointer-events-none" style="background-color: ${pastelBorder}60;"></div>
+        <!-- Glowing Ambient Aura Ring -->
+        <div class="absolute inset-2 rounded-full animate-pulse opacity-75 pointer-events-none border-2" style="background-color: ${pastelBg}90; border-color: ${pastelBorder}; box-shadow: 0 0 16px ${pastelBorder};"></div>
+        <!-- Pulse Target Center Anchor Core -->
+        <div class="relative w-7 h-7 rounded-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.25)] flex items-center justify-center border-2 pointer-events-auto" style="border-color: ${pastelBorder};">
+          <div class="w-3 h-3 rounded-full animate-ping" style="background-color: ${iconColor};"></div>
+          <div class="absolute w-2.5 h-2.5 rounded-full shadow-xs" style="background-color: ${iconColor};"></div>
         </div>
-        <!-- Floating Animated Pointer Pin above pulse beacon -->
-        <div class="absolute -top-7 ${textColor} animate-bounce flex items-center justify-center pointer-events-none" style="filter: drop-shadow(0 6px 10px ${hexColor}80);">
-          <svg width="32" height="38" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M16 0C7.163 0 0 7.163 0 16C0 26.667 16 40 16 40C16 40 32 26.667 32 16C32 7.163 24.837 0 16 0Z" fill="currentColor"/>
-            <circle cx="16" cy="16" r="6" fill="white"/>
-            <circle cx="16" cy="16" r="3" fill="currentColor"/>
+        <!-- Floating Animated Pastel Pin with Embedded Category Icon -->
+        <div class="absolute -top-9 animate-bounce flex items-center justify-center pointer-events-none" style="filter: drop-shadow(0 6px 12px rgba(0,0,0,0.35));">
+          <svg width="36" height="46" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17 1C9.268 1 3 7.268 3 15C3 25.5 17 43 17 43C17 43 31 25.5 31 15C31 7.268 24.732 1 17 1Z" 
+                  fill="${pastelBg}" stroke="${pastelBorder}" stroke-width="2"/>
+            <circle cx="17" cy="15" r="9.5" fill="#FFFFFF" stroke="${pastelBorder}" stroke-width="0.75"/>
+            <svg x="10.5" y="8.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              ${iconInnerSvg}
+            </svg>
           </svg>
         </div>
       </div>
     `,
-    iconSize: [56, 56],
-    iconAnchor: [28, 28]
+    iconSize: [60, 60],
+    iconAnchor: [30, 30]
   });
 };
 
-const createCategoryIcon = (type, isSelected = false) => {
-  const { textColor } = getCategoryColorDetails(type);
-
+export const createCategoryIcon = (itemOrType, isSelected = false) => {
   if (isSelected) {
-    return createPulsePointerIcon(type);
+    return createPulsePointerIcon(itemOrType);
   }
+
+  const catKey = getCategoryKeyFromItem(itemOrType);
+  const style = CATEGORY_STYLE_MAP[catKey] || CATEGORY_STYLE_MAP.government;
+  const { pastelBg, pastelBorder, iconColor, iconInnerSvg } = style;
 
   return L.divIcon({
     className: 'custom-map-pin-container',
-    html: `<div class="${textColor} flex items-center justify-center hover:scale-110 transition-transform duration-300 origin-bottom" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3))">
-             <svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-               <path d="M16 0C7.163 0 0 7.163 0 16C0 26.667 16 40 16 40C16 40 32 26.667 32 16C32 7.163 24.837 0 16 0Z" fill="currentColor"/>
-               <circle cx="16" cy="16" r="6" fill="white"/>
-             </svg>
-           </div>`,
-    iconSize: [32, 40],
-    iconAnchor: [16, 40]
+    html: `
+      <div class="flex items-center justify-center hover:scale-125 hover:-translate-y-1.5 transition-transform duration-200 origin-bottom cursor-pointer" style="filter: drop-shadow(0 3px 6px rgba(0,0,0,0.28));">
+        <svg width="34" height="44" viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17 1C9.268 1 3 7.268 3 15C3 25.5 17 43 17 43C17 43 31 25.5 31 15C31 7.268 24.732 1 17 1Z" 
+                fill="${pastelBg}" stroke="${pastelBorder}" stroke-width="1.75"/>
+          <circle cx="17" cy="15" r="9.5" fill="#FFFFFF" stroke="${pastelBorder}" stroke-width="0.5"/>
+          <svg x="10.5" y="8.5" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${iconColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            ${iconInnerSvg}
+          </svg>
+        </svg>
+      </div>
+    `,
+    iconSize: [34, 44],
+    iconAnchor: [17, 44],
+    popupAnchor: [0, -42]
   });
 };
 
@@ -182,22 +365,26 @@ function MapController({ explorerState, setExplorerState, isExplorer }) {
     }
   }, [isExplorer, explorerState?.isDrawingMode, explorerState?.drawingTool, explorerState?.resizeTrigger, map]);
 
-  useEffect(() => {
-    if (isExplorer) {
-      const targetLat = explorerState?.mapFocus?.lat || explorerState?.userLocation?.lat || 24.4839;
-      const targetLng = explorerState?.mapFocus?.lng || explorerState?.userLocation?.lng || 54.3773;
-      const targetZoom = explorerState?.mapFocus?.zoom || 16;
-      map.flyTo([targetLat, targetLng], targetZoom, { animate: true, duration: 1.2 });
-    }
-  }, [isExplorer]);
+  const lastFlownRef = useRef(null);
 
   useEffect(() => {
-    if (explorerState?.mapFocus) {
-      map.flyTo(
-        [explorerState.mapFocus.lat, explorerState.mapFocus.lng], 
-        explorerState.mapFocus.zoom || 16, 
-        { animate: true, duration: 1.2 }
-      );
+    if (explorerState?.mapFocus && explorerState.mapFocus.lat && explorerState.mapFocus.lng) {
+      const { lat, lng, zoom = 16, timestamp } = explorerState.mapFocus;
+      
+      // Guard against redundant flyTo animations to the same location
+      const last = lastFlownRef.current;
+      if (
+        last && 
+        last.lat === lat && 
+        last.lng === lng && 
+        last.zoom === zoom && 
+        (!timestamp || last.timestamp === timestamp)
+      ) {
+        return;
+      }
+
+      lastFlownRef.current = { lat, lng, zoom, timestamp };
+      map.flyTo([lat, lng], zoom, { animate: true, duration: 1.5 });
     }
   }, [explorerState?.mapFocus, map]);
 
@@ -209,12 +396,26 @@ function MapController({ explorerState, setExplorerState, isExplorer }) {
       else if (action === 'home' || action === 'compass') {
         map.flyTo([24.4839, 54.3773], 13, { animate: true, duration: 1.2 });
       } else if (action === 'locate') {
-        const loc = explorerState?.userLocation || { lat: 24.4839, lng: 54.3773 };
-        map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 1.2 });
+        if (explorerState?.userLocation && explorerState?.userLocationEnabled) {
+          map.flyTo([explorerState.userLocation.lat, explorerState.userLocation.lng], 16, { animate: true, duration: 1.5 });
+        } else if (typeof navigator !== 'undefined' && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+              setExplorerState(prev => ({
+                ...prev,
+                userLocationEnabled: true,
+                userLocation: coords,
+                mapFocus: { lat: coords.lat, lng: coords.lng, zoom: 16, timestamp: Date.now() }
+              }));
+            },
+            () => {}
+          );
+        }
       }
       setExplorerState(prev => ({ ...prev, mapAction: null }));
     }
-  }, [explorerState?.mapAction, explorerState?.userLocation, map, setExplorerState]);
+  }, [explorerState?.mapAction, explorerState?.userLocation, explorerState?.userLocationEnabled, map, setExplorerState]);
 
   return null;
 }
@@ -399,18 +600,9 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
 
     const bounds = [[minLat, minLng], [maxLat, maxLng]];
     const centerCoords = { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 };
-    const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
-    const activeSubcategories = explorerState?.selectedGisSubcategories || [];
-
-    // 1. Spatial containment
-    const inShape = masterDataset.filter(loc => 
-      isPointInRectangle(loc.lat, loc.lng, bounds)
-    );
-
-    // 2. Category relevance
-    const filtered = activeSubcategories.length > 0
-      ? inShape.filter(loc => matchesGisSubcategories(loc, activeSubcategories))
-      : inShape;
+    const widthKm = calculateGeodesicDistance(minLat, minLng, minLat, maxLng);
+    const heightKm = calculateGeodesicDistance(minLat, minLng, maxLat, minLng);
+    const areaKm2 = (widthKm * heightKm).toFixed(1);
 
     const newDrawing = {
       id: 'rect-' + Date.now(),
@@ -418,17 +610,26 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
       bounds
     };
 
-    const [userMsg, assistantMsg] = generateAiChatMessages('rectangle', filtered, centerCoords, activeSubcategories, inShape);
+    const activeDrawnArea = {
+      type: 'rectangle',
+      label: `Drawn Area · ${areaKm2} km²`,
+      label_ar: `المنطقة المحددة · ${areaKm2} كم²`,
+      areaKm2: Number(areaKm2),
+      bounds,
+      centerCoords
+    };
 
     setExplorerState(prev => ({
       ...prev,
       drawingTool: null,
       activeMenu: null,
       drawnRectangle: bounds,
-      drawings: [...(prev.drawings || []), newDrawing],
-      chatHistory: [...(prev.chatHistory || []), userMsg, assistantMsg],
-      activeResults: filtered,
-      showSearchResults: filtered.length > 0
+      drawnCircle: null,
+      drawnPolygon: null,
+      drawings: [newDrawing],
+      activeDrawnArea,
+      activeResults: [],
+      showSearchResults: false
     }));
 
     setStartPoint(null);
@@ -443,18 +644,7 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
 
     const center = [start.lat, start.lng];
     const centerCoords = { lat: start.lat, lng: start.lng };
-    const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
-    const activeSubcategories = explorerState?.selectedGisSubcategories || [];
-
-    // 1. Spatial containment
-    const inShape = masterDataset.filter(loc => 
-      isPointInCircle(loc.lat, loc.lng, centerCoords, radius)
-    );
-
-    // 2. Category relevance
-    const filtered = activeSubcategories.length > 0
-      ? inShape.filter(loc => matchesGisSubcategories(loc, activeSubcategories))
-      : inShape;
+    const radiusKm = (radius / 1000).toFixed(1);
 
     const newDrawing = {
       id: 'circle-' + Date.now(),
@@ -463,17 +653,27 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
       radius
     };
 
-    const [userMsg, assistantMsg] = generateAiChatMessages('circle', filtered, centerCoords, activeSubcategories, inShape);
+    const activeDrawnArea = {
+      type: 'circle',
+      label: `Drawn Area · ${radiusKm} km radius`,
+      label_ar: `المنطقة المحددة · نصف قطر ${radiusKm} كم`,
+      radiusKm: Number(radiusKm),
+      radius,
+      center,
+      centerCoords
+    };
 
     setExplorerState(prev => ({
       ...prev,
       drawingTool: null,
       activeMenu: null,
       drawnCircle: { center, radius },
-      drawings: [...(prev.drawings || []), newDrawing],
-      chatHistory: [...(prev.chatHistory || []), userMsg, assistantMsg],
-      activeResults: filtered,
-      showSearchResults: filtered.length > 0
+      drawnRectangle: null,
+      drawnPolygon: null,
+      drawings: [newDrawing],
+      activeDrawnArea,
+      activeResults: [],
+      showSearchResults: false
     }));
 
     setStartPoint(null);
@@ -492,18 +692,13 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
     const avgLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
     const centerCoords = { lat: avgLat, lng: avgLng };
 
-    const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
-    const activeSubcategories = explorerState?.selectedGisSubcategories || [];
-
-    // 1. Precise Ray-Casting Polygon containment
-    const inShape = masterDataset.filter(loc => 
-      isPointInPolygon(loc.lat, loc.lng, positions)
-    );
-
-    // 2. Category relevance
-    const filtered = activeSubcategories.length > 0
-      ? inShape.filter(loc => matchesGisSubcategories(loc, activeSubcategories))
-      : inShape;
+    // Approximate area in km2
+    let area = 0;
+    for (let i = 0; i < positions.length; i++) {
+      const j = (i + 1) % positions.length;
+      area += positions[i][1] * positions[j][0] - positions[j][1] * positions[i][0];
+    }
+    const areaKm2 = Math.abs((area * 111 * 111 * Math.cos(avgLat * Math.PI / 180)) / 2).toFixed(1);
 
     const newDrawing = {
       id: 'poly-' + Date.now(),
@@ -511,17 +706,26 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
       positions
     };
 
-    const [userMsg, assistantMsg] = generateAiChatMessages('polygon', filtered, centerCoords, activeSubcategories, inShape);
+    const activeDrawnArea = {
+      type: 'polygon',
+      label: `Drawn Area · ${areaKm2} km²`,
+      label_ar: `المنطقة المحددة · ${areaKm2} كم²`,
+      areaKm2: Number(areaKm2),
+      positions,
+      centerCoords
+    };
 
     setExplorerState(prev => ({
       ...prev,
       drawingTool: null,
       activeMenu: null,
       drawnPolygon: positions,
-      drawings: [...(prev.drawings || []), newDrawing],
-      chatHistory: [...(prev.chatHistory || []), userMsg, assistantMsg],
-      activeResults: filtered,
-      showSearchResults: filtered.length > 0
+      drawnCircle: null,
+      drawnRectangle: null,
+      drawings: [newDrawing],
+      activeDrawnArea,
+      activeResults: [],
+      showSearchResults: false
     }));
 
     setPolyPoints([]);
@@ -627,12 +831,13 @@ function CustomDrawControl({ explorerState, setExplorerState }) {
 // Helper function to generate realistic road waypoints following Abu Dhabi road network and bridges
 function getRoadDirectionsWaypoints(startLoc, destLoc) {
   if (!startLoc || !destLoc) return [];
-  const sLat = startLoc.lat || 24.4789;
-  const sLng = startLoc.lng || 54.3312;
-  const dLat = destLoc.lat;
-  const dLng = destLoc.lng;
+  const sLat = Number(startLoc.lat || 24.4789);
+  const sLng = Number(startLoc.lng || 54.3312);
+  const dLat = Number(destLoc.lat);
+  const dLng = Number(destLoc.lng);
+  if (isNaN(sLat) || isNaN(sLng) || isNaN(dLat) || isNaN(dLng)) return [];
 
-  // 1. Saadiyat Island / Louvre Abu Dhabi area (Crosses via Sheikh Khalifa Bridge E12)
+  // 1. Saadiyat Island / Cultural District / Louvre Abu Dhabi (via Sheikh Khalifa Bridge E12)
   if (dLat > 24.51 && dLng > 54.37 && dLng < 54.45) {
     return [
       [sLat, sLng],
@@ -644,7 +849,7 @@ function getRoadDirectionsWaypoints(startLoc, destLoc) {
     ];
   }
 
-  // 2. Yas Island area (Crosses via E12 Saadiyat Expressway & Jubail Causeway)
+  // 2. Yas Island area (via E12 Saadiyat Expressway & Jubail Causeway)
   if (dLat > 24.48 && dLng > 54.55) {
     return [
       [sLat, sLng],
@@ -657,8 +862,19 @@ function getRoadDirectionsWaypoints(startLoc, destLoc) {
     ];
   }
 
-  // 3. Qasr Al Watan / Ras Al Akhdar area (Follows Corniche West & Bainuna St)
-  if (dLng < 54.32) {
+  // 3. Al Reem Island & Al Maryah Island (via Hazza Bin Zayed / Al Maryah Bridges)
+  if (dLat > 24.48 && dLat < 24.52 && dLng > 54.37 && dLng < 54.42) {
+    return [
+      [sLat, sLng],
+      [24.4880, 54.3620], // Zayed The First St
+      [24.4960, 54.3800], // Hazza Bin Zayed St
+      [24.4990, 54.3920], // Al Maryah / Reem Bridge
+      [dLat, dLng]
+    ];
+  }
+
+  // 4. Qasr Al Watan / Ras Al Akhdar area (Follows Corniche West & Bainuna St)
+  if (dLng < 54.33 && dLat > 24.44) {
     return [
       [sLat, sLng],
       [24.4730, 54.3230], // Corniche West
@@ -668,8 +884,8 @@ function getRoadDirectionsWaypoints(startLoc, destLoc) {
     ];
   }
 
-  // 4. Sheikh Zayed Mosque / South Abu Dhabi (Follows Airport Road E11 corridor)
-  if (dLat < 24.43 && dLng > 54.42) {
+  // 5. Sheikh Zayed Grand Mosque / South Abu Dhabi (via Sheikh Rashid Bin Saeed St / Airport Rd)
+  if (dLat < 24.43 && dLng > 54.42 && dLng < 54.50) {
     return [
       [sLat, sLng],
       [24.4650, 54.3520], // Sultan Bin Zayed St
@@ -680,8 +896,20 @@ function getRoadDirectionsWaypoints(startLoc, destLoc) {
     ];
   }
 
-  // 5. Umm Al Emarat Park / Al Mushrif area
-  if (dLat >= 24.43 && dLat <= 24.46 && dLng >= 54.36 && dLng <= 54.40) {
+  // 6. Mussafah Industrial Area / ICAD (via Mussafah Bridge E30)
+  if (dLat < 24.40 && dLng < 54.55) {
+    return [
+      [sLat, sLng],
+      [24.4550, 54.3680], // Sheikh Rashid St
+      [24.4250, 54.4400], // Maqta Approach
+      [24.3980, 54.4950], // Mussafah Bridge
+      [24.3650, 54.5050], // Mussafah Industrial Main Blvd
+      [dLat, dLng]
+    ];
+  }
+
+  // 7. Umm Al Emarat Park / Al Mushrif area
+  if (dLat >= 24.43 && dLat <= 24.47 && dLng >= 54.36 && dLng <= 54.40) {
     return [
       [sLat, sLng],
       [24.4650, 54.3550], // Karamah St
@@ -691,16 +919,25 @@ function getRoadDirectionsWaypoints(startLoc, destLoc) {
     ];
   }
 
-  // Generic Abu Dhabi Street Grid Route (curves along main avenues instead of cutting straight line)
-  const midLat1 = sLat + (dLat - sLat) * 0.35;
-  const midLng1 = sLng + (dLng - sLng) * 0.15;
-  const midLat2 = sLat + (dLat - sLat) * 0.75;
-  const midLng2 = sLng + (dLng - sLng) * 0.85;
+  // 8. General Street Grid Waypoints (Follows primary Abu Dhabi street alignments)
+  const p1Lat = sLat + (dLat - sLat) * 0.18;
+  const p1Lng = sLng + (dLng - sLng) * 0.04;
+
+  const p2Lat = sLat + (dLat - sLat) * 0.42;
+  const p2Lng = sLng + (dLng - sLng) * 0.30;
+
+  const p3Lat = sLat + (dLat - sLat) * 0.72;
+  const p3Lng = sLng + (dLng - sLng) * 0.68;
+
+  const p4Lat = sLat + (dLat - sLat) * 0.90;
+  const p4Lng = sLng + (dLng - sLng) * 0.92;
 
   return [
     [sLat, sLng],
-    [midLat1, midLng1],
-    [midLat2, midLng2],
+    [p1Lat, p1Lng],
+    [p2Lat, p2Lng],
+    [p3Lat, p3Lng],
+    [p4Lat, p4Lng],
     [dLat, dLng]
   ];
 }
@@ -749,7 +986,7 @@ function FacilityMarker({ item, isArabic, isLoggedIn, explorerState, setExplorer
   return (
     <Marker 
       position={[item.lat, item.lng]}
-      icon={createCategoryIcon(item.type || item.facilityType, isSelected)}
+      icon={createCategoryIcon(item, isSelected)}
       zIndexOffset={isSelected ? 3000 : 100}
       eventHandlers={{
         click: () => {
@@ -942,13 +1179,14 @@ function MapStatusBar({ mapStatus, isDarkMode }) {
 export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapClick, selectedLocation, isExplorer, explorerState, setExplorerState }) {
   const { isArabic } = useLanguage();
   const { isDarkMode } = useTheme();
+  const { activeProject } = useProject();
   const [mapStatus, setMapStatus] = useState({ lat: 24.483910, lng: 54.377320, zoom: 16 });
   const userLoc = explorerState?.userLocation || { lat: 24.4839, lng: 54.3773 };
-  const initialCenter = [
-    explorerState?.mapFocus?.lat || userLoc.lat,
-    explorerState?.mapFocus?.lng || userLoc.lng
-  ];
-  const initialZoom = explorerState?.mapFocus?.zoom || 16;
+  const hasUserLocation = Boolean(explorerState?.userLocationEnabled && explorerState?.userLocation);
+  const initialCenter = hasUserLocation
+    ? [userLoc.lat, userLoc.lng]
+    : (explorerState?.mapFocus?.lat ? [explorerState.mapFocus.lat, explorerState.mapFocus.lng] : [24.4839, 54.3773]);
+  const initialZoom = hasUserLocation ? 16 : (explorerState?.mapFocus?.zoom || 13);
 
   const uaeBounds = [
     [22.5, 51.5],
@@ -962,6 +1200,9 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
   const routeDest = explorerState?.activeRouteDestination;
 
   const routeWaypoints = routeDest ? getRoadDirectionsWaypoints(userLoc, routeDest) : [];
+  const routeDistanceKm = routeDest && userLoc && routeDest.lat && routeDest.lng
+    ? calculateGeodesicDistance(userLoc.lat, userLoc.lng, routeDest.lat, routeDest.lng)
+    : null;
 
   return (
     <div className="absolute inset-0 z-0 pointer-events-auto w-full h-full">
@@ -986,8 +1227,8 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
         
         <ArcGISBasemap activeBasemapId={explorerState?.activeBasemap || explorerState?.basemap || 'esri-vector'} />
         
-        {/* User Location Marker Pin with radar ring & location popup */}
-        {userLoc && userLoc.lat && userLoc.lng && (
+        {/* User Location Marker Pin with radar ring & location popup (strictly when location is allowed) */}
+        {explorerState?.userLocationEnabled && userLoc && userLoc.lat && userLoc.lng && (
           <Marker 
             position={[userLoc.lat, userLoc.lng]} 
             icon={userLocationPinIcon} 
@@ -1032,19 +1273,61 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           )
         ))}
 
-        {/* Render Realistic Road Network Polyline for Directions */}
+        {/* Render Realistic Google Maps Style Route Polyline */}
         {routeWaypoints.length > 0 && (
           <>
-            {/* Outer dark road casing for high contrast */}
+            {/* 1. Subtle Outer Drop Shadow / Casing */}
             <Polyline 
               positions={routeWaypoints}
-              pathOptions={{ color: '#0b1426', weight: 8, opacity: 0.85, lineCap: 'round', lineJoin: 'round' }}
+              pathOptions={{ 
+                color: isDarkMode ? '#0d47a1' : '#174ea6', 
+                weight: 10, 
+                opacity: 0.95, 
+                lineCap: 'round', 
+                lineJoin: 'round' 
+              }} 
             />
-            {/* Inner cyan animated road navigation line */}
+            {/* 2. Google Maps Navigation Blue Core Line */}
             <Polyline 
               positions={routeWaypoints}
-              pathOptions={{ color: '#00e5ff', weight: 4, opacity: 1, dashArray: '10, 10', lineCap: 'round', lineJoin: 'round' }}
+              pathOptions={{ 
+                color: '#1a73e8', 
+                weight: 6, 
+                opacity: 1, 
+                lineCap: 'round', 
+                lineJoin: 'round' 
+              }} 
             />
+            {/* 3. Subtle Inner White Directional Highway Dash Overlay */}
+            <Polyline 
+              positions={routeWaypoints}
+              pathOptions={{ 
+                color: '#ffffff', 
+                weight: 2, 
+                opacity: 0.45, 
+                dashArray: '8, 16', 
+                lineCap: 'round', 
+                lineJoin: 'round' 
+              }} 
+            />
+
+            {/* Google Maps Origin Waypoint Dot */}
+            {routeWaypoints[0] && (
+              <Marker 
+                position={routeWaypoints[0]} 
+                icon={googleMapsOriginIcon} 
+                zIndexOffset={2000} 
+              />
+            )}
+
+            {/* Google Maps Destination Pin */}
+            {routeWaypoints[routeWaypoints.length - 1] && (
+              <Marker 
+                position={routeWaypoints[routeWaypoints.length - 1]} 
+                icon={googleMapsDestinationIcon} 
+                zIndexOffset={2001} 
+              />
+            )}
           </>
         )}
 
@@ -1119,7 +1402,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           return (
             <Marker 
               position={[targetLoc.lat, targetLoc.lng]} 
-              icon={createPulsePointerIcon(itemType)}
+              icon={createPulsePointerIcon(targetLoc)}
               zIndexOffset={3000}
             />
           );
@@ -1150,44 +1433,101 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
         </div>
       )}
 
-      {/* Floating Active Spatial Zone Filter Banner with Clear Shape Button */}
-      {isExplorer && ((explorerState?.drawings && explorerState.drawings.length > 0) || explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle) && !explorerState?.drawingTool && (
-        <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-[400] px-3.5 py-2 rounded-2xl shadow-xl border flex items-center gap-2.5 backdrop-blur-xl transition-all ${
-          isDarkMode 
-            ? 'bg-[#0f1932]/95 border-purple-500/40 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]' 
-            : 'bg-white/95 border-purple-200 text-slate-800 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
-        }`}>
-          <div className="w-2 h-2 rounded-full bg-[#7c3aed] animate-pulse" />
-          <span className="text-xs font-bold">
-            {isArabic ? 'منطقة التحليل المكانية نشطة' : 'Active Spatial Zone Filter'}
-          </span>
-          <button
-            type="button"
-            onClick={() => {
-              const masterDataset = getMasterAuthoritativeDataset(activeProject?.datasets || []);
-              const activeSubs = explorerState?.selectedGisSubcategories || [];
-              const restoredResults = activeSubs.length > 0
-                ? masterDataset.filter(loc => matchesGisSubcategories(loc, activeSubs))
-                : (activeProject?.datasets || masterDataset);
-
-              setExplorerState(prev => ({
-                ...prev,
-                drawings: [],
-                drawnPolygon: null,
-                drawnCircle: null,
-                drawnRectangle: null,
-                activeResults: restoredResults,
-                showSearchResults: activeSubs.length > 0
-              }));
-            }}
-            className="ms-1 px-2.5 py-1 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-600 hover:text-white dark:text-rose-400 dark:hover:text-white border border-rose-500/30 text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer"
-            title={isArabic ? 'مسح الشكل المكتوب' : 'Clear drawn shape'}
+      {/* Floating Center Control Area (Google Maps Direction Card & Spatial Zone Filter) */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[450] pointer-events-auto flex flex-col items-center gap-2 max-w-[94%] sm:max-w-md w-full px-2">
+        {/* Floating Google Maps Style Direction Navigation Card with Clear Button */}
+        {isExplorer && routeDest && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`w-full rounded-2xl border shadow-2xl p-2.5 sm:px-3.5 sm:py-3 flex items-center justify-between gap-3 backdrop-blur-xl transition-all ${
+              isDarkMode 
+                ? 'bg-[#0b1426]/95 border-slate-700/80 text-white shadow-[0_15px_35px_rgba(0,0,0,0.6)]' 
+                : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-xl'
+            }`}
           >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>{isArabic ? 'مسح الرسم' : 'Clear Shape'}</span>
-          </button>
-        </div>
-      )}
+            {/* Google Maps Blue Turn Icon */}
+            <div className="w-9 h-9 rounded-xl bg-[#1a73e8] text-white flex items-center justify-center shrink-0 shadow-md">
+              <Navigation className="w-5 h-5 fill-current" />
+            </div>
+
+            {/* Destination & Route Metrics */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="font-extrabold text-xs truncate">
+                  {isArabic && routeDest.name_ar ? routeDest.name_ar : routeDest.name}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] font-semibold mt-0.5">
+                <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">
+                  {Math.max(2, Math.round(((routeDistanceKm || 2.5) / 35) * 60))} {t('min', 'دقيقة')}
+                </span>
+                <span className="text-slate-300 dark:text-slate-600">•</span>
+                <span className="text-slate-600 dark:text-slate-300 font-bold">
+                  {routeDistanceKm ? routeDistanceKm.toFixed(1) : '2.5'} {t('km', 'كم')}
+                </span>
+                <span className="text-slate-300 dark:text-slate-600 hidden sm:inline">•</span>
+                <span className="text-slate-400 text-[10px] hidden sm:inline font-medium">
+                  {t('Fastest route', 'أسرع مسار')}
+                </span>
+              </div>
+            </div>
+
+            {/* Clear Direction Route Button */}
+            <button
+              type="button"
+              onClick={() => setExplorerState(prev => ({ ...prev, activeRouteDestination: null }))}
+              className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:hover:bg-rose-900/80 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
+              title={t('Clear active route', 'إلغاء وتفريغ المسار')}
+            >
+              <X className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="hidden xs:inline">{t('Clear Route', 'مسح المسار')}</span>
+            </button>
+          </motion.div>
+        )}
+
+        {/* Floating Active Spatial Zone Filter Banner with Clear Shape Button */}
+        {isExplorer && ((explorerState?.drawings && explorerState.drawings.length > 0) || explorerState?.drawnPolygon || explorerState?.drawnCircle || explorerState?.drawnRectangle) && !explorerState?.drawingTool && (
+          <div className={`px-3.5 py-2 rounded-2xl shadow-xl border flex items-center gap-2.5 backdrop-blur-xl transition-all ${
+            isDarkMode 
+              ? 'bg-[#0f1932]/95 border-purple-500/40 text-white shadow-[0_8px_32px_rgba(0,0,0,0.5)]' 
+              : 'bg-white/95 border-purple-200 text-slate-800 shadow-[0_8px_32px_rgba(0,0,0,0.12)]'
+          }`}>
+            <div className="w-2 h-2 rounded-full bg-[#7c3aed] animate-pulse" />
+            <span className="text-xs font-bold">
+              {isArabic ? 'منطقة التحليل المكانية نشطة' : 'Active Spatial Zone Filter'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const datasets = activeProject?.datasets || explorerState?.activeProject?.datasets || [];
+                const masterDataset = getMasterAuthoritativeDataset(datasets);
+                const activeSubs = explorerState?.selectedGisSubcategories || [];
+                const restoredResults = activeSubs.length > 0
+                  ? masterDataset.filter(loc => matchesGisSubcategories(loc, activeSubs))
+                  : (datasets.length > 0 ? datasets : masterDataset);
+
+                setExplorerState(prev => ({
+                  ...prev,
+                  drawings: [],
+                  drawnPolygon: null,
+                  drawnCircle: null,
+                  drawnRectangle: null,
+                  activeDrawnArea: null,
+                  activeResults: restoredResults,
+                  showSearchResults: activeSubs.length > 0
+                }));
+              }}
+              className="ms-1 px-2.5 py-1 rounded-xl bg-rose-500/15 hover:bg-rose-500 text-rose-600 hover:text-white dark:text-rose-400 dark:hover:text-white border border-rose-500/30 text-[10.5px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+              title={isArabic ? 'مسح الشكل المكتوب' : 'Clear drawn shape'}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>{isArabic ? 'مسح الرسم' : 'Clear Shape'}</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

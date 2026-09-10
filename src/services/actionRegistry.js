@@ -32,6 +32,8 @@ export const ACTION_TYPES = {
   LANGUAGE_SET: 'LANGUAGE_SET',
   CHANGE_THEME: 'CHANGE_THEME',
   SHOW_DIRECTIONS: 'SHOW_DIRECTIONS',
+  CLEAR_DIRECTIONS: 'CLEAR_DIRECTIONS',
+  VISION_ANALYZE: 'VISION_ANALYZE',
   
   // Analytics & Visualizations
   ANALYTICS_SHOW_CHART: 'ANALYTICS_SHOW_CHART',
@@ -108,6 +110,7 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
         drawnPolygon: null,
         drawnCircle: null,
         drawnRectangle: null,
+        activeDrawnArea: null,
         selectedLocation: null,
         selectedDetail: null,
         activeResults: [],
@@ -134,6 +137,7 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
           drawnPolygon: null,
           drawnCircle: null,
           drawnRectangle: null,
+          activeDrawnArea: null,
           drawings: [],
           drawingTool: null,
           activeResults: restoredResults,
@@ -241,6 +245,14 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
         return { success: true, message: `Route calculated to ${destination.name}` };
       }
       return { success: false, message: "No destination found for directions" };
+    }
+
+    case ACTION_TYPES.CLEAR_DIRECTIONS: {
+      setExplorerState(prev => ({
+        ...prev,
+        activeRouteDestination: null
+      }));
+      return { success: true, message: "Directions cleared from map" };
     }
 
     case ACTION_TYPES.NAVIGATION_SWITCH: {

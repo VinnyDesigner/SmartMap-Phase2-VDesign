@@ -292,6 +292,60 @@ async function runTests() {
   const res25 = await mockAiEngine.processQuery('مسح منطقة الرسم', circleState, true);
   assert(res25.actions.some(a => a.type === 'MAP_CLEAR_DRAWING'), 'Dispatches MAP_CLEAR_DRAWING action for Arabic request');
 
+  // Test 26: Clear directions command
+  console.log('\n--- Test 26: Clear Directions Command ---');
+  const activeRouteState = {
+    ...defaultState,
+    activeRouteDestination: { name: 'Sheikh Zayed Grand Mosque', lat: 24.4128, lng: 54.4750 }
+  };
+  const res26 = await mockAiEngine.processQuery('Clear directions', activeRouteState, false);
+  assert(res26.actions.some(a => a.type === 'CLEAR_DIRECTIONS'), 'Dispatches CLEAR_DIRECTIONS action');
+  assert(res26.reply.toLowerCase().includes('cleared'), 'Confirmation explains direction line was cleared');
+
+  // Test 27: Clear directions in Arabic
+  console.log('\n--- Test 27: Clear Directions in Arabic ---');
+  const res27 = await mockAiEngine.processQuery('مسح المسار', activeRouteState, true);
+  assert(res27.actions.some(a => a.type === 'CLEAR_DIRECTIONS'), 'Dispatches CLEAR_DIRECTIONS action in Arabic');
+
+  // Test 28: User-Initiated Query within Active Drawn Area (Wireframe Workflow)
+  console.log('\n--- Test 28: User-Initiated Query within Active Drawn Area ---');
+  const drawnAreaState = {
+    ...defaultState,
+    drawnCircle: { center: [24.4839, 54.3773], radius: 25000 },
+    activeDrawnArea: {
+      type: 'circle',
+      label: 'Drawn Area · 25.0 km radius',
+      label_ar: 'المنطقة المحددة · نصف قطر 25.0 كم',
+      radiusKm: 25.0,
+      radius: 25000,
+      center: [24.4839, 54.3773]
+    },
+    activeResults: [] // Initially empty on drawing, awaiting user query
+  };
+
+  const res28 = await mockAiEngine.processQuery('Show government facilities', drawnAreaState, false);
+  assert(res28.results.length > 0, 'Found government facilities within active drawn area');
+  assert(res28.results.every(r => r.type === 'GOVERNMENT' || r.facilityType === 'GOVERNMENT'), 'All returned facilities are strictly GOVERNMENT');
+  assert(res28.reply.includes('Drawn Area · 25.0 km radius') || res28.reply.includes('within'), 'Reply explicitly references active drawn area');
+  // Test 29: Export Spatial Analysis to PDF
+  console.log('\n--- Test 29: Export Spatial Analysis to PDF ---');
+  const res29 = await mockAiEngine.processQuery('Export spatial analysis to PDF', drawnAreaState, false);
+  assert(res29.actions.some(a => a.type === 'REPORT_GENERATE'), 'Dispatches REPORT_GENERATE action');
+  assert(res29.reply.includes('Exporting Spatial Analysis to PDF') || res29.reply.includes('PDF'), 'Reply confirms PDF export');
+  assert(!res29.reply.toLowerCase().includes('found 10 verified port'), 'Does NOT falsely return ports for export query');
+
+  // Test 30: "export saptial data to pdf" (handles typo and spatial data)
+  console.log('\n--- Test 30: export saptial data to pdf ---');
+  const res30 = await mockAiEngine.processQuery('export saptial data to pdf', drawnAreaState, false);
+  assert(res30.actions.some(a => a.type === 'REPORT_GENERATE'), 'Dispatches REPORT_GENERATE action for typo query');
+  assert(!res30.reply.toLowerCase().includes('verified port'), 'Does NOT interpret export as port');
+
+  // Test 31: Legitimate search for ports / seaports
+  console.log('\n--- Test 31: Legitimate search for ports / seaports ---');
+  const res31 = await mockAiEngine.processQuery('Show ports in Abu Dhabi', defaultState, false);
+  assert(res31.results.length > 0, 'Found legitimate ports');
+  assert(res31.results.some(r => r.name.toLowerCase().includes('port') || (r.tags && r.tags.includes('port'))), 'Contains genuine port facility');
+
   console.log('\n====================================================');
   console.log('🎉 ALL TESTS PASSED! AI SEARCH ACCURACY FULLY VERIFIED');
   console.log('====================================================\n');

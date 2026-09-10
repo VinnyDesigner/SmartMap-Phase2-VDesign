@@ -510,18 +510,34 @@ export default function DetailSlidePanel({ explorerState, setExplorerState }) {
             </button>
           )}
 
-          {/* Get Directions */}
-          <button
-            onClick={handleDirections}
-            className={`py-2.5 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border ${
-              isDarkMode
-                ? 'bg-[#215A9E] text-white border-transparent hover:bg-[#1a477d]'
-                : 'bg-[#215A9E] text-white border-transparent hover:bg-[#1a477d]'
-            }`}
-          >
-            <Compass className="w-4 h-4 text-white" />
-            <span>{t('Get Directions', 'اتجاهات السير')}</span>
-          </button>
+          {/* Get Directions / Clear Route Toggle */}
+          {Boolean(
+            explorerState?.activeRouteDestination && 
+            (
+              (detail?.id && explorerState.activeRouteDestination.id === detail.id) ||
+              (detail?.name && explorerState.activeRouteDestination.name === detail.name)
+            )
+          ) ? (
+            <button
+              type="button"
+              onClick={() => setExplorerState(prev => ({ ...prev, activeRouteDestination: null }))}
+              className="py-2.5 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-300 dark:hover:bg-rose-900/80 border-rose-200 dark:border-rose-800"
+              title={t('Clear active route from map', 'إلغاء ومسح المسار من الخريطة')}
+            >
+              <X className="w-4 h-4 text-rose-500 stroke-[2.5]" />
+              <span>{t('Clear Route', 'مسح المسار')}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleDirections}
+              className="py-2.5 px-3 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer border bg-[#1a73e8] hover:bg-[#1557bf] text-white border-transparent shadow-sm"
+              title={t('Show directions on map', 'عرض الاتجاهات على الخريطة')}
+            >
+              <Navigation className="w-4 h-4 text-white fill-current" />
+              <span>{t('Get Directions', 'اتجاهات السير')}</span>
+            </button>
+          )}
         </div>
       </motion.div>
     </AnimatePresence>

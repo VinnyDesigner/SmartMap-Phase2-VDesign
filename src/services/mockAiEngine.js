@@ -1209,10 +1209,39 @@ export const mockAiEngine = {
         return { reply, actions, results: [] };
       }
 
-      if (parsedIntent.action === 'PRINT_MAP') {
-        actions.push({ type: ACTION_TYPES.REPORT_GENERATE, params: { type: 'map-print' } });
-        reply = isArabic ? "جاري فتح نموذج الطباعة المخصص الخريطة والتحليلات... 🖨️" : "Opening print layout... 🖨️";
-        return { reply, actions, results: [] };
+      if (parsedIntent.action === 'EXPORT_PDF' || parsedIntent.action === 'PRINT_MAP') {
+        actions.push({ 
+          type: ACTION_TYPES.REPORT_GENERATE, 
+          params: { format: 'pdf', type: 'spatial-data-report' } 
+        });
+
+        const hasSpatialZone = Boolean(
+          currentState?.activeDrawnArea || 
+          currentState?.drawnCircle || 
+          currentState?.drawnRectangle || 
+          currentState?.drawnPolygon
+        );
+        const zoneLabel = currentState?.activeDrawnArea?.label || (isArabic ? 'المنطقة المحددة' : 'Active Spatial Zone');
+        const activeCount = currentState?.activeResults?.length || 0;
+
+        reply = isArabic 
+          ? (hasSpatialZone
+              ? `📄 **جاري تصدير تقرير التحليل المكاني إلى PDF**\n\nتم إعداد تقرير التحليل المكاني الشامل لـ **${zoneLabel}**${activeCount > 0 ? ` متضمناً ${activeCount} منشأة مطابقة` : ''}. جاري فتح نافذة الطباعة والحفظ بصيغة PDF... 🖨️`
+              : `📄 **جاري تصدير تقرير الخريطة والبيانات المكانية إلى PDF**\n\nتم تجهيز ملخص البيانات والتحليلات الحالية. جاري فتح نافذة الطباعة والحفظ بصيغة PDF... 🖨️`)
+          : (hasSpatialZone
+              ? `📄 **Exporting Spatial Analysis to PDF**\n\nComprehensive spatial analysis report generated for **${zoneLabel}**${activeCount > 0 ? ` (${activeCount} matching facilities included)` : ''}. Triggering the print and PDF export layout... 🖨️`
+              : `📄 **Exporting Spatial Data Report to PDF**\n\nComprehensive spatial data and map report generated. Triggering the print and PDF export layout... 🖨️`);
+
+        const suggestions = isArabic
+          ? ['عرض التحليلات البيانية', 'مسح منطقة الرسم', 'عرض المنشآت الحكومية']
+          : ['View analytics dashboard', 'Clear drawn area', 'Show government facilities'];
+
+        return { 
+          reply, 
+          actions, 
+          results: currentState?.activeResults || [], 
+          suggestions 
+        };
       }
 
       if (parsedIntent.action === 'CLEAR_DRAWN_SHAPE') {
@@ -1223,6 +1252,17 @@ export const mockAiEngine = {
         const suggestions = isArabic
           ? ['عرض المنشآت الحكومية', 'عرض المعالم السياحية', 'عرض الحدائق العامة', 'عرض محطات النقل']
           : ['Show government facilities', 'Show tourism landmarks', 'Show parks', 'Show public transit'];
+        return { reply, actions, results: [], suggestions };
+      }
+
+      if (parsedIntent.action === 'CLEAR_DIRECTIONS') {
+        actions.push({ type: ACTION_TYPES.CLEAR_DIRECTIONS, params: {} });
+        reply = isArabic 
+          ? "تم مسح خط سير الاتجاهات وإلغاء المسار من الخريطة بنجاح. 🧭"
+          : "Active navigation direction line has been cleared from the map. 🧭";
+        const suggestions = isArabic
+          ? ['عرض المنشآت بالقرب مني', 'عرض كافة المنشآت في أبوظبي']
+          : ['Show facilities near me', 'Show all facilities in Abu Dhabi'];
         return { reply, actions, results: [], suggestions };
       }
 
@@ -1421,10 +1461,12 @@ export const mockAiEngine = {
       userLocation: currentState?.userLocation,
       selectedLocation: currentState?.selectedLocation || currentState?.activeContext?.selectedFeature || currentState?.activeResults?.[0],
       activeProject: currentState?.activeProject,
+      activeDrawnArea: currentState?.activeDrawnArea,
       drawnRectangle: currentState?.drawnRectangle || currentState?.drawings?.find(d => d.type === 'rectangle')?.bounds,
       drawnCircle: currentState?.drawnCircle || currentState?.drawings?.find(d => d.type === 'circle'),
       drawnPolygon: currentState?.drawnPolygon || currentState?.drawings?.find(d => d.type === 'polygon')?.positions,
       hasActiveDrawingFilter: Boolean(
+        currentState?.activeDrawnArea ||
         currentState?.drawnRectangle || 
         currentState?.drawnCircle || 
         currentState?.drawnPolygon ||
@@ -1513,15 +1555,25 @@ export const mockAiEngine = {
       ? (queryResult.referenceNameAr || 'موقعك الجغرافي')
       : (queryResult.referenceName || 'your location');
 
-    if (parsedIntent.isDrawnShapeQuery) {
+    const hasDrawnScope = parsedIntent.isDrawnShapeQuery || Boolean(
+      currentState?.activeDrawnArea ||
+      currentState?.drawnRectangle || 
+      currentState?.drawnCircle || 
+      currentState?.drawnPolygon || 
+      (currentState?.drawings && currentState.drawings.length > 0)
+    );
+
+    if (hasDrawnScope) {
+      const areaLabel = currentState?.activeDrawnArea?.label || 'the drawn area';
+      const areaLabelAr = currentState?.activeDrawnArea?.label_ar || 'المنطقة المحددة على الخريطة';
       if (isTruncated) {
         reply = isArabic
-          ? `تم العثور على **${totalCount} ${searchLabelAr}** داخل المنطقة المحددة على الخريطة. عرض **أقرب 10 منشآت**:`
-          : `Found **${totalCount} verified ${searchLabel}** within the drawn area. Showing the **top 10 closest**:`;
+          ? `تم العثور على **${totalCount} ${searchLabelAr}** داخل ${areaLabelAr}. عرض **أقرب 10 منشآت**:`
+          : `Found **${totalCount} verified ${searchLabel}** within ${areaLabel}. Showing the **top 10 closest**:`;
       } else {
         reply = isArabic
-          ? `تم العثور على **${results.length} ${searchLabelAr}** داخل المنطقة المحددة على الخريطة:`
-          : `Found **${results.length} verified ${searchLabel}** within the drawn area:`;
+          ? `تم العثور على **${results.length} ${searchLabelAr}** داخل ${areaLabelAr}:`
+          : `Found **${results.length} verified ${searchLabel}** within ${areaLabel}:`;
       }
     } else if (parsedIntent.isRefinement) {
       if (isTruncated) {

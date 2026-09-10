@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, User, MapPin, Heart, History, MessageSquare, 
   Trash2, ArrowRight, Pencil, Check, Pin, Sparkles, Bookmark,
-  Printer, BarChart3, X, Filter, Layers
+  Printer, BarChart3, X, Filter, Layers, Compass
 } from 'lucide-react';
 import GeoLogoIcon from '../common/GeoLogoIcon';
 import { useTypewriterPlaceholder } from '../../hooks/useTypewriter';
@@ -103,8 +103,74 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
   const [editingMsgId, setEditingMsgId] = useState(null);
   const [editingText, setEditingText] = useState('');
   const scrollContainerRef = useRef(null);
+  const inputRef = useRef(null);
 
   const isLoggedIn = Boolean(explorerState?.userAuth?.isLoggedIn || explorerState?.isLoggedIn);
+
+  // Derive active drawn area metadata from explorerState
+  const activeDrawnArea = useMemo(() => {
+    if (explorerState?.activeDrawnArea) return explorerState.activeDrawnArea;
+    if (explorerState?.drawnCircle) {
+      const radiusKm = ((explorerState.drawnCircle.radius || 1000) / 1000).toFixed(1);
+      return {
+        type: 'circle',
+        label: `Drawn Area · ${radiusKm} km radius`,
+        label_ar: `المنطقة المحددة · نصف قطر ${radiusKm} كم`,
+        radiusKm: Number(radiusKm),
+        radius: explorerState.drawnCircle.radius,
+        center: explorerState.drawnCircle.center
+      };
+    }
+    if (explorerState?.drawnRectangle) {
+      return {
+        type: 'rectangle',
+        label: 'Drawn Area · Rectangle',
+        label_ar: 'المنطقة المحددة · مستطيل',
+        bounds: explorerState.drawnRectangle
+      };
+    }
+    if (explorerState?.drawnPolygon) {
+      return {
+        type: 'polygon',
+        label: 'Drawn Area · Polygon',
+        label_ar: 'المنطقة المحددة · مضلع',
+        positions: explorerState.drawnPolygon
+      };
+    }
+    const circleDrawing = (explorerState?.drawings || []).find(d => d.type === 'circle');
+    if (circleDrawing) {
+      const radiusKm = ((circleDrawing.radius || 1000) / 1000).toFixed(1);
+      return {
+        type: 'circle',
+        label: `Drawn Area · ${radiusKm} km radius`,
+        label_ar: `المنطقة المحددة · نصف قطر ${radiusKm} كم`,
+        radiusKm: Number(radiusKm),
+        radius: circleDrawing.radius,
+        center: circleDrawing.center
+      };
+    }
+    return null;
+  }, [explorerState?.activeDrawnArea, explorerState?.drawnCircle, explorerState?.drawnRectangle, explorerState?.drawnPolygon, explorerState?.drawings]);
+
+  // Focus input automatically when area is drawn
+  useEffect(() => {
+    if (activeDrawnArea && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [activeDrawnArea]);
+
+  const handleClearDrawnArea = () => {
+    setExplorerState(prev => ({
+      ...prev,
+      activeDrawnArea: null,
+      drawnCircle: null,
+      drawnRectangle: null,
+      drawnPolygon: null,
+      drawings: [],
+      drawingTool: null
+    }));
+  };
+
 
   // If user is guest, lock activeTab to 'chat'
   useEffect(() => {
@@ -737,7 +803,9 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
           {/* Bottom Chat Input Form */}
           <div className={`p-3 border-t shrink-0 relative z-20 backdrop-blur-md transition-colors duration-300 ${isDarkMode ? 'bg-[#0f1932]/95 border-slate-800/90' : 'bg-white border-slate-200'}`}>
             
-            {/* Visual Active Filter Scope Indicator */}
+
+
+            {/* 2. Visual Active Filter Scope Indicator */}
             {explorerState?.selectedGisSubcategories?.length > 0 && (
               <div className={`mb-2 px-2.5 py-1.5 rounded-lg border text-[11px] flex items-center justify-between gap-2 transition-all animate-fadeIn ${
                 isDarkMode 
@@ -796,30 +864,61 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder={placeholderText}
-                className={`flex-1 text-xs font-medium rounded-full px-4 py-2.5 border outline-none transition-all ${
-                  isDarkMode 
-                    ? 'bg-[#15213c] text-white placeholder-slate-400 border-slate-700/80 focus:border-[#7c3aed]' 
-                    : 'bg-slate-100/90 hover:bg-slate-100 focus:bg-white text-slate-800 placeholder-slate-400 border-slate-200 focus:border-[#7c3aed]'
-                }`}
-              />
-              <button
-                type="submit"
-                disabled={!inputValue.trim() || isTyping}
-                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 ${
-                  inputValue.trim() && !isTyping
-                    ? (isDarkMode ? 'bg-[#7c3aed] text-white shadow-sm hover:bg-[#6d28d9]' : 'bg-black text-white hover:bg-[#7c3aed]')
-                    : (isDarkMode ? 'bg-slate-800/80 text-slate-600 cursor-not-allowed' : 'bg-slate-200 text-slate-400 cursor-not-allowed')
-                }`}
-              >
-                <Send className="w-4 h-4 rtl:-scale-x-100" />
-              </button>
-            </form>
+            {/* 3. Modern Card Input Container (Matches Provided Screenshot) */}
+            <div className={`rounded-3xl border p-2.5 sm:p-3 transition-all shadow-md ${
+              isDarkMode 
+                ? 'bg-[#0b1426]/95 border-slate-700/80 text-white shadow-[0_8px_30px_rgba(0,0,0,0.4)]' 
+                : 'bg-white/95 border-slate-200/90 text-slate-800 shadow-sm'
+            }`}>
+              
+              {/* Selected Area Pill Badge (Top Row inside Input Card) */}
+              {activeDrawnArea && (
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-[#edf2fb] hover:bg-[#e2eafc] dark:bg-[#162544] dark:hover:bg-[#1c3058] text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700/80 shadow-2xs transition-all">
+                    <span>{isArabic ? (activeDrawnArea.label_ar || activeDrawnArea.label) : activeDrawnArea.label}</span>
+                    <button
+                      type="button"
+                      onClick={handleClearDrawnArea}
+                      className="w-3.5 h-3.5 rounded-full hover:bg-slate-300 dark:hover:bg-slate-600 flex items-center justify-center transition-colors cursor-pointer text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                      title={isArabic ? 'مسح المنطقة المحددة' : 'Clear drawn area'}
+                    >
+                      <X className="w-2.5 h-2.5 stroke-[2.5]" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Input Row: Sparkle Circular Badge + Divider + Transparent Input + Send Button */}
+              <form onSubmit={handleSubmit} className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#3b82f6]/20 via-[#6366f1]/20 to-[#a855f7]/20 border border-blue-400/40 flex items-center justify-center shrink-0 shadow-xs">
+                  <Sparkles className="w-4 h-4 text-blue-500 dark:text-sky-400 fill-current" />
+                </div>
+
+                <div className="w-[1px] h-5 bg-slate-200 dark:bg-slate-700 mx-0.5 shrink-0" />
+
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder={isArabic ? 'اسأل الخريطة الذكية عن أي شيء...' : 'Ask Smart Map Anything...'}
+                  className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm font-medium text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 px-1 py-1"
+                />
+
+                <button
+                  type="submit"
+                  disabled={!inputValue.trim() || isTyping}
+                  className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-xs ${
+                    inputValue.trim() && !isTyping
+                      ? 'bg-[#1a73e8] hover:bg-[#1557bf] text-white shadow-md hover:scale-105'
+                      : 'bg-slate-200/80 dark:bg-slate-800/80 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                  }`}
+                  title={isArabic ? 'إرسال الاستعلام' : 'Send query'}
+                >
+                  <Send className="w-4 h-4 rtl:-scale-x-100" />
+                </button>
+              </form>
+            </div>
           </div>
         </>
       )}

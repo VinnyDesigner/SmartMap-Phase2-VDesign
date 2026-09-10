@@ -53,25 +53,34 @@ function App() {
     if (typeof navigator !== 'undefined' && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          const userCoords = { 
+            lat: pos.coords.latitude, 
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy 
+          };
           setExplorerState(prev => ({
             ...prev,
             userLocationEnabled: true,
             userLocation: userCoords,
-            mapFocus: { lat: userCoords.lat, lng: userCoords.lng, zoom: 16 }
+            // When user allows location, smoothly move map to exact user position
+            mapFocus: { 
+              lat: userCoords.lat, 
+              lng: userCoords.lng, 
+              zoom: 16, 
+              source: 'geolocation-granted',
+              timestamp: Date.now() 
+            }
           }));
         },
         (err) => {
-          console.warn("Browser Geolocation Permission Denied or Timed Out:", err);
-          const defaultCoords = { lat: 24.4839, lng: 54.3773 };
+          console.warn("Browser Geolocation Denied or Unavailable:", err);
+          // When denied or unavailable, do NOT move the map, leave at default overview
           setExplorerState(prev => ({
             ...prev,
-            userLocationEnabled: false,
-            userLocation: defaultCoords,
-            mapFocus: { lat: defaultCoords.lat, lng: defaultCoords.lng, zoom: 14 }
+            userLocationEnabled: false
           }));
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     }
   };
@@ -82,9 +91,6 @@ function App() {
         ...prev,
         chatHistory: [] 
       }));
-    }
-    if (view === 'explorer') {
-      requestUserLocation();
     }
     setCurrentView(view);
   };
@@ -111,7 +117,6 @@ function App() {
       isLoggedIn: true
     }));
 
-    requestUserLocation();
     setCurrentView('explorer');
   };
 
@@ -132,11 +137,7 @@ function App() {
   };
 
   const [explorerState, setExplorerState] = useState({
-    mapFocus: {
-      lat: 24.4839,
-      lng: 54.3773,
-      zoom: 16
-    },
+    mapFocus: null,
     activeResults: [],
     showSearchResults: false,
     selectedDetail: null,
@@ -149,7 +150,7 @@ function App() {
     savedChatHistory: [],
     userAuth: { isLoggedIn: false },
     isLoggedIn: false,
-    userLocationEnabled: true,
+    userLocationEnabled: false,
     userLocation: { lat: 24.4839, lng: 54.3773 },
     showLocationModal: false
   });

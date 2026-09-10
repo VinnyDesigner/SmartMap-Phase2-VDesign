@@ -16,6 +16,22 @@ import {
   findCategoryBySubcategoryId 
 } from '../../config/categoryTree.js';
 
+// Strict word boundary checker to prevent accidental substring collisions (e.g. "port" inside "export")
+function hasWord(text, word) {
+  if (!text || !word) return false;
+  // For Arabic, use includes because Arabic words take morphological prefixes like 'ال' (الشرطة, بالميناء)
+  if (/[\u0600-\u06FF]/.test(word)) {
+    return text.includes(word);
+  }
+  // For Latin/English words, use strict regex word boundaries to prevent collisions like "port" in "export"
+  const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`\\b${escaped}\\b`, 'i').test(text);
+}
+
+function hasAnyWord(text, words = []) {
+  return words.some(w => hasWord(text, w));
+}
+
 export function parseQueryIntent(queryText, currentState = null, isArabic = false) {
   if (!queryText || typeof queryText !== 'string') return null;
   const rawQ = queryText.trim();
@@ -95,9 +111,31 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
     return { type: 'APP_CONTROL', action: 'NAVIGATE', params: { view: 'about' } };
   }
 
-  // Print
-  if (['print this map', 'print map', 'print current view', 'print screen', 'print the screen', 'print view', 'print page', 'print report', 'print', 'طباعة الخريطة', 'طباعة الشاشة', 'طباعة التقرير', 'طباعة'].some(k => q.includes(k))) {
-    return { type: 'APP_CONTROL', action: 'PRINT_MAP', params: {} };
+  // Print & PDF Export (Spatial Data, Analysis Report, Current Map View)
+  const isPdfOrExportQuery = (
+    // Regex matching export/print/save/download with pdf or report or data or analysis
+    /(?:export|print|download|save)\b.*?\b(?:pdf|report|analysis|data|map)\b/i.test(q) ||
+    // Typos like "saptial" or "spacial" with export/print and pdf/data
+    /\b(?:export|print)\b.*?\b(?:saptial|spacial|spatial)\b/i.test(q) ||
+    /\b(?:pdf)\b.*?\b(?:export|print|download|report|save)/i.test(q) ||
+    (/\bpdf\b/i.test(q) && /(?:export|print|generate|download|save|create)/i.test(q)) ||
+    ['export to pdf', 'export pdf', 'print pdf', 'save as pdf', 'download pdf', 'export data to pdf', 'export spatial', 'export saptial', 'export analysis', 'export report', 'export data', 'print map', 'print report', 'print this map', 'print current view', 'print screen', 'print view', 'print'].some(k => q === k || q.includes(k)) ||
+    // Arabic triggers
+    ['تصدير إلى pdf', 'تصدير الى pdf', 'تصدير تقرير', 'تصدير التقرير', 'تصدير التحليل', 'تصدير البيانات', 'تصدير الخريطة', 'طباعة الخريطة', 'طباعة الشاشة', 'طباعة التقرير', 'طباعة pdf', 'طباعة'].some(k => q.includes(k)) ||
+    (['تصدير', 'طباعة'].some(k => q.includes(k)) && ['pdf', 'تقرير', 'تحليل', 'بيانات', 'خريطة'].some(k => q.includes(k)))
+  );
+
+  if (isPdfOrExportQuery) {
+    const isExplicitPdf = /\bpdf\b/i.test(q) || q.includes('pdf');
+    return { 
+      type: 'APP_CONTROL', 
+      action: isExplicitPdf ? 'EXPORT_PDF' : 'PRINT_MAP', 
+      params: { 
+        format: 'pdf', 
+        type: 'spatial-data-report',
+        hasDrawnArea: Boolean(currentState?.activeDrawnArea || currentState?.drawnCircle || currentState?.drawnRectangle || currentState?.drawnPolygon)
+      } 
+    };
   }
 
   // Clear Drawn Shape / Boundary
@@ -109,6 +147,17 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
   ];
   if (clearAreaTriggers.some(k => q === k || q.includes(k))) {
     return { type: 'APP_CONTROL', action: 'CLEAR_DRAWN_SHAPE', params: {} };
+  }
+
+  // Clear Directions / Route
+  const clearDirectionTriggers = [
+    'clear direction', 'clear directions', 'clear route', 'remove direction', 'remove directions',
+    'remove route', 'cancel route', 'cancel directions', 'hide directions', 'hide route',
+    'close directions', 'reset route', 'stop directions', 'clear navigation',
+    'مسح الاتجاهات', 'مسح المسار', 'إلغاء المسار', 'إلغاء الاتجاهات', 'إخفاء المسار', 'إزالة المسار', 'مسح خط السير'
+  ];
+  if (clearDirectionTriggers.some(k => q === k || q.includes(k))) {
+    return { type: 'APP_CONTROL', action: 'CLEAR_DIRECTIONS', params: {} };
   }
 
   // Facility Details Inspection Intent
@@ -177,8 +226,7 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
     q.includes('which one is worst') || q.includes('which is worst') || q.includes('أيها الأسوأ') || q.includes('أي منها الأكثر خطورة') ||
     q === 'why' || q === 'why?' || q.includes('why is this facility high risk') || q.includes('why high risk') || q.includes('لماذا تعتبر عالية الخطورة') ||
     q === 'compare it' || q.includes('compare this facility with nearby') || q.includes('compare with nearby') || q.includes('مقارنة بالمنشآت المجاورة') ||
-    q.includes('show the last 12 months') || q.includes('last 12 months') || q.includes('12 month trend') || q.includes('الـ 12 شهراً الأخيرة') ||
-    q.includes('export analysis') || q.includes('export report') || q.includes('تصدير التقرير')
+    q.includes('show the last 12 months') || q.includes('last 12 months') || q.includes('12 month trend') || q.includes('الـ 12 شهراً الأخيرة')
   ) {
     return {
       type: 'ORCHESTRATOR_TASK',
@@ -298,27 +346,27 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
     }
   }
 
-  // 3H. Precise Sub-Types
+  // 3H. Precise Sub-Types (Strict Word Boundaries to avoid false positives like "port" in "export")
   let subType = null;
-  if (q.includes('museum') || q.includes('متحف')) subType = 'museum';
-  else if (q.includes('mosque') || q.includes('مسجد') || q.includes('جامع')) subType = 'mosque';
-  else if (q.includes('palace') || q.includes('قصر')) subType = 'palace';
-  else if (q.includes('louvre') || q.includes('لوفر')) subType = 'louvre';
-  else if (q.includes('beach') || q.includes('شاطئ')) subType = 'beach';
-  else if (q.includes('park') || q.includes('garden') || q.includes('حديقة') || q.includes('منتزه')) subType = 'park';
-  else if (q.includes('police') || q.includes('شرطة')) subType = 'police';
-  else if (q.includes('ambulance') || q.includes('إسعاف')) subType = 'ambulance';
-  else if (q.includes('hospital') || q.includes('مستشفى')) subType = 'hospital';
-  else if (q.includes('clinic') || q.includes('عيادة')) subType = 'clinic';
-  else if (q.includes('university') || q.includes('جامعة')) subType = 'university';
-  else if (q.includes('college') || q.includes('كلية')) subType = 'college';
-  else if (q.includes('bus') || q.includes('حافلة') || q.includes('حافلات')) subType = 'bus';
-  else if (q.includes('airport') || q.includes('مطار')) subType = 'airport';
-  else if (q.includes('port') || q.includes('ميناء')) subType = 'port';
-  else if (q.includes('desalination') || q.includes('تحلية')) subType = 'desalination';
-  else if (q.includes('power') || q.includes('طاقة') || q.includes('كهرباء')) subType = 'power';
-  else if (q.includes('tamm') || q.includes('تم')) subType = 'tamm';
-  else if (q.includes('municipality') || q.includes('بلدية')) subType = 'municipality';
+  if (hasAnyWord(q, ['museum', 'museums', 'متحف'])) subType = 'museum';
+  else if (hasAnyWord(q, ['mosque', 'mosques', 'masjid', 'مسجد', 'جامع'])) subType = 'mosque';
+  else if (hasAnyWord(q, ['palace', 'palaces', 'قصر'])) subType = 'palace';
+  else if (hasAnyWord(q, ['louvre', 'لوفر'])) subType = 'louvre';
+  else if (hasAnyWord(q, ['beach', 'beaches', 'شاطئ'])) subType = 'beach';
+  else if (hasAnyWord(q, ['park', 'parks', 'garden', 'gardens', 'حديقة', 'منتزه']) && !hasWord(q, 'parking')) subType = 'park';
+  else if (hasAnyWord(q, ['police', 'شرطة'])) subType = 'police';
+  else if (hasAnyWord(q, ['ambulance', 'ambulances', 'إسعاف'])) subType = 'ambulance';
+  else if (hasAnyWord(q, ['hospital', 'hospitals', 'مستشفى'])) subType = 'hospital';
+  else if (hasAnyWord(q, ['clinic', 'clinics', 'عيادة'])) subType = 'clinic';
+  else if (hasAnyWord(q, ['university', 'universities', 'جامعة'])) subType = 'university';
+  else if (hasAnyWord(q, ['college', 'colleges', 'كلية'])) subType = 'college';
+  else if (hasAnyWord(q, ['bus', 'buses', 'حافلة', 'حافلات'])) subType = 'bus';
+  else if (hasAnyWord(q, ['airport', 'airports', 'مطار'])) subType = 'airport';
+  else if (hasAnyWord(q, ['port', 'ports', 'seaport', 'seaports', 'harbor', 'harbour', 'ميناء', 'موانئ'])) subType = 'port';
+  else if (hasAnyWord(q, ['desalination', 'desal', 'تحلية'])) subType = 'desalination';
+  else if (hasAnyWord(q, ['power', 'grid', 'طاقة', 'كهرباء'])) subType = 'power';
+  else if (hasAnyWord(q, ['tamm', 'مركز تم', 'منصة تم', 'مراكز تم'])) subType = 'tamm';
+  else if (hasAnyWord(q, ['municipality', 'municipal', 'بلدية'])) subType = 'municipality';
   else if (isClosestQuery && currentState?.activeContext?.subType) {
     subType = currentState.activeContext.subType;
   }

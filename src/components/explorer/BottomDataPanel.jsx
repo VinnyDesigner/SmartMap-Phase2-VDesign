@@ -105,6 +105,7 @@ export default function BottomDataPanel({ explorerState, setExplorerState, onNav
         drawnPolygon: null,
         drawnCircle: null,
         drawnRectangle: null,
+        activeDrawnArea: null,
         drawings: [],
         drawingTool: null,
         // ── AI context & filters ──

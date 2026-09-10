@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  X, Search, ChevronRight, ChevronDown, Check,
+  X, Search, ChevronRight, ChevronDown, Check, Minus,
   Activity, Bus, TreePine, Landmark, Building, Building2,
   Home, Shield, Zap, CloudRain, Hammer, Trees, Sprout, Briefcase,
   GraduationCap, RotateCcw
@@ -135,6 +135,22 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
     filterLocationsBySubcategories(updated);
   };
 
+  // Master list of all subcategory IDs across all 16 categories
+  const allSubcategoryIds = useMemo(() => {
+    return CATEGORY_TREE.flatMap(cat => cat.subcategories.map(sub => sub.id));
+  }, []);
+
+  const isMasterAllSelected = allSubcategoryIds.length > 0 && allSubcategoryIds.every(id => selectedSubcategories.includes(id));
+  const isMasterPartiallySelected = selectedSubcategories.length > 0 && !isMasterAllSelected;
+
+  const handleToggleMasterSelectAll = () => {
+    if (isMasterAllSelected) {
+      filterLocationsBySubcategories([]);
+    } else {
+      filterLocationsBySubcategories(allSubcategoryIds);
+    }
+  };
+
   const handleClearAll = () => {
     filterLocationsBySubcategories([]);
   };
@@ -219,6 +235,43 @@ export default function GisCategoriesPanel({ isOpen, onClose, explorerState, set
             </button>
           )}
         </div>
+      </div>
+
+      {/* 2B. Master Select All Control Bar for all Categories & Subcategories */}
+      <div className={`px-4 py-2.5 border-b flex items-center justify-between shrink-0 transition-colors select-none ${
+        isDarkMode ? 'bg-[#0a1122]/90 border-slate-800' : 'bg-slate-50 border-slate-100'
+      }`}>
+        <div 
+          onClick={handleToggleMasterSelectAll}
+          className="flex items-center gap-2.5 cursor-pointer select-none group"
+        >
+          {/* Master Checkbox */}
+          <div className={`w-4 h-4 rounded flex items-center justify-center transition-all shrink-0 ${
+            isMasterAllSelected
+              ? 'bg-[#7c3aed] border-[#7c3aed] text-white shadow-xs'
+              : isMasterPartiallySelected
+                ? 'bg-[#7c3aed]/20 border-[#7c3aed] text-[#7c3aed]'
+                : (isDarkMode ? 'border border-slate-700 bg-slate-900 group-hover:border-slate-500' : 'border border-slate-300 bg-white group-hover:border-slate-400')
+          }`}>
+            {isMasterAllSelected && <Check className="w-3 h-3 stroke-[3]" />}
+            {isMasterPartiallySelected && <Minus className="w-3 h-3 stroke-[3]" />}
+          </div>
+
+          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 group-hover:text-[#7c3aed] dark:group-hover:text-[#a78bfa] transition-colors">
+            {isMasterAllSelected
+              ? (isArabic ? 'إلغاء تحديد كل الفئات' : 'Deselect All')
+              : (isArabic ? 'تحديد كافة الفئات والأنواع' : 'Select All Categories')}
+          </span>
+        </div>
+
+        {/* Selected count pill */}
+        <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full font-mono transition-colors ${
+          selectedSubcategories.length > 0
+            ? (isDarkMode ? 'bg-purple-900/60 text-purple-200 border border-purple-700/50' : 'bg-purple-100 text-purple-800 border border-purple-200')
+            : (isDarkMode ? 'bg-slate-800 text-slate-400' : 'bg-slate-200/70 text-slate-500')
+        }`}>
+          {selectedSubcategories.length} / {allSubcategoryIds.length}
+        </span>
       </div>
 
       {/* 3. Scrollable Categories Accordion List */}

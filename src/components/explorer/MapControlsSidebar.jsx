@@ -114,9 +114,18 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
           <Home className="w-4 h-4" />
         </button>
 
-
-
-        <div className={`w-5 h-px my-0.5 ${isDarkMode ? 'bg-slate-800' : 'bg-slate-200/80'}`} />
+        {/* Current Location / Locate Me */}
+        <button 
+          onClick={() => setExplorerState(prev => ({ ...prev, mapAction: 'locate' }))}
+          title={t('My Location', 'موقعي الحالي')}
+          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
+            explorerState?.userLocationEnabled 
+              ? (isDarkMode ? 'text-sky-400 bg-sky-500/15 hover:bg-sky-500/25' : 'text-[#215A9E] bg-[#215A9E]/10 hover:bg-[#215A9E]/20')
+              : (isDarkMode ? 'hover:bg-slate-800 text-slate-300 hover:text-white' : 'hover:bg-slate-100 text-slate-700 hover:text-[#3D52A0]')
+          }`}
+        >
+          <Navigation className="w-4 h-4" />
+        </button>
 
         {/* Hamburger Menu Toggle Button */}
         <button
@@ -261,6 +270,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                           drawnPolygon: null, 
                           drawnCircle: null, 
                           drawnRectangle: null, 
+                          activeDrawnArea: null,
                           activeResults: [] 
                         }))}
                         className={`flex items-center gap-2.5 p-2 mt-1 rounded-xl border transition-all w-full cursor-pointer font-bold ${
