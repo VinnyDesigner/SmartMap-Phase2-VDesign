@@ -332,7 +332,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                   >
                     <BasemapOption 
                       label={t('Abu Dhabi DGE', 'أبوظبي الرسمية')} 
-                      imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/4/6/10" 
+                      imgUrl="https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_WM/MapServer/tile/10/440/666" 
                       isActive={!explorerState?.activeBasemap || explorerState?.activeBasemap === 'abu-dhabi-dge'}
                       isOfficial={true}
                       isDarkMode={isDarkMode}
@@ -343,7 +343,7 @@ export default function MapControlsSidebar({ explorerState, setExplorerState }) 
                     <BasemapOption 
                       label={t('Esri Vector', 'الشوارع العالمية')} 
                       imgUrl="https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/4/6/10" 
-                      isActive={explorerState?.activeBasemap === 'streets'}
+                      isActive={explorerState?.activeBasemap === 'streets' || explorerState?.activeBasemap === 'esri-vector'}
                       isDarkMode={isDarkMode}
                       onClick={() => { 
                         setExplorerState(prev => ({ ...prev, activeBasemap: 'streets', showBasemapMenu: false })); 

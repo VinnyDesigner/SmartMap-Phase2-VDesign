@@ -85,7 +85,7 @@ export default function DemoScenarioSwitcher({ onLaunchScenario }) {
   ];
 
   return (
-    <div className="fixed bottom-4 start-4 z-[90] pointer-events-auto">
+    <div className="fixed bottom-16 start-4 md:start-6 z-[450] pointer-events-auto">
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}

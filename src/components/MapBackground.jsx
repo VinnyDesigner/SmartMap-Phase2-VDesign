@@ -1280,7 +1280,7 @@ export default function MapBackground({ mouseX, mouseY, isSearchFocused, onMapCl
           <CustomDrawControl explorerState={explorerState} setExplorerState={setExplorerState} />
         )}
         
-        <ArcGISBasemap activeBasemapId={explorerState?.activeBasemap || explorerState?.basemap || 'esri-vector'} />
+        <ArcGISBasemap activeBasemapId={explorerState?.activeBasemap || explorerState?.basemap || 'abu-dhabi-dge'} />
         
         {/* User Location Marker Pin with radar ring & location popup (strictly when location is allowed) */}
         {explorerState?.userLocationEnabled && userLoc && userLoc.lat && userLoc.lng && (

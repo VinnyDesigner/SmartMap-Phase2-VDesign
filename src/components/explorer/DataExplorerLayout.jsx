@@ -12,6 +12,7 @@ import FlyingCardOverlay from '../common/FlyingCardOverlay';
 
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import DemoScenarioSwitcher from '../common/DemoScenarioSwitcher';
 
 export default function DataExplorerLayout({ 
   onNavigate, 
@@ -27,6 +28,19 @@ export default function DataExplorerLayout({
   const containerRef = useRef(null);
 
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+
+  const handleLaunchScenario = (queryText) => {
+    setIsRightPanelOpen(true);
+    if (setExplorerState) {
+      setExplorerState(prev => ({
+        ...prev,
+        pendingQuery: queryText,
+        activeMenu: null,
+        showCategoriesPanel: false,
+        showBasemapMenu: false
+      }));
+    }
+  };
 
   const [chatWidth, setChatWidth] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -254,6 +268,9 @@ export default function DataExplorerLayout({
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* Stakeholder 8 Demo Journey Switcher */}
+      <DemoScenarioSwitcher onLaunchScenario={handleLaunchScenario} />
     </motion.div>
   );
 }

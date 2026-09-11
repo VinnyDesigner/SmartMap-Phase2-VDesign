@@ -222,8 +222,8 @@ export const PROJECTS_CONFIG = [
     },
 
     mapConfig: {
-      defaultBasemap: 'esri-vector',
-      allowedBasemaps: ['esri-vector', 'abu-dhabi-dge', 'satellite', 'streets', 'dark', 'topo']
+      defaultBasemap: 'abu-dhabi-dge',
+      allowedBasemaps: ['abu-dhabi-dge', 'esri-vector', 'satellite', 'streets', 'dark', 'topo']
     },
 
     aiContext: {
@@ -408,8 +408,8 @@ export const PROJECTS_CONFIG = [
     },
 
     mapConfig: {
-      defaultBasemap: 'esri-vector',
-      allowedBasemaps: ['esri-vector', 'abu-dhabi-dge', 'satellite', 'streets', 'dark', 'topo']
+      defaultBasemap: 'abu-dhabi-dge',
+      allowedBasemaps: ['abu-dhabi-dge', 'esri-vector', 'satellite', 'streets', 'dark', 'topo']
     },
 
     aiContext: {
@@ -594,8 +594,8 @@ export const PROJECTS_CONFIG = [
     },
 
     mapConfig: {
-      defaultBasemap: 'esri-vector',
-      allowedBasemaps: ['esri-vector', 'abu-dhabi-dge', 'streets', 'satellite', 'dark']
+      defaultBasemap: 'abu-dhabi-dge',
+      allowedBasemaps: ['abu-dhabi-dge', 'esri-vector', 'streets', 'satellite', 'dark']
     },
 
     aiContext: {
@@ -761,8 +761,8 @@ export const PROJECTS_CONFIG = [
     },
 
     mapConfig: {
-      defaultBasemap: 'esri-vector',
-      allowedBasemaps: ['esri-vector', 'abu-dhabi-dge', 'satellite', 'streets', 'dark', 'topo']
+      defaultBasemap: 'abu-dhabi-dge',
+      allowedBasemaps: ['abu-dhabi-dge', 'esri-vector', 'satellite', 'streets', 'dark', 'topo']
     },
 
     aiContext: {
