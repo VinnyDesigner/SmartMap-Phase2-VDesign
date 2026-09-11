@@ -241,8 +241,27 @@ export function parseQueryIntent(queryText, currentState = null, isArabic = fals
     };
   }
 
-  // Deep Risk Analytics, Proximity Comparison & Historical Trends
+  // Deep Risk Analytics, Proximity Comparison, Historical Trends & Client Strategic Spatial Queries
+  const isClientStrategicQuery = (
+    // 1. Schools comparison Khalifa vs MBZ City
+    ((q.includes('khalifa') || q.includes('خليفة')) && (q.includes('mbz') || q.includes('mohammed bin zayed') || q.includes('محمد بن زايد')) && (q.includes('school') || q.includes('مدارس') || q.includes('مدرسة'))) ||
+    q.includes('which area has more schools') || q.includes('more schools') ||
+    // 2. Schools within 2 km of hospitals
+    ((q.includes('school') || q.includes('مدارس')) && (q.includes('hospital') || q.includes('مستشف')) && (q.includes('2 km') || q.includes('2km') || q.includes('2 كم') || q.includes('2كم') || q.includes('كيلومترين'))) ||
+    q.includes('schools within 2 km of hospitals') || q.includes('schools within 2km of hospital') ||
+    // 3. Schools with bus stop and healthcare within 1 km
+    ((q.includes('bus') || q.includes('حافل')) && (q.includes('healthcare') || q.includes('health') || q.includes('clinic') || q.includes('صحي') || q.includes('رعاية صحية')) && (q.includes('school') || q.includes('مدارس')) && (q.includes('1 km') || q.includes('1km') || q.includes('1 كم') || q.includes('1كم') || q.includes('كيلومتر'))) ||
+    q.includes('bus stop and healthcare') || q.includes('bus stop and health') || q.includes('schools that have a bus stop') ||
+    // 4. Count hospitals, clinics and pharmacies by district
+    ((q.includes('hospital') || q.includes('مستشف')) && (q.includes('clinic') || q.includes('عياد')) && (q.includes('pharmac') || q.includes('صيدل'))) ||
+    (q.includes('count hospitals') && (q.includes('district') || q.includes('area') || q.includes('منطقة'))) ||
+    // 5. Highest percentage of schools with bus stop within 500m
+    ((q.includes('percentage') || q.includes('highest percentage') || q.includes('نسبة') || q.includes('أعلى نسبة')) && (q.includes('school') || q.includes('مدارس')) && (q.includes('bus') || q.includes('حافل')) && (q.includes('500') || q.includes('٥٠٠'))) ||
+    q.includes('schools with a bus stop within 500') || q.includes('percentage of schools with a bus stop')
+  );
+
   if (
+    isClientStrategicQuery ||
     q.includes('which one is worst') || q.includes('which is worst') || q.includes('أيها الأسوأ') || q.includes('أي منها الأكثر خطورة') ||
     q === 'why' || q === 'why?' || q.includes('why is this facility high risk') || q.includes('why high risk') || q.includes('لماذا تعتبر عالية الخطورة') ||
     q === 'compare it' || q.includes('compare this facility with nearby') || q.includes('compare with nearby') || q.includes('مقارنة بالمنشآت المجاورة') ||

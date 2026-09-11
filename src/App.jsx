@@ -13,6 +13,7 @@ import LocationPermissionModal from './components/common/LocationPermissionModal
 import MapPrintTemplate from './components/common/MapPrintTemplate';
 import AnalyticsModal from './components/common/AnalyticsModal';
 import FeedbackModal from './components/common/FeedbackModal';
+import PrintPreviewModal from './components/common/PrintPreviewModal';
 
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
@@ -245,6 +246,13 @@ function App() {
           onClose={() => setExplorerState(prev => ({ ...prev, showAnalyticsModal: false }))}
           title={explorerState?.analyticsTitle}
           results={explorerState?.activeResults}
+        />
+
+        {/* On-Demand Centered Executive Print & PDF Preview Modal */}
+        <PrintPreviewModal
+          isOpen={Boolean(explorerState?.showPrintModal)}
+          onClose={() => setExplorerState(prev => ({ ...prev, showPrintModal: false }))}
+          explorerState={explorerState}
         />
 
         {/* User Feedback Modal (Matching Image 1 & 2) */}

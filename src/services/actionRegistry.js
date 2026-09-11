@@ -297,12 +297,11 @@ export async function executeAppAction(action, explorerState, setExplorerState, 
 
     case ACTION_TYPES.EXPORT_DATA:
     case ACTION_TYPES.REPORT_GENERATE: {
-      if (typeof window !== 'undefined') {
-        setTimeout(() => {
-          window.print();
-        }, 300);
-      }
-      return { success: true, message: "Opened print layout" };
+      setExplorerState(prev => ({
+        ...prev,
+        showPrintModal: true
+      }));
+      return { success: true, message: "Opened executive print & PDF preview" };
     }
 
     case ACTION_TYPES.UNDO_ACTION: {

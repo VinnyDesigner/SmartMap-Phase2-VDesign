@@ -797,7 +797,7 @@ export default function AiChatInterface({ explorerState, setExplorerState, onNav
                         <div className="mt-2.5 pt-1.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-end gap-1.5 flex-wrap">
                           <button
                             type="button"
-                            onClick={() => window.print()}
+                            onClick={() => setExplorerState(prev => ({ ...prev, showPrintModal: true }))}
                             className={`px-2 py-0.5 rounded-lg border text-[10px] font-semibold transition-all cursor-pointer flex items-center gap-1 opacity-70 hover:opacity-100 ${
                               isDarkMode 
                                 ? 'bg-[#182645]/60 border-slate-700/60 text-slate-300 hover:text-white hover:bg-[#182645]' 

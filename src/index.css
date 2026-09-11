@@ -146,13 +146,14 @@ html.theme-dark .leaflet-control-attribution a {
   scrollbar-width: none; /* Firefox */
 }
 
+/* Page setup for Print / PDF Export - Unlocks Layout, Paper Size, and Scale in Chrome Print Dialog */
+/* Page setup for Print / PDF Export - Unlocks Layout, Paper Size, and Scale in Chrome Print Dialog */
+@page {
+  margin: 8mm 10mm;
+}
+
 /* Media Print Rules - Captures Multi-Page Executive PDF Layout */
 @media print {
-  @page {
-    size: A4 landscape;
-    margin: 8mm;
-  }
-
   *, *::before, *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -164,6 +165,9 @@ html.theme-dark .leaflet-control-attribution a {
     color: #0f172a !important;
     overflow: visible !important;
     height: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* Hide live interactive screen elements during print */
@@ -174,14 +178,57 @@ html.theme-dark .leaflet-control-attribution a {
     display: none !important;
   }
 
-  .page-break-before-always {
-    break-before: page !important;
-    page-break-before: always !important;
+  /* Centered Executive Print Layout Container */
+  .print-root {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    background-color: #ffffff !important;
   }
 
-  .page-break-after-always {
-    break-after: page !important;
+  /* Exactly 1 Sheet Per Page (No overflow, no spillover) */
+  .print-page {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    background-color: #ffffff !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Only break after pages 1 and 2; NEVER break after the last page */
+  .print-page:not(:last-child) {
     page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Responsive Map Canvas Sizing */
+  @media (orientation: landscape) {
+    .print-map-canvas {
+      height: 310px !important;
+      max-height: 310px !important;
+    }
+  }
+
+  @media (orientation: portrait) {
+    .print-map-canvas {
+      height: 380px !important;
+      max-height: 380px !important;
+    }
   }
 }
 
